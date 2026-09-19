@@ -66,6 +66,6 @@ static inline NQTimeMs NQStat_creationTimeMs(const NQStat* st)
 #ifdef __cplusplus
 }
 #endif
-#endif
 
+#endif
 #endif /* _LIBNETQ_FS_WIN32_STAT_H */

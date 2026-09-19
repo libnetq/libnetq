@@ -67,6 +67,20 @@ bool NQHttpRequest_setFollowLocation(NQHttpRequest* thiz, bool value)
   return false;
 }
 
+bool NQHttpRequest_setVerifyingPeerSsl(NQHttpRequest* thiz, bool value)
+{
+  NQ_UNUSED_PARAM(thiz);
+  NQ_UNUSED_PARAM(value);
+  return false;
+}
+
+bool NQHttpRequest_setVerifyingHostSsl(NQHttpRequest* thiz, bool value)
+{
+  NQ_UNUSED_PARAM(thiz);
+  NQ_UNUSED_PARAM(value);
+  return false;
+}
+
 bool NQHttpRequest_setTimeoutMs(NQHttpRequest* thiz, int64_t timeoutMs)
 {
   NQ_UNUSED_PARAM(thiz);
@@ -124,6 +138,12 @@ const char* NQHttpRequestHeaderIter_value(NQHttpRequestHeaderIter* iter)
 {
   NQ_UNUSED_PARAM(iter);
   return NULL;
+}
+
+int NQSendEmailSync(struct NQSendEmailParams* params)
+{
+  NQ_UNUSED_PARAM(params);
+  return -NQ_ENOTSUPP;
 }
 
 #endif

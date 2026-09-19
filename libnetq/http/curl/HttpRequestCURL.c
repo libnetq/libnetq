@@ -20,7 +20,9 @@
 #include <libnetq/Limits.h>
 #include <libnetq/Log.h>
 #include <libnetq/string/Strtox.h>
-#include <libnetq/String.h>
+#include <libnetq/string/String.h>
+#include <libnetq/string/StringData.h>
+#include <libnetq/string/StringRange.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/List.h>
 #include <libnetq/Mutex.h>
@@ -258,6 +260,16 @@ bool NQHttpRequest_setFollowLocation(NQHttpRequest* thiz, bool value)
   return toBoolean(curl_easy_setopt(thiz->curl, CURLOPT_FOLLOWLOCATION, value ? 1L : 0L));
 }
 
+bool NQHttpRequest_setVerifyingPeerSsl(NQHttpRequest* thiz, bool value)
+{
+  return toBoolean(curl_easy_setopt(thiz->curl, CURLOPT_SSL_VERIFYPEER, value ? 1L : 0L));
+}
+
+bool NQHttpRequest_setVerifyingHostSsl(NQHttpRequest* thiz, bool value)
+{
+  return toBoolean(curl_easy_setopt(thiz->curl, CURLOPT_SSL_VERIFYHOST, value ? 2L : 0L));
+}
+
 bool NQHttpRequest_setTimeoutMs(NQHttpRequest* thiz, int64_t timeoutMs)
 {
   timeoutMs = NQGetClamp(timeoutMs, NQ_LONG_MIN, NQ_LONG_MAX);
@@ -312,6 +324,99 @@ const char* NQHttpRequestHeaderIter_name(NQHttpRequestHeaderIter* iter)
 const char* NQHttpRequestHeaderIter_value(NQHttpRequestHeaderIter* iter)
 {
   return iter->value;
+}
+
+struct EmailUploadStatus {
+  const char** sequence;
+  const char* characters;
+  size_t length;
+};
+
+static size_t emailPayloadSource(char* ptr, size_t size, size_t nmemb, void* userdata) {
+  struct EmailUploadStatus* uploadCtx = (struct EmailUploadStatus*)userdata;
+
+  size_t bufferSize = size * nmemb;
+  if (bufferSize == 0)
+      return 0;
+
+  while (uploadCtx->length == 0) {
+    if (*uploadCtx->sequence == NULL)
+      return 0;
+    uploadCtx->characters = *(uploadCtx->sequence++);
+    uploadCtx->length = NQStrlen(uploadCtx->characters);
+  }
+
+  size_t n = NQGetMin(uploadCtx->length, bufferSize);
+  memcpy(ptr, uploadCtx->characters, n);
+  uploadCtx->characters += n;
+  uploadCtx->length -= n;
+
+  return n;
+}
+
+int NQSendEmailSync(struct NQSendEmailParams* params)
+{
+  if (params->smtp == NULL || params->username == NULL || params->password == NULL
+      || params->from == NULL || params->to == NULL || params->subject == NULL
+      || params->content == NULL) {
+    return -NQ_EINVAL;
+  }
+
+  const char* sequence[] = {
+    "To: ", params->to, NQ_HTTP_CRLF,
+    "From: ", params->from, NQ_HTTP_CRLF,
+    "Subject: ", params->subject, NQ_HTTP_CRLF,
+    NQ_HTTP_CRLF,
+    params->content,
+    NQ_HTTP_CRLF,
+    NULL,
+  };
+
+  struct EmailUploadStatus uploadCtx = {
+    .sequence = sequence,
+    .characters = NULL,
+    .length = 0,
+  };
+
+  curlGlobalInit();
+  CURL* curl = curl_easy_init();
+  if (curl == NULL) {
+    curlGlobalCleanup();
+    return -NQ_EIO;
+  }
+
+  struct curl_slist* recipients = NULL;
+
+  curl_easy_setopt(curl, CURLOPT_URL, params->smtp);
+  curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
+  curl_easy_setopt(curl, CURLOPT_USERNAME, params->from);
+  curl_easy_setopt(curl, CURLOPT_PASSWORD, params->password);
+
+  curl_easy_setopt(curl, CURLOPT_MAIL_FROM, params->from);
+  recipients = curl_slist_append(recipients, params->to);
+  if (recipients == NULL) {
+    curl_easy_cleanup(curl);
+    curlGlobalCleanup();
+    return -NQ_ENOMEM;
+  }
+
+  curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
+
+  curl_easy_setopt(curl, CURLOPT_READFUNCTION, emailPayloadSource);
+  curl_easy_setopt(curl, CURLOPT_READDATA, &uploadCtx);
+  curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+
+  int ret = 0;
+  CURLcode res = curl_easy_perform(curl);
+  if (res != CURLE_OK) {
+    NQ_LOGE("curl_easy_perform failed: %s (%i)", curl_easy_strerror(res), (int)res);
+    ret = -NQ_EIO;
+  }
+
+  curl_slist_free_all(recipients);
+  curl_easy_cleanup(curl);
+  curlGlobalCleanup();
+  return ret;
 }
 
 #endif

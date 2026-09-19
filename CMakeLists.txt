@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(libnetq VERSION 1.0.19
+project(libnetq VERSION 1.1.0
   DESCRIPTION "The cross-platform library"
   HOMEPAGE_URL "https://github.com/libnetq/libnetq"
   LANGUAGES "C"
@@ -98,12 +98,12 @@ endif ()
 set(HAVE_PTHREAD FALSE)
 set(WITH_PTHREAD OFF)
 find_package(Threads)
-if(Threads_FOUND)
+if (Threads_FOUND)
   set(HAVE_PTHREAD TRUE)
   set(WITH_PTHREAD ON)
   if (COMPILER_SUPPORTS_PTHREAD)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-  endif()
+  endif ()
 endif ()
 
 set(HAVE_OLE32 FALSE)
@@ -1214,7 +1214,6 @@ target_link_libraries(libnetq PUBLIC ${libnetq_LIBRARIES})
 set_target_properties(libnetq PROPERTIES LINKER_LANGUAGE "C")
 set_target_properties(libnetq PROPERTIES PREFIX "" IMPORT_PREFIX "")
 set_target_properties(libnetq PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
-set_target_properties(libnetq PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(LibNetQ::LibNetQ ALIAS libnetq)
 

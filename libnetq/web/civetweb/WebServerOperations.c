@@ -267,7 +267,7 @@ static int websocketConnect(const struct mg_connection* conn, void* userdata)
     return 1;
 
   context->socket = &ws->base;
-  if (!NQWebServer_initSocket(server, &context->request.base, &ws->base)) {
+  if (!NQWebServer_initRequest(server, &context->request.base, &ws->base)) {
     NQWebSocket_release(&ws->base);
     return 1;
   }
@@ -336,7 +336,7 @@ static int requestHandler(struct mg_connection* conn, void* userdata)
     return NQ_HTTP_INTERNAL_SERVER_ERROR;
   }
 
-  if (!NQWebServer_initRequest(server, &context.request.base)) {
+  if (!NQWebServer_initRequest(server, &context.request.base, NULL)) {
     contextFinalize(&context);
     mg_send_http_error(conn, NQ_HTTP_NOT_FOUND, "Not found");
     return NQ_HTTP_NOT_FOUND;
