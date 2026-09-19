@@ -81,9 +81,9 @@ bool NQHttpStatistics_add(NQHttpStatistics* thiz, const char* method, const char
     return false;
 
   newEntry->counter = 0;
-  memcpy(newEntry->method, method, mlen + 1);
+  NQMemcpy(newEntry->method, method, mlen + 1);
   newEntry->ulen = (uint32_t)ulen;
-  memcpy(newEntry->url, url, ulen + 1);
+  NQMemcpy(newEntry->url, url, ulen + 1);
   newEntry->hash = NQHashString(url, ulen);
   uint32_t index = newEntry->hash & thiz->mask;
 
@@ -95,7 +95,7 @@ bool NQHttpStatistics_add(NQHttpStatistics* thiz, const char* method, const char
   while (iter != NULL) {
     struct WebStatisticEntry* entry = NQ_CONTAINER_OF(iter, struct WebStatisticEntry, slist);
     if ((entry->hash == newEntry->hash) && (entry->ulen == newEntry->ulen)) {
-      if (memcmp(entry->method, method, mlen + 1) == 0 && memcmp(entry->url, url, ulen) == 0) {
+      if (NQMemcmp(entry->method, method, mlen + 1) == 0 && NQMemcmp(entry->url, url, ulen) == 0) {
         prev->next = iter->next;
         NQFree(entry);
         return true;
@@ -127,7 +127,7 @@ bool NQHttpStatistics_inc(NQHttpStatistics* thiz, const char* method, const char
   while (iter != NULL) {
     entry = NQ_CONTAINER_OF(iter, struct WebStatisticEntry, slist);
     if (entry->hash == hash && entry->ulen == ulen) {
-      if (memcmp(entry->method, method, mlen) == 0 && memcmp(entry->url, url, ulen) == 0) {
+      if (NQMemcmp(entry->method, method, mlen) == 0 && NQMemcmp(entry->url, url, ulen) == 0) {
         entry->counter++;
         return true;
       }

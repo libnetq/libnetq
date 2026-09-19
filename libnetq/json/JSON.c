@@ -13,6 +13,8 @@
 #include "config.h"
 #include "libnetq/json/JSON.h"
 
+#ifdef ENABLE_JSON
+
 #include <libnetq/string/StringPrint.h>
 #include <libnetq/json/JSONWriter.h>
 
@@ -120,3 +122,5 @@ bool NQJSON_dump(const NQJSON* json, NQStringPrint* buffer)
   NQJSONWriter_finalize(&writer);
   return result;
 }
+
+#endif /* ENABLE_JSON */

@@ -112,7 +112,7 @@ static const struct NQAssetCallbacks s_fileSystemAssetCallbacks =
 
 NQAsset* NQFileSystemAssetCreate(const char* dirname)
 {
-  size_t len = strlen(dirname);
+  size_t len = NQStrlen(dirname);
   if (len > NQ_UINT16_MAX) {
     NQ_LOGE("The dirname '%s' is huge", dirname);
     return NULL;
@@ -126,7 +126,7 @@ NQAsset* NQFileSystemAssetCreate(const char* dirname)
 
   thiz->base.callbacks = &s_fileSystemAssetCallbacks;
 
-  memcpy(thiz->pathCharacters, dirname, len + 1);
+  NQMemcpy(thiz->pathCharacters, dirname, len + 1);
   if (len > 0 && NQIsPathSeparator(thiz->pathCharacters[len - 1]))
     thiz->pathCharacters[--len] = '\0';
   thiz->pathLength = (uint16_t)len;

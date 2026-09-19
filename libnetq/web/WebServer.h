@@ -80,13 +80,7 @@ struct NQWebRequestListener {
 };
 
 struct NQWebSocketListener {
-  NQWebExecutor* executor;
-  NQListHead list;
-
-  const char* method;
-  const char* pattern;
-  int patternKind;
-
+  struct NQWebRequestListener requestListener;
   const NQWebSocketOperations* operations;
   void* userdata;
 };
@@ -152,8 +146,7 @@ struct NQWebServer {
   NQWebServerSupervisor* parent;
   NQPrimitiveStorage storage;
   NQListHead executors;
-  NQListHead requestExecutors;
-  NQListHead socketExecutors;
+  NQListHead listeners;
   NQListHead writerExecutors;
   NQListHead moduleList;
   NQListHead catalogEntries;
@@ -266,8 +259,7 @@ NQ_EXPORT void NQWebCatalogEntryDestroy(struct NQWebCatalogEntry*);
 NQ_EXPORT int NQWebServer_addCatalogEntry(NQWebServer*, struct NQWebCatalogEntry* entry);
 NQ_EXPORT void NQWebServer_removeCatalogEntry(NQWebServer*, struct NQWebCatalogEntry* entry);
 
-NQ_EXPORT bool NQWebServer_initRequest(NQWebServer*, NQWebRequest* request);
-NQ_EXPORT bool NQWebServer_initSocket(NQWebServer*, NQWebRequest* request, NQWebSocket* sock);
+NQ_EXPORT bool NQWebServer_initRequest(NQWebServer*, NQWebRequest* request, NQWebSocket* sock);
 
 NQ_EXPORT void NQWebServerOperationsRegister(NQWebServerOperations*);
 NQ_EXPORT void NQWebServerOperationsUnregister(NQWebServerOperations*);

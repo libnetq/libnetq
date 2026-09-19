@@ -19,7 +19,7 @@
 #elif defined(NQ_OS_KERNEL)
 # include <libnetq/fs/kernel/Stat.h>
 #else
-# error There is no implementation for the Stat
+# include <libnetq/fs/stub/Stat.h>
 #endif
 
 #endif /* _LIBNETQ_FS_STAT_H */

@@ -441,7 +441,7 @@ static int websocketUpgradeHandler(NQWebRequest* request, NQWebResponse* respons
 
   struct MHDWebContext* context = NQ_CONTAINER_OF(request, struct MHDWebContext, request.base);
   context->socket = &ws->base;
-  if (!NQWebServer_initSocket(server, request, &ws->base)) {
+  if (!NQWebServer_initRequest(server, request, &ws->base)) {
     NQWebSocket_release(&ws->base);
     return NQ_HTTP_NOT_FOUND;
   }
@@ -521,7 +521,7 @@ static struct MHDWebContext* contextCreate(NQWebServer* server, const struct MHD
     }
   }
 
-  if (!NQWebServer_initRequest(server, &thiz->request.base)) {
+  if (!NQWebServer_initRequest(server, &thiz->request.base, NULL)) {
     contextRelease(thiz);
     return NULL;
   }

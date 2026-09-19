@@ -238,7 +238,7 @@ bool NQHttpFormDataParse(const char* data, size_t size, NQHttpFormData* result)
   const char* end = curr + size;
 
   if (result != NULL) {
-    memset(result, 0, sizeof(*result));
+    NQMemset(result, 0, sizeof(*result));
   }
 
   while (curr < end) {
@@ -255,7 +255,7 @@ bool NQHttpFormDataParse(const char* data, size_t size, NQHttpFormData* result)
       size--;
     }
     if (count == 0) {
-      if (size != 9 || memcmp(data, "form-data", 9) != 0) {
+      if (size != 9 || NQMemcmp(data, "form-data", 9) != 0) {
         return false;
       }
       count++;
@@ -263,11 +263,11 @@ bool NQHttpFormDataParse(const char* data, size_t size, NQHttpFormData* result)
     }
     NQHttpHeaderValue kv;
     if (NQHttpHeaderValueParse(data, size, &kv)) {
-      if (kv.key.length == 4 && memcmp("name", kv.key.characters, kv.key.length) == 0) {
+      if (kv.key.length == 4 && NQMemcmp("name", kv.key.characters, kv.key.length) == 0) {
         if(result != NULL)
           result->name = kv.value;
       }
-      else if (kv.key.length == 8 && memcmp("filename", kv.key.characters, kv.key.length) == 0) {
+      else if (kv.key.length == 8 && NQMemcmp("filename", kv.key.characters, kv.key.length) == 0) {
         if(result != NULL)
           result->filename = kv.value;
       }
@@ -285,7 +285,7 @@ const char* NQHttpGetContentBoundary(const char* contentType)
     contentType++;
 
   const char multipartFormData[] = "multipart/form-data;";
-  if (memcmp(contentType, multipartFormData, sizeof(multipartFormData) - 1) != 0)
+  if (NQMemcmp(contentType, multipartFormData, sizeof(multipartFormData) - 1) != 0)
     return NULL;
   contentType += sizeof(multipartFormData) - 1;
 
@@ -293,7 +293,7 @@ const char* NQHttpGetContentBoundary(const char* contentType)
     contentType++;
 
   const char boundary[] = "boundary=";
-  if (memcmp(contentType, boundary, sizeof(boundary) - 1) != 0)
+  if (NQMemcmp(contentType, boundary, sizeof(boundary) - 1) != 0)
     return NULL;
   contentType += sizeof(boundary) - 1;
 

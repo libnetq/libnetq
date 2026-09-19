@@ -20,8 +20,8 @@ static inline bool initImpl(NQHMAC_SHA1* thiz, const uint8_t* key, size_t length
 {
   uint8_t rkey[64];
   if (length <= sizeof(rkey)) {
-    memcpy(rkey, key, length);
-    memset(rkey + length, 0, sizeof(rkey) - length);
+    NQMemcpy(rkey, key, length);
+    NQMemset(rkey + length, 0, sizeof(rkey) - length);
   }
   else {
     NQSHA1 sha1;
@@ -37,8 +37,8 @@ static inline bool initImpl(NQHMAC_SHA1* thiz, const uint8_t* key, size_t length
       return false;
     }
     NQSHA1_finalize(&sha1);
-    memcpy(rkey, digest, sizeof(digest));
-    memset(rkey + sizeof(digest), 0, sizeof(rkey) - sizeof(digest));
+    NQMemcpy(rkey, digest, sizeof(digest));
+    NQMemset(rkey + sizeof(digest), 0, sizeof(rkey) - sizeof(digest));
   }
 
   for(size_t i = 0; i < sizeof(rkey); i++)

@@ -34,10 +34,10 @@ typedef int (*NQLogHandler) (void* userdata, NQLogLevel level, const char* tag, 
 NQ_EXPORT void NQLogSetHandler(NQLogHandler handler, void* userdata);
 
 NQ_EXPORT int NQLog_snprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* format, ...) NQ_ATTRIBUTE_PRINTF(5, 6);
-NQ_EXPORT int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* format, va_list args);
+NQ_EXPORT int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* format, va_list args) NQ_ATTRIBUTE_PRINTF(5, 0);
 
 NQ_EXPORT int NQLog_print(NQLogLevel level, const char* tag, const char* format, ...) NQ_ATTRIBUTE_PRINTF(3, 4);
-NQ_EXPORT int NQLog_vprint(NQLogLevel level, const char* tag, const char* format, va_list args);
+NQ_EXPORT int NQLog_vprint(NQLogLevel level, const char* tag, const char* format, va_list args) NQ_ATTRIBUTE_PRINTF(3, 0);
 
 NQ_EXPORT void NQLog_report(NQLogLevel level, const char* tag, const char* file, int line, const char* function);
 NQ_EXPORT NQ_NORETURN void NQLog_assert(const char* condition, const char* tag, const char* format, ...) NQ_ATTRIBUTE_PRINTF(3, 4);
