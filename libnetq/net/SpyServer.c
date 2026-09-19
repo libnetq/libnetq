@@ -15,7 +15,7 @@
 #include <libnetq/Malloc.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Time.h>
-#include <libnetq/String.h>
+#include <libnetq/string/String.h>
 #include <libnetq/net/NetBufferQueue.h>
 #include <libnetq/Assert.h>
 
@@ -205,7 +205,7 @@ static void NQSpyConnectionList_unshift(NQSpyConnectionList* list, NQSpyConnecti
 static void NQSpyServer_init(NQSpyServer* server, const NQSpyServerOptions* options)
 {
   size_t i;
-  memset(server, 0, sizeof(*server));
+  NQMemset(server, 0, sizeof(*server));
 
   NQSpyModuleList_init(&server->modules);
 

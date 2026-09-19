@@ -12,6 +12,7 @@
 
 #include <libnetq/net/Netinet.h>
 #include <libnetq/net/EndPoint.h>
+#include <libnetq/net/Socket.h>
 
 #if defined(NQ_OS_KERNEL)
 typedef struct socket* NQSocketHandle;

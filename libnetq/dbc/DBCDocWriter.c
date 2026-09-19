@@ -131,7 +131,7 @@ static bool onParserSection(void* userdata, const NQDBCSection* section) {
     if (message == NULL)
       return false;
 
-    if (strcmp("Vector__XXX", section->message.transmitter) != 0) {
+    if (NQStrcmp("Vector__XXX", section->message.transmitter) != 0) {
       const char* transmitterName = section->message.transmitter;
       NQDBCNetNode* transmitter = NQDBCDocument_findOrCreateNetNode(thiz->document, transmitterName);
       if (transmitter == NULL) {
@@ -180,7 +180,7 @@ static bool onParserSection(void* userdata, const NQDBCSection* section) {
     if (signal == NULL)
       return false;
 
-    if (section->signal.count != 1 || strcmp("Vector__XXX", section->signal.receivers[0]) != 0) {
+    if (section->signal.count != 1 || NQStrcmp("Vector__XXX", section->signal.receivers[0]) != 0) {
       size_t i;
       for (i = 0; i < section->signal.count; i++) {
         const char* receiverName = section->signal.receivers[i];
@@ -278,7 +278,7 @@ static bool onParserSection(void* userdata, const NQDBCSection* section) {
     if (envVar == NULL)
       return false;
 
-    if (section->envVar.count != 1 || strcmp(section->envVar.accessNode[0], "Vector__XXX") != 0) {
+    if (section->envVar.count != 1 || NQStrcmp(section->envVar.accessNode[0], "Vector__XXX") != 0) {
       size_t i;
       for (i = 0; i < section->envVar.count; i++) {
         NQDBCNetNode* netNode = NQDBCDocument_findNetNode(thiz->document, section->envVar.accessNode[i]);

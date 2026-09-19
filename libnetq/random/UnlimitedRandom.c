@@ -30,8 +30,6 @@
 #include <libnetq/Time.h>
 #include <libnetq/MinMax.h>
 #include <libnetq/string/String.h>
-#else
-# error "This configuration doesn't have a strong source of randomness."
 #endif
 
 int NQGetUnlimitedRandom(void* data, size_t size)

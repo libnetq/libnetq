@@ -39,7 +39,7 @@ void NQStringList_finalize(NQStringList* thiz)
 
 bool NQStringList_append(NQStringList* thiz, const char* characters)
 {
-  return NQStringList_append2(thiz, characters, strlen(characters));
+  return NQStringList_append2(thiz, characters, NQStrlen(characters));
 }
 
 bool NQStringList_append2(NQStringList* thiz, const char* characters, size_t length)
@@ -58,7 +58,7 @@ bool NQStringList_append2(NQStringList* thiz, const char* characters, size_t len
   }
 
   entry->length = (uint32_t)length;
-  memcpy(entry->characters, characters, length);
+  NQMemcpy(entry->characters, characters, length);
   entry->characters[length] = '\0';
   NQListHead_addBack(&thiz->impl, &entry->list);
   thiz->size++;

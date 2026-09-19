@@ -46,7 +46,7 @@ bool NQStringData_set2(NQStringData* thiz, const char* characters, size_t length
   }
 
   if (thiz->length == length) {
-    memcpy((char*)thiz->characters, characters, length);
+    NQMemcpy((char*)thiz->characters, characters, length);
     return true;
   }
 
@@ -55,7 +55,7 @@ bool NQStringData_set2(NQStringData* thiz, const char* characters, size_t length
     return false;
   }
 
-  memcpy(newCharacters, characters, length);
+  NQMemcpy(newCharacters, characters, length);
   newCharacters[length] = '\0';
 
   NQStringData_finalize(thiz);

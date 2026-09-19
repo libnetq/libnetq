@@ -15,6 +15,7 @@
 #include <libnetq/fs/Path.h>
 #include <libnetq/Time.h>
 #include <libnetq/Assert.h>
+#include <libnetq/ErrorCode.h>
 
 #include <windows.h>
 
@@ -22,14 +23,16 @@ int NQGetStat(const char* path, NQStat* st)
 {
   NQ_ASSERT(st);
 
-  WCHAR winpath[MAX_PATH];
-  if (NQWinPathFrom(winpath, sizeof(winpath), path) >= sizeof(winpath))
-    return -ERROR_INVALID_PARAMETER;
+  NQWinPath winpath;
+  if (!NQWinPathInit(&winpath, path))
+    return -NQ_ENOMEM;
 
+  WINBOOL success;
   WIN32_FILE_ATTRIBUTE_DATA data;
-
-  if (GetFileAttributesExW(winpath, GetFileExInfoStandard, &data) == 0)
-      return -(int)GetLastError();
+  success = GetFileAttributesExW(winpath.characters, GetFileExInfoStandard, &data);
+  NQWinPathFinalize(&winpath);
+  if (!success)
+    return -NQGetLastError();
 
   st->mode = 0;
   if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)

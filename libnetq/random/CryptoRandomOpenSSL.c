@@ -23,7 +23,7 @@ int NQGetCryptoRandom(void* data, size_t size)
   int rc = RAND_bytes(data, (int)size);
   if (rc != 1) {
     NQ_LOGE("RAND_bytes returned error %lu", ERR_get_error());
-    return -NQ_ENOTSUPP;
+    return -NQ_EIO;
   }
   return 0;
 }

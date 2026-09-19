@@ -19,11 +19,39 @@
 #include <limits.h>
 #endif
 
-/* CHAR */
-#if defined(CHAR_BIT)
-#define NQ_CHAR_BIT CHAR_BIT
+#define NQ_UCHAR_MIN 0
+
+#ifdef UCHAR_MAX
+# define NQ_UCHAR_MAX UCHAR_MAX
 #else
-#define NQ_CHAR_BIT (8)
+# define NQ_UCHAR_MAX 255
+#endif
+
+#ifdef SCHAR_MIN
+# define NQ_SCHAR_MIN SCHAR_MIN
+#else
+# define NQ_SCHAR_MIN (-127-1)
+#endif
+
+#ifdef SCHAR_MAX
+# define NQ_SCHAR_MAX SCHAR_MAX
+#else
+# define NQ_SCHAR_MAX 127
+#endif
+
+/* CHAR */
+#ifdef CHAR_BIT
+# define NQ_CHAR_BIT CHAR_BIT
+#else
+# define NQ_CHAR_BIT 8
+#endif
+
+#ifdef __CHAR_UNSIGNED__
+# define NQ_CHAR_MIN NQ_UCHAR_MIN
+# define NQ_CHAR_MAX NQ_UCHAR_MAX
+#else
+# define NQ_CHAR_MIN NQ_SCHAR_MIN
+# define NQ_CHAR_MAX NQ_SCHAR_MAX
 #endif
 
 /* INT */
@@ -32,11 +60,11 @@
 #if defined(INT_BIT)
 #define NQ_INT_BIT INT_BIT
 #else
-#define NQ_INT_BIT (32)
+#define NQ_INT_BIT 32
 #endif
 
 /* UINT */
-#define NQ_UINT_MIN (0)
+#define NQ_UINT_MIN 0
 #define NQ_UINT_MAX UINT_MAX
 
 /* LONG */
@@ -44,7 +72,7 @@
 #define NQ_LONG_MAX LONG_MAX
 
 /* ULONG */
-#define NQ_ULONG_MIN (0)
+#define NQ_ULONG_MIN 0
 #define NQ_ULONG_MAX ULONG_MAX
 
 /* LLONG */
@@ -52,7 +80,7 @@
 #define NQ_LLONG_MAX LLONG_MAX
 
 /* ULLONG */
-#define NQ_ULLONG_MIN (0)
+#define NQ_ULLONG_MIN 0
 #define NQ_ULLONG_MAX ULLONG_MAX
 
 /* INT8 */
@@ -61,7 +89,7 @@
 #elif defined(SCHAR_MIN)
 #define NQ_INT8_MIN SCHAR_MIN
 #else
-#define NQ_INT8_MIN (-127-1)
+#define NQ_INT8_MIN NQ_SCHAR_MIN
 #endif
 
 #if defined(_I8_MAX)
@@ -69,18 +97,18 @@
 #elif defined(SCHAR_MAX)
 #define NQ_INT8_MAX SCHAR_MAX
 #else
-#define NQ_INT8_MAX (127)
+#define NQ_INT8_MAX NQ_SCHAR_MAX
 #endif
 
 /* UINT8 */
-#define NQ_UINT8_MIN (0)
+#define NQ_UINT8_MIN 0
 
 #if defined(_UI8_MAX)
 #define NQ_UINT8_MAX _UI8_MAX
 #elif defined(UCHAR_MAX)
 #define NQ_UINT8_MAX UCHAR_MAX
 #else
-#define NQ_UINT8_MAX (255)
+#define NQ_UINT8_MAX NQ_UCHAR_MAX
 #endif
 
 /* INT16 */
@@ -101,7 +129,7 @@
 #endif
 
 /* UINT16 */
-#define NQ_UINT16_MIN (0)
+#define NQ_UINT16_MIN 0
 
 #if defined(_UI16_MAX)
 #define NQ_UINT16_MAX _UI16_MAX
@@ -129,7 +157,7 @@
 #endif
 
 /* UINT32 */
-#define NQ_UINT32_MIN (0)
+#define NQ_UINT32_MIN 0
 
 #if defined(_UI32_MAX)
 #define NQ_UINT32_MAX _UI32_MAX
@@ -153,7 +181,7 @@
 #endif
 
 /* UINT64 */
-#define NQ_UINT64_MIN (0)
+#define NQ_UINT64_MIN 0
 
 #if defined(_UI64_MAX)
 # define NQ_UINT64_MAX _UI64_MAX

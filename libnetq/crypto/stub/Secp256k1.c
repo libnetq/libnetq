@@ -33,7 +33,7 @@ NQSecp256k1Pubkey* NQSecp256k1PubkeyCreate(const NQSecp256k1Ctx* ctx, const uint
 {
   NQ_UNUSED_PARAM(ctx);
   NQ_UNUSED_PARAM(seckey);
-  return false;
+  return NULL;
 }
 
 NQSecp256k1Pubkey* NQSecp256k1PubkeyParse(const NQSecp256k1Ctx* ctx, const uint8_t* data, size_t size)

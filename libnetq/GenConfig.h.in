@@ -7,9 +7,6 @@
 /* Use CryptoHash implementation from the Advapi32 library */
 #cmakedefine NQCONFIG_USE_ADVAPI32_CRYPTOHASH
 
-/* Use BCrypt implementation from the OpenSSL library */
-#cmakedefine NQCONFIG_USE_OPENSSL_BCRYPT
-
 /* Use CryptoHash implementation from the OpenSSL library */
 #cmakedefine NQCONFIG_USE_OPENSSL_CRYPTOHASH
 
@@ -30,12 +27,6 @@
 
 /* Use CRC32 implementation from the ZLib library */
 #cmakedefine NQCONFIG_USE_ZLIB_CRC32
-
-/* Use JSON implementation from the Jansson library */
-#cmakedefine NQCONFIG_USE_JANSSON_JSON
-
-/* Use JSON implementation from the cJSON library */
-#cmakedefine NQCONFIG_USE_CJSON_JSON
 
 /* Use Regex implementation from the PCRE2 library */
 #cmakedefine NQCONFIG_USE_PCRE2_REGEX
@@ -64,23 +55,20 @@
 /* Use JWT implementation from the OpenSSL library */
 #cmakedefine NQCONFIG_USE_OPENSSL_JWT
 
+/* Use JWT implementation from the libsodium library */
+#cmakedefine NQCONFIG_USE_SODIUM_JWT
+
 /* Use native cypto random implementation */
 #cmakedefine NQCONFIG_USE_PLATFORM_CRYPTORAND
 
 /* Use HttpRequestSync implementation from the libcurl library */
 #cmakedefine NQCONFIG_USE_CURL_HTTPREQUESTSYNC
 
-/* Use stub for BCrypt */
-#cmakedefine NQCONFIG_USE_STUB_BCRYPT
-
 /* Use stub for CryptoHash */
 #cmakedefine NQCONFIG_USE_STUB_CRYPTOHASH
 
 /* Use stub for CRC32 */
 #cmakedefine NQCONFIG_USE_STUB_CRC32
-
-/* Use stub for JSON */
-#cmakedefine NQCONFIG_USE_STUB_JSON
 
 /* Use stub for Regex */
 #cmakedefine NQCONFIG_USE_STUB_REGEX

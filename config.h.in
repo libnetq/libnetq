@@ -13,6 +13,33 @@
 /* Handler used for logging output */
 #cmakedefine NQ_USE_LOGHANDLER 1
 
+/* Fail the build if any CPU property is undetected instead of using defaults */
+#cmakedefine NQ_CPU_STRICT_MODE 1
+
+/* Enable JSON */
+#cmakedefine ENABLE_JSON
+
+/* Use JSON implementation from the Jansson library */
+#cmakedefine JSON_BACKEND_JANSSON
+
+/* Use JSON implementation from the cJSON library */
+#cmakedefine JSON_BACKEND_CJSON
+
+/* Use stub for JSON */
+#cmakedefine JSON_BACKEND_STUB
+
+/* Use CryptoAead implementation from the OpenSSL library */
+#cmakedefine CRYPTOAEAD_BACKEND_OPENSSL
+
+/* Use CryptoPw implementation from the OpenSSL library */
+#cmakedefine CRYPTOPW_BACKEND_OPENSSL
+
+/* Use stub for CryptoPw */
+#cmakedefine CRYPTOPW_BACKEND_STUB
+
+/* Use stub for CryptoAead */
+#cmakedefine CRYPTOAEAD_BACKEND_STUB
+
 /* Define to 1 if you have the <errno.h> header file. */
 #cmakedefine HAVE_ERRNO_H 1
 

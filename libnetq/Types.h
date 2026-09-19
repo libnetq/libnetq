@@ -11,16 +11,67 @@
 #define _LIBNETQ_TYPES_H
 
 #include <libnetq/OS.h>
-#include <libnetq/Compiler.h>
 #include <libnetq/ConstExpr.h>
 
 #ifdef NQ_OS_KERNEL
-#include <linux/types.h>
+# include <linux/types.h>
+# include <linux/stddef.h>
+#elif defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX)
+# include <stdbool.h>
+# include <stddef.h>
+# include <stdint.h>
+# include <stdlib.h>
 #else
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
+
+# if !defined(__SSIZE_T__) && defined(NQ_OS_WINDOWS)
+#  if __SIZEOF_POINTER__ == __SIZEOF_INT__
+#   define __SSIZE_T__ int
+#  endif
+#endif
+
+# ifndef __SSIZE_T__
+#  if __SIZEOF_POINTER__ == __SIZEOF_LONG__
+#   define __SSIZE_T__ long
+#  elif __SIZEOF_POINTER__ == __SIZEOF_LONG_LONG__
+#   define __SSIZE_T__ long long
+#  else
+#   error Unknown pointer size
+#  endif
+ #endif
+
+typedef _Bool bool;
+
+typedef signed char int8_t;
+typedef unsigned char uint8_t;
+
+typedef short int16_t;
+typedef unsigned short uint16_t;
+
+typedef int int32_t;
+typedef unsigned uint32_t;
+
+#if __SIZEOF_LONG__ == 8
+typedef long int64_t;
+typedef unsigned long uint64_t;
+#else
+typedef long long int64_t;
+typedef unsigned long long uint64_t;
+
+typedef __SSIZE_T__ ssize_t;
+typedef unsigned __SSIZE_T__ size_t;
+
+typedef ssize_t intptr_t;
+typedef size_t uintptr_t;
+
+#define NULL ((void*)0)
+
+enum {
+  false	= 0,
+  true	= 1
+};
+
+#endif
+
 #endif
 
 #define NQ_FALSE false

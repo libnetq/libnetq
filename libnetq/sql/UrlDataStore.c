@@ -14,8 +14,8 @@
 #include <libnetq/Log.h>
 #include <libnetq/MinMax.h>
 #include <libnetq/fs/Path.h>
+#include <libnetq/string/String.h>
 #include <libnetq/string/StringPrint.h>
-#include <libnetq/crypto/BCrypt.h>
 
 #define FILES_TABLE  "files"
 #define ID_KEY       "id"
@@ -104,7 +104,7 @@ static int readRequest(NQSQLiteStatement* statement, int32_t userId, const NQPat
     return -1;
   }
 
-  memcpy(buf, data, NQGetMin(len, size));
+  NQMemcpy(buf, data, NQGetMin(len, size));
   return (int)size;
 }
 

@@ -18,16 +18,6 @@
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Assert.h>
 
-static HANDLE NQFileOpenImpl(const char* path, DWORD dwDesiredAccess, DWORD dwShareMode,
-  LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
-  DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
-{
-  WCHAR winpath[MAX_PATH];
-  if (NQWinPathFrom(winpath, MAX_PATH, path) > 0)
-    return CreateFileW(winpath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-  return CreateFileA(path, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-}
-
 int NQFileOpen(const char* path, NQFileOpenMode mode, NQFileHandle* result)
 {
   NQ_ASSERT(path && result);
@@ -54,12 +44,19 @@ int NQFileOpen(const char* path, NQFileOpenMode mode, NQFileHandle* result)
     return -NQ_EINVAL;
   }
 
-  NQFileHandle handle = NQFileOpenImpl(path, desiredAccess, shareMode, 0, creationDisposition, FILE_ATTRIBUTE_NORMAL, 0);
-  if (handle == INVALID_HANDLE_VALUE) {
-    int ret = GetLastError();
-    NQ_LOGE("CreateFile returned %i", -ret);
-    return -ret;
-  }
+  NQWinPath winpath;
+  if (!NQWinPathInit(&winpath, path))
+    return -NQ_ENOMEM;
+
+  LPSECURITY_ATTRIBUTES securityAttributes = NULL;
+  DWORD flagsAndAttributes = FILE_ATTRIBUTE_NORMAL;
+  HANDLE templateFile = NULL;
+
+  NQFileHandle handle = CreateFileW(winpath.characters, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+  NQWinPathFinalize(&winpath);
+
+  if (handle == INVALID_HANDLE_VALUE)
+    return -NQGetLastError();
 
   *result = handle;
   return 0;

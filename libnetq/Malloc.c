@@ -90,7 +90,7 @@ void* NQRealloc(void* ptr, size_t size)
 
 #elif defined(NQ_OS_WINDOWS)
   HANDLE heap = GetProcessHeap();
-  if (NQ_UNLIKELY(heap))
+  if (NQ_UNLIKELY(!heap))
     return NULL;
 
   if (NQ_UNLIKELY(!ptr))

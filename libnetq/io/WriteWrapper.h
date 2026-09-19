@@ -83,6 +83,30 @@ static inline bool NQWriteWrapper_writeUint32BE(NQWriteWrapper* thiz, uint32_t v
   return NQWriteWrapper_writeAll(thiz, &value, sizeof(value));
 }
 
+static inline bool NQWriteWrapper_writeInt64LE(NQWriteWrapper* thiz, int64_t value)
+{
+  value = NQHostToLE64(value);
+  return NQWriteWrapper_writeAll(thiz, &value, sizeof(value));
+}
+
+static inline bool NQWriteWrapper_writeInt64BE(NQWriteWrapper* thiz, int64_t value)
+{
+  value = NQHostToBE64(value);
+  return NQWriteWrapper_writeAll(thiz, &value, sizeof(value));
+}
+
+static inline bool NQWriteWrapper_writeUint64LE(NQWriteWrapper* thiz, uint64_t value)
+{
+  value = NQHostToLE64(value);
+  return NQWriteWrapper_writeAll(thiz, &value, sizeof(value));
+}
+
+static inline bool NQWriteWrapper_writeUint64BE(NQWriteWrapper* thiz, uint64_t value)
+{
+  value = NQHostToBE64(value);
+  return NQWriteWrapper_writeAll(thiz, &value, sizeof(value));
+}
+
 #ifdef __cplusplus
 }
 #endif

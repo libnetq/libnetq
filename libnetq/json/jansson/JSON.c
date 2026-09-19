@@ -13,7 +13,7 @@
 #include "config.h"
 #include "libnetq/json/JSON.h"
 
-#ifdef NQCONFIG_USE_JANSSON_JSON
+#ifdef JSON_BACKEND_JANSSON
 
 #include <libnetq/Log.h>
 
