@@ -14,16 +14,33 @@
 
 #if defined(NQ_OS_KERNEL)
 #include <linux/string.h>
-#define NQ_HAVE_ARCH_STRLEN 1
-#define NQ_HAVE_ARCH_STRRCHR 1
 #elif defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX) || defined(NQCONFIG_USE_STRING_H)
 #include <string.h>
+#endif
+
+#if defined(NQ_OS_KERNEL) || defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX) || defined(NQCONFIG_USE_STRING_H)
 #define NQ_HAVE_ARCH_STRLEN 1
 #define NQ_HAVE_ARCH_STRRCHR 1
+#define NQ_HAVE_ARCH_MEMCPY 1
+#define NQ_HAVE_ARCH_MEMCMP 1
 #endif
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifndef NQ_HAVE_ARCH_MEMCPY
+NQ_EXPORT void* NQMemcpy(void* dest, const void* src, size_t count);
+#elif NQ_HAS_BUILTIN(__builtin_memcpy)
+#define NQMemcpy __builtin_memcpy
+#else
+#define NQMemcpy memcpy
+#endif
+
+#ifndef NQ_HAVE_ARCH_MEMCMP
+NQ_EXPORT int NQMemcmp(const void* m1, const void* m2, size_t count);
+#else
+#define NQMemcmp memcmp
 #endif
 
 #if defined(NQ_COMPILER_MSVC)

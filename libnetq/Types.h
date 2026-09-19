@@ -16,7 +16,7 @@
 
 #ifdef NQ_OS_KERNEL
 #include <linux/types.h>
-#else
+#elif defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX)
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

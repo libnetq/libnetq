@@ -36,6 +36,7 @@ typedef int NQErrorCode;
 # define NQ_ENAMETOOLONG     ENAMETOOLONG
 # define NQ_EOVERFLOW        EOVERFLOW
 # define NQ_EACCES           EACCES
+# define NQ_EISDIR           EISDIR
 
 #if defined(NQ_OS_KERNEL)
 # define NQ_ENOTSUPP         ENOTSUPP
@@ -63,6 +64,7 @@ typedef int NQErrorCode;
 # define NQ_ENAMETOOLONG     ERROR_FILENAME_EXCED_RANGE
 # define NQ_EOVERFLOW        ERROR_ARITHMETIC_OVERFLOW
 # define NQ_EACCES           ERROR_ACCESS_DENIED
+# define NQ_EISDIR           ERROR_ACCESS_DENIED
 
 #endif
 

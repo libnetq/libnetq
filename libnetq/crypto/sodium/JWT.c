@@ -10,12 +10,9 @@
 #include "config.h"
 #include "libnetq/crypto/JWT.h"
 
-#ifdef NQCONFIG_USE_OPENSSL_JWT
+#ifdef NQCONFIG_USE_LIBSODIUM_JWT
 
-#include <openssl/opensslv.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/err.h>
+#include <sodium.h>
 
 #include <libnetq/string/String.h>
 #include <libnetq/ErrorCode.h>
@@ -25,65 +22,46 @@
 #include <libnetq/Assert.h>
 #include <libnetq/Log.h>
 
-struct HMACStruct {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-  HMAC_CTX ctx;
-#else
-  HMAC_CTX* ctx;
-#endif
+enum JWTAlg {
+  ALG_NONE,
+  ALG_HS256,
+  ALG_HS512,
 };
-
-static inline bool HMAC_init(struct HMACStruct* hmac)
-{
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-  HMAC_CTX_init(&hmac->ctx);
-  return true;
-#else
-  hmac->ctx = HMAC_CTX_new();
-  return hmac->ctx != NULL;
-#endif
-}
-
-static inline void HMAC_finalize(struct HMACStruct* hmac)
-{
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-  HMAC_CTX_cleanup(&hmac->ctx);
-#else
-  HMAC_CTX_free(hmac->ctx);
-  hmac->ctx = NULL;
-#endif
-}
-
-static inline HMAC_CTX* HMAC_impl(struct HMACStruct* hmac)
-{
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-  return &hmac->ctx;
-#else
-  return hmac->ctx;
-#endif
-}
 
 struct NQJWT {
   NQJSON* header;
   NQJSON* claims;
   NQByteBuffer token;
-  const EVP_MD* md;
-  struct HMACStruct hmac;
-  uint8_t digest[1];
+  enum JWTAlg alg;
+  uint8_t digest[crypto_auth_hmacsha512_BYTES];
 };
 
-static bool alg2md(const char* alg, const EVP_MD** md)
+static inline size_t digestSize(enum JWTAlg alg)
 {
-  if (NQStrcmp(alg, NQ_JWT_ALG_NONE) == 0)
-    *md = NULL;
-  else if (NQStrcmp(alg, NQ_JWT_ALG_HS256) == 0)
-    *md = EVP_sha256();
-  else if (NQStrcmp(alg, NQ_JWT_ALG_HS384) == 0)
-    *md = EVP_sha384();
-  else if (NQStrcmp(alg, NQ_JWT_ALG_HS512) == 0)
-    *md = EVP_sha512();
+  switch (alg) {
+  case ALG_HS256:
+    return crypto_auth_hmacsha256_BYTES;
+  case ALG_HS512:
+    return crypto_auth_hmacsha512_BYTES;
+  default:
+    return 0;
+  }
+}
+
+static bool str2alg(const char* str, enum JWTAlg* alg)
+{
+  if (NQStrcmp(str, NQ_JWT_ALG_NONE) == 0)
+    *alg = ALG_NONE;
+  else if (NQStrcmp(str, NQ_JWT_ALG_HS256) == 0)
+    *alg = ALG_HS256;
+  else if (NQStrcmp(str, NQ_JWT_ALG_HS512) == 0)
+    *alg = ALG_HS512;
+  else if (NQStrcmp(str, NQ_JWT_ALG_HS384) == 0) {
+    NQ_LOGE("Crypt algorithm (%s) is not supported by libsodium", str);
+    return false;
+  }
   else {
-    NQ_LOGE("Unknown crypt algorithm (%s)", alg);
+    NQ_LOGE("Unknown crypt algorithm (%s)", str);
     return false;
   }
   return true;
@@ -110,38 +88,49 @@ static NQJSON* encodeJSON(const char* str, size_t len)
 
 static bool updateDigest(NQJWT* thiz, const uint8_t* data, size_t size, const void* seckey, size_t sklen)
 {
-  HMAC_CTX* ctx = HMAC_impl(&thiz->hmac);
-  if (HMAC_Init_ex(ctx, seckey, sklen, thiz->md, NULL) != 1) {
-    NQ_LOGE("%s (%lu)", ERR_error_string(ERR_get_error(), NULL), ERR_get_error());
+  switch (thiz->alg) {
+  case ALG_HS256: {
+    crypto_auth_hmacsha256_state state;
+    if (crypto_auth_hmacsha256_init(&state, (const unsigned char*)seckey, sklen) != 0 ||
+        crypto_auth_hmacsha256_update(&state, data, size) != 0 ||
+        crypto_auth_hmacsha256_final(&state, thiz->digest) != 0) {
+      sodium_memzero(&state, sizeof(state));
+      NQ_LOGE("HMAC-SHA256 failed");
+      return false;
+    }
+    sodium_memzero(&state, sizeof(state));
+    return true;
+  }
+  case ALG_HS512: {
+    crypto_auth_hmacsha512_state state;
+    if (crypto_auth_hmacsha512_init(&state, (const unsigned char*)seckey, sklen) != 0 ||
+        crypto_auth_hmacsha512_update(&state, data, size) != 0 ||
+        crypto_auth_hmacsha512_final(&state, thiz->digest) != 0) {
+      sodium_memzero(&state, sizeof(state));
+      NQ_LOGE("HMAC-SHA512 failed");
+      return false;
+    }
+    sodium_memzero(&state, sizeof(state));
+    return true;
+  }
+  default:
+    NQ_ASSERT(false);
     return false;
   }
-
-  if (HMAC_Update(ctx, data, size) != 1) {
-    NQ_LOGE("%s (%lu)", ERR_error_string(ERR_get_error(), NULL), ERR_get_error());
-    return false;
-  }
-
-  if (HMAC_Final(ctx, thiz->digest, NULL) != 1) {
-    NQ_LOGE("%s (%lu)", ERR_error_string(ERR_get_error(), NULL), ERR_get_error());
-    return false;
-  }
-
-  return true;
 }
 
-static NQJWT* createInternal(NQJSON* header, NQJSON* claims, const EVP_MD* md)
+static NQJWT* createInternal(NQJSON* header, NQJSON* claims, enum JWTAlg alg)
 {
-  size_t digestSize = md ? EVP_MD_size(md) : 0;
-  NQJWT* thiz = (NQJWT*)NQMalloc(sizeof(*thiz) + digestSize - sizeof(thiz->digest));
+  if (sodium_init() < 0) {
+    NQ_LOGE("Failed to initialize libsodium");
+    return NULL;
+  }
+
+  NQJWT* thiz = (NQJWT*)NQMalloc(sizeof(*thiz));
   if (thiz == NULL)
     return NULL;
 
-  if (md != NULL && !HMAC_init(&thiz->hmac)) {
-    NQFree(thiz);
-    return NULL;
-  }
-
-  thiz->md = md;
+  thiz->alg = alg;
   thiz->header = header;
   thiz->claims = claims;
   NQByteBuffer_init(&thiz->token);
@@ -151,8 +140,8 @@ static NQJWT* createInternal(NQJSON* header, NQJSON* claims, const EVP_MD* md)
 
 NQJWT* NQJWT_create(const char* alg)
 {
-  const EVP_MD* md;
-  if (!alg2md(alg, &md)) {
+  enum JWTAlg jwtAlg;
+  if (!str2alg(alg, &jwtAlg)) {
     return NULL;
   }
 
@@ -177,7 +166,7 @@ NQJWT* NQJWT_create(const char* alg)
     return NULL;
   }
 
-  NQJWT* thiz = createInternal(header, claims, md);
+  NQJWT* thiz = createInternal(header, claims, jwtAlg);
   if (thiz == NULL) {
     NQJSON_release(header);
     NQJSON_release(claims);
@@ -222,19 +211,19 @@ NQJWT* NQJWT_parse(const char* token, const void* seckey, size_t sklen)
   }
 
   const char* alg = NQJSON_asString(algJson);
-  const EVP_MD* md;
-  if (!alg2md(alg, &md)) {
+  enum JWTAlg jwtAlg;
+  if (!str2alg(alg, &jwtAlg)) {
     NQJSON_release(header);
     return NULL;
   }
 
-  if (md == NULL && info.signature.length != 0) {
+  if (jwtAlg == ALG_NONE && info.signature.length != 0) {
     NQ_LOGE("JWT algorithm 'none' but signature present");
     NQJSON_release(header);
     return NULL;
   }
 
-  if (md != NULL && info.signature.length == 0) {
+  if (jwtAlg != ALG_NONE && info.signature.length == 0) {
     NQ_LOGE("JWT algorithm '%s' requires a signature", alg);
     NQJSON_release(header);
     return NULL;
@@ -247,7 +236,7 @@ NQJWT* NQJWT_parse(const char* token, const void* seckey, size_t sklen)
     return NULL;
   }
 
-  NQJWT* thiz = createInternal(header, claims, md);
+  NQJWT* thiz = createInternal(header, claims, jwtAlg);
   if (thiz == NULL) {
     NQ_LOGE("No Memory");
     NQJSON_release(header);
@@ -263,34 +252,31 @@ NQJWT* NQJWT_parse(const char* token, const void* seckey, size_t sklen)
     return NULL;
   }
 
-  if (md != NULL) {
-    size_t digestSize = EVP_MD_size(md);
-    NQ_ASSERT(digestSize < tokenLength);
+  if (jwtAlg != ALG_NONE) {
+    size_t dsize = digestSize(jwtAlg);
+    NQ_ASSERT(dsize < tokenLength);
 
     uint8_t* digest = NQByteBuffer_data(&thiz->token);
-    int sz = NQBase64DecodeEx(info.signature.characters, info.signature.length, digest, digestSize, NQ_BASE64_URL | NQ_BASE64_NONPAD);
-    if (sz != digestSize) {
+    int sz = NQBase64DecodeEx(info.signature.characters, info.signature.length, digest, dsize, NQ_BASE64_URL | NQ_BASE64_NONPAD);
+    if (sz != (int)dsize) {
       NQJWT_release(thiz);
       return NULL;
     }
 
     size_t signingSize = NQJWTTokenInfo_signingSize(&info);
-    if (!updateDigest(thiz, (const uint8_t*)token, signingSize, seckey, sklen) || NQMemcmp(thiz->digest, digest, digestSize) != 0) {
+    if (!updateDigest(thiz, (const uint8_t*)token, signingSize, seckey, sklen) || sodium_memcmp(thiz->digest, digest, dsize) != 0) {
       NQJWT_release(thiz);
       return NULL;
     }
   }
 
-  NQMemcpy(NQByteBuffer_data(&thiz->token), token, tokenLength);
+  memcpy(NQByteBuffer_data(&thiz->token), token, tokenLength);
   return thiz;
 }
 
 void NQJWT_release(NQJWT* thiz)
 {
-  if (thiz->md != NULL) {
-    HMAC_finalize(&thiz->hmac);
-  }
-
+  sodium_memzero(thiz->digest, sizeof(thiz->digest));
   NQByteBuffer_finalize(&thiz->token);
   NQJSON_release(thiz->header);
   NQJSON_release(thiz->claims);
@@ -365,7 +351,7 @@ bool NQJWT_claimSetString(NQJWT* thiz, const char* name, const char* value)
 
 static bool addDataAsBase64ToToken(NQJWT* thiz, const uint8_t* data, size_t size)
 {
-  size_t b64Size = NQBase64EncodeLength(size);
+  size_t b64Size = ((size + 2) / 3) * 4;
 
   size_t oldb64Size = NQByteBuffer_size(&thiz->token);
   if (!NQByteBuffer_resize(&thiz->token, oldb64Size + b64Size)) {
@@ -423,7 +409,7 @@ static bool signToken(NQJWT* thiz, const void* seckey, size_t sklen)
   NQ_ASSERT(!NQByteBuffer_isEmpty(&thiz->token));
   if (!updateDigest(thiz, NQByteBuffer_data(&thiz->token), NQByteBuffer_size(&thiz->token) - 1, seckey, sklen))
     return false;
-  if (!addDataAsBase64ToToken(thiz, thiz->digest, EVP_MD_size(thiz->md)))
+  if (!addDataAsBase64ToToken(thiz, thiz->digest, digestSize(thiz->alg)))
     return false;
   return true;
 }
@@ -432,7 +418,7 @@ bool NQJWT_sign(NQJWT* thiz, const void* seckey, size_t sklen)
 {
   NQByteBuffer_resize(&thiz->token, 0);
 
-  if (thiz->md == NULL) {
+  if (thiz->alg == ALG_NONE) {
     if (sklen != 0) {
       NQ_LOGE("JWT algorithm 'none' does not accept a secret key");
       return false;
@@ -463,9 +449,9 @@ int NQJWT_token(NQJWT* thiz, char* buffer, size_t length)
 
   size_t result = NQByteBuffer_size(&thiz->token);
   if (length < (result + 1))
-    NQMemcpy(buffer, NQByteBuffer_data(&thiz->token), length);
+    memcpy(buffer, NQByteBuffer_data(&thiz->token), length);
   else {
-    NQMemcpy(buffer, NQByteBuffer_data(&thiz->token), result);
+    memcpy(buffer, NQByteBuffer_data(&thiz->token), result);
     buffer[result] = '\0';
   }
 

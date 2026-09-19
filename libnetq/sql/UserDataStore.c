@@ -11,7 +11,7 @@
 #include "libnetq/sql/UserDataStore.h"
 
 #include <libnetq/Log.h>
-#include <libnetq/crypto/BCrypt.h>
+#include <libnetq/crypto/CryptoPw.h>
 #include <libnetq/crypto/SecureErase.h>
 #include <libnetq/Assert.h>
 #include <libnetq/Limits.h>
@@ -24,7 +24,7 @@
 
 #define INIT_QUERY \
   "CREATE TABLE IF NOT EXISTS " USERS_TABLE " (" \
-    ID_KEY   " INTEGER PRIMARY KEY," \
+    ID_KEY   " INTEGER PRIMARY KEY AUTOINCREMENT," \
     USER_KEY " TEXT UNIQUE NOT NULL," \
     HASH_KEY " BLOB NOT NULL," \
     SALT_KEY " BLOB NOT NULL" \
@@ -62,12 +62,12 @@ static inline bool signupRequest(NQSQLiteStatement* statement, const char* usern
     return false;
   }
 
-  if (!NQSQLiteStatement_bindBlob(statement, 2, hash, NQ_BCRYPT_HASHSIZE)) {
+  if (!NQSQLiteStatement_bindBlob(statement, 2, hash, NQ_CRYPTOPW_HASHSIZE)) {
     NQ_LOGE("Failed to bind password hash parameter");
     return false;
   }
 
-  if (!NQSQLiteStatement_bindBlob(statement, 3, salt, NQ_BCRYPT_SALTSIZE)) {
+  if (!NQSQLiteStatement_bindBlob(statement, 3, salt, NQ_CRYPTOPW_SALTSIZE)) {
     NQ_LOGE("Failed to bind password salt parameter");
     return false;
   }
@@ -86,20 +86,28 @@ static inline bool signupRequest(NQSQLiteStatement* statement, const char* usern
   return true;
 }
 
+static bool cpyptoPassword(const char* password, void* salt, void* hash)
+{
+  if (!NQCryptoPwSalt(salt)) {
+    NQ_LOGE("Failed to generate password salt");
+    return false;
+  }
+
+  if (!NQCryptoPwHash(password, salt, hash)) {
+    NQ_LOGE("Failed to generate password hash");
+    return false;
+  }
+
+  return true;
+}
+
 bool NQUserDataStoreSignup(NQSQLiteDatabase* database, const char* username, const char* password)
 {
-  uint8_t salt[NQ_BCRYPT_SALTSIZE];
-  uint8_t hash[NQ_BCRYPT_HASHSIZE];
+  uint8_t salt[NQ_CRYPTOPW_SALTSIZE];
+  uint8_t hash[NQ_CRYPTOPW_HASHSIZE];
 
-  if (!NQBCryptGenerateSalt(salt)) {
-    NQ_LOGE("Failed to generate bcrypt salt");
+  if (!cpyptoPassword(password, salt, hash))
     return false;
-  }
-
-  if (!NQBCryptHashPassword(password, salt, hash)) {
-    NQ_LOGE("Failed to hash password for user '%s'", username);
-    return false;
-  }
 
   NQSQLiteStatement* statement = NQSQLiteDatabase_prepare(database, SIGNUP_QUERY);
   if (statement == NULL) {
@@ -118,8 +126,8 @@ bool NQUserDataStoreSignup(NQSQLiteDatabase* database, const char* username, con
 
 static bool loginRequest(NQSQLiteStatement* statement, const char* username, const char* password)
 {
-  static const uint8_t kDummySalt[NQ_BCRYPT_SALTSIZE] = { 0 };
-  static const uint8_t kDummyHash[NQ_BCRYPT_HASHSIZE] = { 0 };
+  static const uint8_t kDummySalt[NQ_CRYPTOPW_SALTSIZE] = { 0 };
+  static const uint8_t kDummyHash[NQ_CRYPTOPW_HASHSIZE] = { 0 };
 
   if (!NQSQLiteStatement_bindText(statement, 1, username)) {
     NQ_LOGE("Failed to bind username parameter");
@@ -145,7 +153,7 @@ static bool loginRequest(NQSQLiteStatement* statement, const char* username, con
     size_t saltSize = NQSQLiteStatement_columnSize(statement, 1);
     const uint8_t* rowSalt = (const uint8_t*)NQSQLiteStatement_columnBlob(statement, 1);
 
-    if (rowHash != NULL && hashSize == NQ_BCRYPT_HASHSIZE && rowSalt != NULL && saltSize == NQ_BCRYPT_SALTSIZE) {
+    if (rowHash != NULL && hashSize == NQ_CRYPTOPW_HASHSIZE && rowSalt != NULL && saltSize == NQ_CRYPTOPW_SALTSIZE) {
       hash = rowHash;
       salt = rowSalt;
     }
@@ -155,7 +163,7 @@ static bool loginRequest(NQSQLiteStatement* statement, const char* username, con
     }
   }
 
-  bool verified = NQBCryptVerifyPassword(password, salt, hash);
+  bool verified = NQCryptoPwVerify(password, salt, hash);
 
   if (!userFound) {
     NQ_LOGE("Login failed: user '%s' does not exist", username);
@@ -185,12 +193,12 @@ bool NQUserDataStoreLogin(NQSQLiteDatabase* database, const char* username, cons
 
 static bool updateRequest(NQSQLiteDatabase* database, NQSQLiteStatement* statement, const char* username, const void* salt, const void* hash)
 {
-  if (!NQSQLiteStatement_bindBlob(statement, 1, hash, NQ_BCRYPT_HASHSIZE)) {
+  if (!NQSQLiteStatement_bindBlob(statement, 1, hash, NQ_CRYPTOPW_HASHSIZE)) {
     NQ_LOGE("Failed to bind password hash parameter");
     return false;
   }
 
-  if (!NQSQLiteStatement_bindBlob(statement, 2, salt, NQ_BCRYPT_SALTSIZE)) {
+  if (!NQSQLiteStatement_bindBlob(statement, 2, salt, NQ_CRYPTOPW_SALTSIZE)) {
     NQ_LOGE("Failed to bind password salt parameter");
     return false;
   }
@@ -221,18 +229,11 @@ static bool updateRequest(NQSQLiteDatabase* database, NQSQLiteStatement* stateme
 
 bool NQUserDataStoreUpdate(NQSQLiteDatabase* database, const char* username, const char* password)
 {
-  uint8_t salt[NQ_BCRYPT_SALTSIZE];
-  uint8_t hash[NQ_BCRYPT_HASHSIZE];
+  uint8_t salt[NQ_CRYPTOPW_SALTSIZE];
+  uint8_t hash[NQ_CRYPTOPW_HASHSIZE];
 
-  if (!NQBCryptGenerateSalt(salt)) {
-    NQ_LOGE("Failed to generate bcrypt salt");
+  if (!cpyptoPassword(password, salt, hash))
     return false;
-  }
-
-  if (!NQBCryptHashPassword(password, salt, hash)) {
-    NQ_LOGE("Failed to hash password for user '%s'", username);
-    return false;
-  }
 
   NQSQLiteStatement* statement = NQSQLiteDatabase_prepare(database, UPDATE_QUERY);
   if (statement == NULL) {

@@ -19,6 +19,8 @@
 #include <stdio.h>
 #endif
 
+#define NQVsprintf vsprintf
+#define NQVsnprintf vsnprintf
 #define NQSprintf sprintf
 #define NQSnprintf snprintf
 

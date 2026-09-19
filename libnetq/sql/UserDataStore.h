@@ -11,6 +11,7 @@
 #define _LIBNETQ_SQL_USERDATASTORE_H
 
 #include <libnetq/sql/SQLite.h>
+#include <libnetq/Array.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +24,8 @@ NQ_EXPORT bool NQUserDataStoreLogin(NQSQLiteDatabase* database, const char* user
 NQ_EXPORT bool NQUserDataStoreUpdate(NQSQLiteDatabase* database, const char* username, const char* password);
 NQ_EXPORT bool NQUserDataStoreDelete(NQSQLiteDatabase* database, const char* username);
 NQ_EXPORT bool NQUserDataStoreUserId(NQSQLiteDatabase* database, const char* username, uint32_t* id);
+
+// NQ_EXPORT NQStringRef* NQMakeSignupToken(const uint8_t key[32], const char* username, const char* password);
 
 #ifdef __cplusplus
 }

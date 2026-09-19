@@ -15,7 +15,6 @@
 #include <libnetq/MinMax.h>
 #include <libnetq/fs/Path.h>
 #include <libnetq/string/StringPrint.h>
-#include <libnetq/crypto/BCrypt.h>
 
 #define FILES_TABLE  "files"
 #define ID_KEY       "id"

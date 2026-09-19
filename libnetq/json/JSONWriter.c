@@ -13,6 +13,8 @@
 #include "config.h"
 #include "libnetq/json/JSONWriter.h"
 
+#ifdef ENABLE_JSON
+
 #include <libnetq/CType.h>
 #include <libnetq/String.h>
 #include <libnetq/string/Sprintf.h>
@@ -802,3 +804,5 @@ bool NQJSONWriter_writeKeyBool(NQJSONWriter* thiz, const char* key, bool val)
   }
   return false;
 }
+
+#endif
