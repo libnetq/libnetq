@@ -10,7 +10,7 @@
 #ifndef _LIBNETQ_POLLVECTOR_H
 #define _LIBNETQ_POLLVECTOR_H
 
-#include <libnetq/SocketHandle.h>
+#include <libnetq/net/SocketHandle.h>
 #include <libnetq/PlatformPoll.h>
 
 #ifdef __cplusplus

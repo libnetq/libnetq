@@ -14,7 +14,7 @@
 #include "libnetq/HexViewer.h"
 
 #include <libnetq/string/StringUtil.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Assert.h>
 

@@ -10,8 +10,8 @@
 #include "config.h"
 #include "libnetq/web/WebResponse.h"
 
-#include <libnetq/String.h>
-#include <libnetq/HttpHeader.h>
+#include <libnetq/string/String.h>
+#include <libnetq/http/HttpHeader.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/web/WebRequest.h>
 #include <libnetq/web/WebServer.h>
@@ -58,7 +58,8 @@ void NQWebResponse_finalize(NQWebResponse* thiz)
     NQWebWriter* next = iter->next;
     if (iter->operations->release)
       iter->operations->release(iter);
-    NQFree(iter);
+    if (iter != &thiz->lastWriter)
+      NQFree(iter);
     iter = next;
   }
 

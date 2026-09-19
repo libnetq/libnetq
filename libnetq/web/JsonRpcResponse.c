@@ -23,17 +23,23 @@ static bool writeResponse(void* userdata, const char* characters, size_t length)
 
 static bool NQJSONWriter_writeJsonRpcErrorParams(NQJSONWriter* writer, int code, const char* message)
 {
-  NQJSONWriter_writeObjectBegin(writer);
+  if (!NQJSONWriter_writeObjectBegin(writer))
+    return false;
 
-  if (code != 0)
-    NQJSONWriter_writeKeyUint32(writer, NQ_JSONRPC_NAME_CODE, code);
+  if (code != 0) {
+    if (!NQJSONWriter_writeKeyUint32(writer, NQ_JSONRPC_NAME_CODE, code))
+      return false;
+  }
 
-  if (message != NULL)
-    NQJSONWriter_writeKeyString(writer, NQ_JSONRPC_NAME_MESSAGE, message);
+  if (message != NULL) {
+    if (!NQJSONWriter_writeKeyString(writer, NQ_JSONRPC_NAME_MESSAGE, message))
+      return false;
+  }
 
-  NQJSONWriter_writeObjectEnd(writer);
+  if (!NQJSONWriter_writeObjectEnd(writer))
+    return false;
 
-  return 0;
+  return true;
 }
 
 bool NQWebResponse_writeJsonRpcErrorParams(NQWebResponse* response, int code, const char* message)

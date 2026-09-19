@@ -13,8 +13,8 @@
 #include "config.h"
 #include "libnetq/Arguments.h"
 
-#include <libnetq/String.h>
-#include <libnetq/Strtox.h>
+#include <libnetq/string/String.h>
+#include <libnetq/string/Strtox.h>
 #include <libnetq/PrimitiveType.h>
 #include <libnetq/Limits.h>
 #include <libnetq/Malloc.h>

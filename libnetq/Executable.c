@@ -23,7 +23,7 @@
 
 #ifdef NQ_OS_WINDOWS
 #include <windows.h>
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #endif
 
 int NQGetCommandLine(char* buffer, size_t n)

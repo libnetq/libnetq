@@ -20,6 +20,7 @@ NQ_EXPORT bool NQUserDataStoreInit(NQSQLiteDatabase* database);
 NQ_EXPORT void NQUserDataStoreExit(NQSQLiteDatabase* database);
 NQ_EXPORT bool NQUserDataStoreSignup(NQSQLiteDatabase* database, const char* username, const char* password);
 NQ_EXPORT bool NQUserDataStoreLogin(NQSQLiteDatabase* database, const char* username, const char* password);
+NQ_EXPORT bool NQUserDataStoreUpdate(NQSQLiteDatabase* database, const char* username, const char* password);
 NQ_EXPORT bool NQUserDataStoreDelete(NQSQLiteDatabase* database, const char* username);
 NQ_EXPORT bool NQUserDataStoreUserId(NQSQLiteDatabase* database, const char* username, uint32_t* id);
 

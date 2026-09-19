@@ -11,7 +11,7 @@
 #define _LIBNETQ_IO_FILEWRITER_H
 
 #include <libnetq/io/IOWriter.h>
-#include <libnetq/FileHandle.h>
+#include <libnetq/fs/FileHandle.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -88,7 +88,7 @@ NQ_EXPORT NQTickMs NQGetCPUTickMs(void);
 
 NQ_EXPORT void NQGetLocaltime(const time_t* t, struct tm* tm);
 NQ_EXPORT void nq_gmtimems(NQTimeMs time, struct tm* ptm, int* pms);
-NQ_EXPORT void nq_gmtime(const time_t* t, struct tm* tm);
+NQ_EXPORT void NQGmtime(const time_t* t, struct tm* tm);
 NQ_EXPORT time_t nq_timegm(const struct tm* tm);
 
 enum NQTimeFormat {

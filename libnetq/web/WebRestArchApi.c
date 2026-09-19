@@ -10,11 +10,11 @@
 #include "config.h"
 #include "libnetq/web/WebRestArchApi.h"
 
-#include <libnetq/HttpHeader.h>
-#include <libnetq/String.h>
+#include <libnetq/http/HttpHeader.h>
+#include <libnetq/string/String.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/json/JSONWriter.h>
-#include <libnetq/MediaType.h>
+#include <libnetq/http/MediaType.h>
 #include <libnetq/CPU.h>
 #include <libnetq/Event.h>
 #include <libnetq/web/WebRequest.h>

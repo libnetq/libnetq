@@ -13,12 +13,12 @@
 #include "config.h"
 #include "libnetq/string/StringRef.h"
 
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/Compiler.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Limits.h>
 #include <libnetq/Assert.h>
-#include <libnetq/FileHandle.h>
+#include <libnetq/fs/FileHandle.h>
 #include <libnetq/string/String.h>
 #include <libnetq/Log.h>
 

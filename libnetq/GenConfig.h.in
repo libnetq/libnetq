@@ -67,6 +67,9 @@
 /* Use native cypto random implementation */
 #cmakedefine NQCONFIG_USE_PLATFORM_CRYPTORAND
 
+/* Use HttpRequestSync implementation from the libcurl library */
+#cmakedefine NQCONFIG_USE_CURL_HTTPREQUESTSYNC
+
 /* Use stub for BCrypt */
 #cmakedefine NQCONFIG_USE_STUB_BCRYPT
 
@@ -96,6 +99,9 @@
 
 /* Use stub for JWT */
 #cmakedefine NQCONFIG_USE_STUB_JWT
+
+/* Use stub for HttpRequestSync */
+#cmakedefine NQCONFIG_USE_STUB_HTTPREQUESTSYNC
 
 /* Use standard C <dirent.h> definitions and errno variable */
 #cmakedefine NQCONFIG_USE_DIRENT_H

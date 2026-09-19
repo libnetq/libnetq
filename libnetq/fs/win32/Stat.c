@@ -12,7 +12,7 @@
 
 #ifdef NQ_OS_WINDOWS
 
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/Time.h>
 #include <libnetq/Assert.h>
 

@@ -14,7 +14,7 @@
 
 #include <libnetq/string/StringUtil.h>
 #include <libnetq/Assert.h>
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/Limits.h>
 #include <libnetq/CType.h>
 #include <libnetq/Malloc.h>

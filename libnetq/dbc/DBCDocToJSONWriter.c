@@ -10,8 +10,8 @@
 #include "config.h"
 #include "libnetq/dbc/DBCDocToJSONWriter.h"
 
-#include <libnetq/String.h>
-#include <libnetq/Path.h>
+#include <libnetq/string/String.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/dbc/DBCID.h>
 #include <libnetq/dbc/DBCJ1939.h>
 

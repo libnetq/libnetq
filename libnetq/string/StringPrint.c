@@ -11,7 +11,7 @@
 #include "libnetq/string/StringPrint.h"
 
 #include <libnetq/string/StringUtil.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Limits.h>
 #include <libnetq/MinMax.h>
@@ -66,13 +66,17 @@ int NQStringPrint_vprintf(NQStringPrint* thiz, const char* format, va_list list)
   NQ_ASSERT(thiz->length < thiz->capacity);
 
   va_list listCopy;
+
   va_copy(listCopy, list);
-
   int n = vsnprintf(thiz->characters + thiz->length, thiz->capacity - thiz->length, format, listCopy);
-
   va_end(listCopy);
 
-  int newSize = thiz->length + n + 1;
+  if (n < 0)
+    return n;
+
+  size_t newSize = thiz->length + (size_t)n + 1;
+  if (thiz->length > newSize)
+    return -NQ_EOVERFLOW;
 
   if (newSize <= thiz->capacity) {
     thiz->length += n;

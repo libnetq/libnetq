@@ -13,16 +13,15 @@
 
 #ifdef WITH_CIVETWEB
 
-#include <civetweb.h>
+#include <libnetq/web/civetweb/CivetWebAdapter.h>
 
 #include <libnetq/UrlQuery.h>
 #include <libnetq/KeyVal.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Log.h>
-#include <libnetq/JSON.h>
-#include <libnetq/HttpHeader.h>
-#include <libnetq/HttpStatus.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/http/HttpHeader.h>
+#include <libnetq/http/HttpStatus.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/Assert.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Mutex.h>
@@ -55,6 +54,46 @@ struct WebContextCivetWeb {
   NQWebSocket* socket;
 };
 
+static int flagsToOpcode(unsigned flags)
+{
+  switch (flags) {
+  case WEB_WSOPCODE_CONTINUATION:
+    return MG_WEBSOCKET_OPCODE_CONTINUATION;
+  case WEB_WSOPCODE_TEXT:
+    return MG_WEBSOCKET_OPCODE_TEXT;
+  case WEB_WSOPCODE_BINARY:
+    return MG_WEBSOCKET_OPCODE_BINARY;
+  case WEB_WSOPCODE_CONNECTION_CLOSE:
+    return MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE;
+  case WEB_WSOPCODE_PING:
+    return MG_WEBSOCKET_OPCODE_PING;
+  case WEB_WSOPCODE_PONG:
+    return MG_WEBSOCKET_OPCODE_PONG;
+  default:
+    return (int)flags;
+  }
+}
+
+static unsigned opcodeToFlags(int opcode)
+{
+  switch (opcode) {
+  case MG_WEBSOCKET_OPCODE_CONTINUATION:
+    return WEB_WSOPCODE_CONTINUATION;
+  case MG_WEBSOCKET_OPCODE_TEXT:
+    return WEB_WSOPCODE_TEXT;
+  case MG_WEBSOCKET_OPCODE_BINARY:
+    return WEB_WSOPCODE_BINARY;
+  case MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE:
+    return WEB_WSOPCODE_CONNECTION_CLOSE;
+  case MG_WEBSOCKET_OPCODE_PING:
+    return WEB_WSOPCODE_PING;
+  case MG_WEBSOCKET_OPCODE_PONG:
+    return WEB_WSOPCODE_PONG;
+  default:
+    return (unsigned)opcode;
+  }
+}
+
 static const char* requestGetQuery(const NQWebRequest* req, const char* name)
 {
   struct CivetWeRequest* request = NQ_CONTAINER_OF(req, struct CivetWeRequest, base);
@@ -73,8 +112,7 @@ static const char* requestGetHeader(const NQWebRequest* req, const char* header)
   return mg_get_header(request->conn, header);
 }
 
-static const NQWebRequestClass kCivetWebWebRequestClass =
-{
+static const NQWebRequestClass kCivetWebWebRequestClass = {
   .getQuery = requestGetQuery,
   .getCookie = requestGetCookie,
   .getHeader = requestGetHeader,
@@ -126,8 +164,7 @@ static int responseFlush(NQWebResponse* res)
   return 0;
 }
 
-static const struct NQWebResponseOperations kResponseOperations =
-{
+static const struct NQWebResponseOperations kResponseOperations = {
   .setHeader = responseSetHeader,
   .write = responseWrite,
   .flush = responseFlush,
@@ -145,6 +182,8 @@ static void responseRelease(struct CivetWeResponse* response)
 {
   NQKeyVal_destroy(response->headers);
   NQStringPrint_finalize(&response->buffer);
+
+  NQWebResponse_finalize(&response->base);
 }
 
 static bool contextInit(struct WebContextCivetWeb* thiz, NQWebServer* server, struct mg_connection* conn)
@@ -170,33 +209,7 @@ static void websocketUpgrade(NQWebSocket* sock, const struct mg_connection* conn
 static int websocketSend(NQWebSocket* sock, const uint8_t* data, size_t size, unsigned flags)
 {
   struct CivetWebSocket* thiz = (struct CivetWebSocket*)sock;
-
-  int opcode;
-  switch (flags & 0x0f) {
-  case WEB_WSOPCODE_CONTINUATION:
-    opcode = MG_WEBSOCKET_OPCODE_CONTINUATION;
-    break;
-  case WEB_WSOPCODE_TEXT:
-    opcode = MG_WEBSOCKET_OPCODE_TEXT;
-    break;
-  case WEB_WSOPCODE_BINARY:
-    opcode = MG_WEBSOCKET_OPCODE_BINARY;
-    break;
-  case WEB_WSOPCODE_CONNECTION_CLOSE:
-    opcode = MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE;
-    break;
-  case WEB_WSOPCODE_PING:
-    opcode = MG_WEBSOCKET_OPCODE_PING;
-    break;
-  case WEB_WSOPCODE_PONG:
-    opcode = MG_WEBSOCKET_OPCODE_PONG;
-    break;
-  default:
-    opcode = (int)flags;
-    break;
-  }
-
-  return mg_websocket_write(thiz->conn, opcode, (const char*)data, size);
+  return mg_websocket_write(thiz->conn, flagsToOpcode(flags & 0x0f), (const char*)data, size);
 }
 
 static void websocketClose(NQWebSocket* sock, uint16_t statusCode)
@@ -249,20 +262,18 @@ static int websocketConnect(const struct mg_connection* conn, void* userdata)
     return 1;
   }
 
-  {
-    struct CivetWebSocket* ws = websocketCreate(server);
-    if (ws == NULL)
-      return 1;
+  struct CivetWebSocket* ws = websocketCreate(server);
+  if (ws == NULL)
+    return 1;
 
-    context->socket = &ws->base;
-    if (!NQWebServer_initSocket(server, &context->request.base, &ws->base)) {
-      NQWebSocket_release(&ws->base);
-      return 1;
-    }
+  context->socket = &ws->base;
+  if (!NQWebServer_initSocket(server, &context->request.base, &ws->base)) {
+    NQWebSocket_release(&ws->base);
+    return 1;
   }
 
   websocketUpgrade(context->socket, conn);
-  mg_set_user_connection_data(conn, context);
+  mg_set_user_connection_data((struct mg_connection*)conn, context);
   return 0;
 }
 
@@ -281,36 +292,9 @@ static int websocketRecive(struct mg_connection* conn, int opcode, char* data, s
 {
   NQWebServer* server = (NQWebServer*)userdata;
   struct WebContextCivetWeb* ctx = (struct WebContextCivetWeb*)mg_get_user_connection_data(conn);
-
   NQ_ASSERT(ctx->request.conn == conn);
   NQ_ASSERT(ctx->request.base.server == server);
-
-  unsigned flags;
-  switch (opcode & 0x0f) {
-  case MG_WEBSOCKET_OPCODE_CONTINUATION:
-    flags = WEB_WSOPCODE_CONTINUATION;
-    break;
-  case MG_WEBSOCKET_OPCODE_TEXT:
-    flags = WEB_WSOPCODE_TEXT;
-    break;
-  case MG_WEBSOCKET_OPCODE_BINARY:
-    flags = WEB_WSOPCODE_BINARY;
-    break;
-  case MG_WEBSOCKET_OPCODE_CONNECTION_CLOSE:
-    flags = WEB_WSOPCODE_CONNECTION_CLOSE;
-    break;
-  case MG_WEBSOCKET_OPCODE_PING:
-    flags = WEB_WSOPCODE_PING;
-    break;
-  case MG_WEBSOCKET_OPCODE_PONG:
-    flags = WEB_WSOPCODE_PONG;
-    break;
-  default:
-    flags = (unsigned)opcode;
-    break;
-  }
-
-  NQWebSocket_doReceive(ctx->socket, (uint8_t*)data, datasize, flags);
+  NQWebSocket_doReceive(ctx->socket, (uint8_t*)data, datasize, opcodeToFlags(opcode & 0x0f));
   return 1;
 }
 
@@ -387,7 +371,6 @@ static int requestHandler(struct mg_connection* conn, void* userdata)
   while (iter != NULL) {
     const char* key = NQKeyValIter_key(iter);
     const char* val = NQKeyValIter_val(iter);
-
     mg_response_header_add(conn, key, val, -1);
     iter = NQKeyValIter_next(iter);
   }
@@ -413,7 +396,7 @@ static int logAccess(const struct mg_connection* conn, const char* message)
   return 1;
 }
 
-static NQMutex g_mutex = NQ_MUTEX_INIT(g_mutex);
+static NQ_MUTEX_DEFINE(g_mutex);
 static unsigned g_initCounter = 0;
 
 static bool serverInit(NQWebServer* thiz)
@@ -438,7 +421,7 @@ static int serverStart(NQWebServer* thiz)
 {
   uint16_t port = NQUrlHost_port(thiz->host);
   char portBuf[6];
-  snprintf(portBuf, sizeof(portBuf), "%i", port);
+  NQSnprintf(portBuf, sizeof(portBuf), "%i", port);
 
   const char* options[] = {
     "listening_ports",    portBuf,

@@ -11,7 +11,7 @@
 #define _LIBNETQ_TARBALL_H
 
 #include <libnetq/Basic.h>
-#include <libnetq/MediaType.h>
+#include <libnetq/http/MediaType.h>
 
 #ifdef __cplusplus
 extern "C" {

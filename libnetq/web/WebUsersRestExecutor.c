@@ -12,7 +12,8 @@
 
 #include <libnetq/Malloc.h>
 #include <libnetq/Time.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
+#include <libnetq/string/Strtox.h>
 #include <libnetq/string/StringPrint.h>
 #include <libnetq/json/JSON.h>
 #include <libnetq/web/JsonRpcResponse.h>
@@ -20,19 +21,27 @@
 #include <libnetq/crypto/JWT.h>
 #include <libnetq/web/WebRequest.h>
 #include <libnetq/web/WebResponse.h>
-#include <libnetq/HttpHeader.h>
-#include <libnetq/MediaType.h>
+#include <libnetq/http/HttpHeader.h>
+#include <libnetq/http/MediaType.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Log.h>
 
-struct NQWebUserApiRequestModule {
-  struct NQWebServerModuleOperations* module;
-  NQSQLiteDatabase* database;
+#define BEARER_PREFIX "Bearer "
+
+#define USE_USER_NAME     (1 << 0)
+#define USE_USER_EMAIL    (1 << 1)
+#define USE_USER_PASSWORD (1 << 2)
+
+struct UserRequest {
+  NQWebUsersRestListeners* listeners;
+  NQStringPrint recvBuffer;
 };
 
-struct UserApiRequest {
-  NQSQLiteDatabase* database;
-  NQStringPrint recvBuffer;
+struct UserCredential {
+  NQJSON* json;
+  const char* name;
+  const char* email;
+  const char* password;
 };
 
 static bool jsonWriterHandler(void* userdata, const char* characters, size_t size)
@@ -42,14 +51,7 @@ static bool jsonWriterHandler(void* userdata, const char* characters, size_t siz
   return n < 0 ? false : true;
 }
 
-struct UserSignup {
-  NQJSON* json;
-  const char* name;
-  const char* email;
-  const char* password;
-};
-
-static void UserSignup_init(struct UserSignup* thiz)
+static void UserCredential_init(struct UserCredential* thiz)
 {
   thiz->json = NULL;
   thiz->name = NULL;
@@ -57,40 +59,50 @@ static void UserSignup_init(struct UserSignup* thiz)
   thiz->password = NULL;
 }
 
-static void UserSignup_finalize(struct UserSignup* thiz)
+static void UserCredential_finalize(struct UserCredential* thiz)
 {
   if (thiz->json != NULL) {
     NQJSON_release(thiz->json);
   }
 }
 
-static bool UserSignup_parse(struct UserSignup* thiz, const char* characters, size_t length, bool nameRequired)
+static bool UserCredential_parse(struct UserCredential* thiz, const char* characters, size_t length, unsigned flags)
 {
-  UserSignup_finalize(thiz);
-  UserSignup_init(thiz);
-
-  thiz->json = NQJSON_parse2(characters, length);
-  if (thiz->json == NULL) {
+  NQJSON* json = NQJSON_parse2(characters, length);
+  if (json == NULL) {
     NQ_LOGE("Invalid JSON");
     return false;
   }
 
-  if (!nameRequired)
-    thiz->name = NULL;
-  else if (!NQJSON_objectGetString(thiz->json, "name", &thiz->name)) {
+  const char* name = NULL;
+  if ((USE_USER_NAME & flags) && !NQJSON_objectGetString(json, "name", &name)) {
     NQ_LOGE("Missing required field: name");
+    NQJSON_release(json);
     return false;
   }
 
-  if (!NQJSON_objectGetString(thiz->json, "email", &thiz->email)) {
+  const char* email = NULL;
+  if ((USE_USER_EMAIL & flags) && !NQJSON_objectGetString(json, "email", &email)) {
     NQ_LOGE("Missing required field: email");
+    NQJSON_release(json);
     return false;
   }
 
-  if (!NQJSON_objectGetString(thiz->json, "password", &thiz->password)) {
+  const char* password = NULL;
+  if ((USE_USER_PASSWORD & flags) && !NQJSON_objectGetString(json, "password", &password)) {
     NQ_LOGE("Missing required field: password");
+    NQJSON_release(json);
     return false;
   }
+
+  if (thiz->json != NULL) {
+    NQJSON_release(thiz->json);
+  }
+
+  thiz->json = json;
+  thiz->name = name;
+  thiz->email = email;
+  thiz->password = password;
 
   return true;
 }
@@ -101,7 +113,7 @@ struct JWTClaims {
   uint32_t sub;
 };
 
-static bool buildJWT(struct JWTClaims* claims, const void* seckey, size_t sklen, char* buf, size_t len)
+static bool buildJWT(const struct JWTClaims* claims, const void* seckey, size_t sklen, char* buf, size_t len)
 {
   int n;
   NQJWT* jwt = NQJWT_create(NQ_JWT_ALG_HS256);
@@ -111,34 +123,105 @@ static bool buildJWT(struct JWTClaims* claims, const void* seckey, size_t sklen,
   }
 
   if (!NQJWT_claimSetInt64(jwt, NQ_JWT_CLM_ISS, claims->iss)) {
-    NQ_LOGE("Failed to set JWT 'iss' claim");
+    NQ_LOGE("Failed to set JWT '" NQ_JWT_CLM_ISS "' claim");
+    NQJWT_release(jwt);
     return false;
   }
 
   if (!NQJWT_claimSetInt64(jwt, NQ_JWT_CLM_EXP, claims->exp)) {
-    NQ_LOGE("Failed to set JWT 'exp' claim");
+    NQ_LOGE("Failed to set JWT '" NQ_JWT_CLM_EXP "' claim");
+    NQJWT_release(jwt);
     return false;
   }
 
   n = NQSnprintf(buf, len, "%u", claims->sub);
   if (n < 0 || len <= (size_t)n) {
-    NQ_LOGE("Failed to format JWT 'sub' claim");
+    NQ_LOGE("Failed to format JWT '" NQ_JWT_CLM_SUB "' claim");
+    NQJWT_release(jwt);
     return false;
   }
 
   if (!NQJWT_claimSetString(jwt, NQ_JWT_CLM_SUB, buf)) {
-    NQ_LOGE("Failed to set JWT 'sub' claim");
+    NQ_LOGE("Failed to set JWT '" NQ_JWT_CLM_SUB "' claim");
+    NQJWT_release(jwt);
     return false;
   }
 
   if (!NQJWT_sign(jwt, seckey, sklen)) {
     NQ_LOGE("Failed to sign JWT");
+    NQJWT_release(jwt);
     return false;
   }
 
   n = NQJWT_token(jwt, buf, len);
   if (n < 0 || len <= (size_t)n) {
     NQ_LOGE("Failed to generate JWT token string");
+    NQJWT_release(jwt);
+    return false;
+  }
+
+  return true;
+}
+
+static bool parseJWT(const char* token, const void* seckey, size_t sklen, struct JWTClaims* claims)
+{
+  NQJWT* jwt = NQJWT_parse(token, seckey, sklen);
+  if (jwt == NULL) {
+    NQ_LOGE("Failed to parse JWT object");
+    return false;
+  }
+
+  if (!NQJWT_claimGetInt64(jwt, NQ_JWT_CLM_ISS, &claims->iss)) {
+    NQ_LOGE("Failed to get JWT '" NQ_JWT_CLM_ISS "' claim");
+    NQJWT_release(jwt);
+    return false;
+  }
+
+  if (!NQJWT_claimGetInt64(jwt, NQ_JWT_CLM_EXP, &claims->exp)) {
+    NQ_LOGE("Failed to get JWT '" NQ_JWT_CLM_EXP "' claim");
+    NQJWT_release(jwt);
+    return false;
+  }
+
+  const char* sub;
+  if (!NQJWT_claimGetString(jwt, NQ_JWT_CLM_SUB, &sub)) {
+    NQ_LOGE("Failed to get JWT '" NQ_JWT_CLM_SUB "' claim");
+    NQJWT_release(jwt);
+    return false;
+  }
+
+  char* end;
+  unsigned long num = NQSimpleStrtoul(sub, &end, 10);
+  if (*end != '\0' || num > NQ_UINT32_MAX) {
+    NQ_LOGE("Failed format of JWT '" NQ_JWT_CLM_SUB "' claim");
+    NQJWT_release(jwt);
+    return false;
+  }
+
+  claims->sub = (uint32_t)num;
+  return true;
+}
+
+static bool getJWTClaims(NQWebRequest* request, struct JWTClaims* claims)
+{
+  const char* token = NQWebRequest_getHeader(request, NQHTTP_HEADER_AUTHORIZATION);
+  if (token == NULL || !NQCStrStartsWith(token, BEARER_PREFIX)) {
+    NQ_LOGE("Missing or malformed Authorization header");
+    return false;
+  }
+
+  token += NQ_CSTR_LENGTH(BEARER_PREFIX);
+  while (*token == ' ')
+    token++;
+
+  NQWebServer* server = NQWebRequest_server(request);
+  if (!parseJWT(token, server->sessionSeckey, sizeof(server->sessionSeckey), claims)) {
+    NQ_LOGE("Invalid or missing authentication token");
+    return false;
+  }
+
+  if (claims->exp < NQGetTimeSec()) {
+    NQ_LOGE("Authentication token expired");
     return false;
   }
 
@@ -147,28 +230,28 @@ static bool buildJWT(struct JWTClaims* claims, const void* seckey, size_t sklen,
 
 static int commonInit(NQWebRequest* request, void* data)
 {
-  struct NQWebUsersRestExecutor* userApi = (NQWebUsersRestExecutor*)data;
-  struct UserApiRequest* uas = (struct UserApiRequest*)NQMalloc(sizeof(*uas));
-  if (uas == NULL)
+  struct NQWebUsersRestListeners* listeners = (NQWebUsersRestListeners*)data;
+  struct UserRequest* userRequest = (struct UserRequest*)NQMalloc(sizeof(*userRequest));
+  if (userRequest == NULL)
     return -NQ_ENOMEM;
-  uas->database = userApi->listeners.database;
-  NQStringPrint_init(&uas->recvBuffer);
-  request->userdata = uas;
+  userRequest->listeners = listeners;
+  NQStringPrint_init(&userRequest->recvBuffer);
+  request->userdata = userRequest;
   return 0;
 }
 
 static size_t commonPostReceive(NQWebRequest* request, const char* data, size_t size)
 {
-  struct UserApiRequest* uas = (struct UserApiRequest*)request->userdata;
-  return NQStringPrint_writeAll(&uas->recvBuffer, data, size) ? size : 0;
+  struct UserRequest* userRequest = (struct UserRequest*)request->userdata;
+  return NQStringPrint_writeAll(&userRequest->recvBuffer, data, size) ? size : 0;
 }
 
-static int commonPostResponse(struct UserApiRequest* uas, const char* email, NQWebResponse* response)
+static int commonPostResponse(struct UserRequest* req, const char* email, NQWebResponse* response)
 {
   NQWebServer* server = NQWebResponse_server(response);
 
   struct JWTClaims claims;
-  if (!NQUserDataStoreUserId(uas->database, email, &claims.sub)) {
+  if (!NQUserDataStoreUserId(req->listeners->database, email, &claims.sub)) {
     NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Unable to get user id");
     return NQ_HTTP_INTERNAL_SERVER_ERROR;
   }
@@ -194,61 +277,177 @@ static int commonPostResponse(struct UserApiRequest* uas, const char* email, NQW
 
 static int signupPostRequest(NQWebRequest* request, NQWebResponse* response)
 {
-  struct UserApiRequest* uas = (struct UserApiRequest*)request->userdata;
+  struct UserRequest* req = (struct UserRequest*)request->userdata;
 
   NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
-  struct UserSignup params;
-  UserSignup_init(&params);
+  struct UserCredential credential;
+  UserCredential_init(&credential);
 
-  if (!UserSignup_parse(&params, NQStringPrint_characters(&uas->recvBuffer), NQStringPrint_length(&uas->recvBuffer), true)) {
+  unsigned flags = USE_USER_NAME | USE_USER_EMAIL | USE_USER_PASSWORD;
+  if (!UserCredential_parse(&credential, NQStringPrint_characters(&req->recvBuffer), NQStringPrint_length(&req->recvBuffer), flags)) {
     NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_BAD_REQUEST, "Invalid params");
-    UserSignup_finalize(&params);
+    UserCredential_finalize(&credential);
     return NQ_HTTP_BAD_REQUEST;
   }
 
-  if (!NQUserDataStoreSignup(uas->database, params.email, params.password)) {
+  if (NQStrlen(credential.password) < req->listeners->passwordMin) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_BAD_REQUEST, "'password'is shorter than the required length");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_BAD_REQUEST;
+  }
+
+  if (!NQUserDataStoreSignup(req->listeners->database, credential.email, credential.password)) {
     NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Unable to register user");
-    UserSignup_finalize(&params);
+    UserCredential_finalize(&credential);
     return NQ_HTTP_INTERNAL_SERVER_ERROR;
   }
 
-  int ret = commonPostResponse(uas, params.email, response);
-  UserSignup_finalize(&params);
+  int ret = commonPostResponse(req, credential.email, response);
+  UserCredential_finalize(&credential);
   return ret;
 }
 
 static int loginPostRequest(NQWebRequest* request, NQWebResponse* response)
 {
-  struct UserApiRequest* uas = (struct UserApiRequest*)request->userdata;
+  struct UserRequest* req = (struct UserRequest*)request->userdata;
 
   NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
-  struct UserSignup params;
-  UserSignup_init(&params);
+  struct UserCredential credential;
+  UserCredential_init(&credential);
 
-  if (!UserSignup_parse(&params, NQStringPrint_characters(&uas->recvBuffer), NQStringPrint_length(&uas->recvBuffer), false)) {
+  unsigned flags = USE_USER_EMAIL | USE_USER_PASSWORD;
+  if (!UserCredential_parse(&credential, NQStringPrint_characters(&req->recvBuffer), NQStringPrint_length(&req->recvBuffer), flags)) {
     NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_BAD_REQUEST, "Invalid params");
-    UserSignup_finalize(&params);
+    UserCredential_finalize(&credential);
     return NQ_HTTP_BAD_REQUEST;
   }
 
-  if (!NQUserDataStoreLogin(uas->database, params.email, params.password)) {
-    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Unable to register user");
-    UserSignup_finalize(&params);
+  if (!NQUserDataStoreLogin(req->listeners->database, credential.email, credential.password)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Incorrect username or password");
+    UserCredential_finalize(&credential);
     return NQ_HTTP_INTERNAL_SERVER_ERROR;
   }
 
-  int ret = commonPostResponse(uas, params.email, response);
-  UserSignup_finalize(&params);
+  int ret = commonPostResponse(req, credential.email, response);
+  UserCredential_finalize(&credential);
   return ret;
+}
+
+static int updatePostRequest(NQWebRequest* request, NQWebResponse* response)
+{
+  struct UserRequest* req = (struct UserRequest*)request->userdata;
+
+  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+
+  struct JWTClaims claims;
+  if (!getJWTClaims(request, &claims)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_UNAUTHORIZED, "Invalid or missing authentication token");
+    return NQ_HTTP_UNAUTHORIZED;
+  }
+
+  struct UserCredential credential;
+  UserCredential_init(&credential);
+
+  unsigned flags = USE_USER_EMAIL | USE_USER_PASSWORD;
+  if (!UserCredential_parse(&credential, NQStringPrint_characters(&req->recvBuffer), NQStringPrint_length(&req->recvBuffer), flags)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_BAD_REQUEST, "Invalid params");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_BAD_REQUEST;
+  }
+
+  uint32_t sub;
+  if (!NQUserDataStoreUserId(req->listeners->database, credential.email, &sub)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Unable to get user id");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_INTERNAL_SERVER_ERROR;
+  }
+
+  if (claims.sub != sub) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_UNAUTHORIZED, "Invalid or missing authentication token");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_UNAUTHORIZED;
+  }
+
+  if (NQStrlen(credential.password) < req->listeners->passwordMin) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_BAD_REQUEST, "'password'is shorter than the required length");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_BAD_REQUEST;
+  }
+
+  if (!NQUserDataStoreUpdate(req->listeners->database, credential.email, credential.password)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Unable to update password");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_INTERNAL_SERVER_ERROR;
+  }
+
+  UserCredential_finalize(&credential);
+
+  NQJSONWriter writer;
+  NQJSONWriter_init(&writer, jsonWriterHandler, response);
+  NQJSONWriter_writeBool(&writer, true);
+  NQJSONWriter_finalize(&writer);
+
+  return NQ_HTTP_OK;
+}
+
+static int deletePostRequest(NQWebRequest* request, NQWebResponse* response)
+{
+  struct UserRequest* req = (struct UserRequest*)request->userdata;
+
+  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+
+  struct JWTClaims claims;
+  if (!getJWTClaims(request, &claims)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_UNAUTHORIZED, "Invalid or missing authentication token");
+    return NQ_HTTP_UNAUTHORIZED;
+  }
+
+  struct UserCredential credential;
+  UserCredential_init(&credential);
+
+  unsigned flags = USE_USER_EMAIL;
+  if (!UserCredential_parse(&credential, NQStringPrint_characters(&req->recvBuffer), NQStringPrint_length(&req->recvBuffer), flags)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_BAD_REQUEST, "Invalid params");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_BAD_REQUEST;
+  }
+
+  uint32_t sub;
+  if (!NQUserDataStoreUserId(req->listeners->database, credential.email, &sub)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Unable to get user id");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_INTERNAL_SERVER_ERROR;
+  }
+
+  if (claims.sub != sub) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_BAD_REQUEST, "No permission to delete the user");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_BAD_REQUEST;
+  }
+
+  if (!NQUserDataStoreDelete(req->listeners->database, credential.email)) {
+    NQWebResponse_writeJsonRpcErrorParams(response, NQ_HTTP_INTERNAL_SERVER_ERROR, "Unable to delete user");
+    UserCredential_finalize(&credential);
+    return NQ_HTTP_INTERNAL_SERVER_ERROR;
+  }
+
+  UserCredential_finalize(&credential);
+
+  NQJSONWriter writer;
+  NQJSONWriter_init(&writer, jsonWriterHandler, response);
+  NQJSONWriter_writeBool(&writer, true);
+  NQJSONWriter_finalize(&writer);
+
+  return NQ_HTTP_OK;
 }
 
 static void commonPostRelease(NQWebRequest* request)
 {
-  struct UserApiRequest* uas = (struct UserApiRequest*)request->userdata;
-  NQStringPrint_finalize(&uas->recvBuffer);
-  NQFree(uas);
+  struct UserRequest* req = (struct UserRequest*)request->userdata;
+  NQStringPrint_finalize(&req->recvBuffer);
+  NQFree(req);
 }
 
 static const NQWebRequestOperations kSignupOps = {
@@ -262,6 +461,20 @@ static const NQWebRequestOperations kLoginOps = {
   .init    = commonInit,
   .receive = commonPostReceive,
   .handler = loginPostRequest,
+  .release = commonPostRelease,
+};
+
+static const NQWebRequestOperations kUpdateOps = {
+  .init    = commonInit,
+  .receive = commonPostReceive,
+  .handler = updatePostRequest,
+  .release = commonPostRelease,
+};
+
+static const NQWebRequestOperations kDeleteOps = {
+  .init    = commonInit,
+  .receive = commonPostReceive,
+  .handler = deletePostRequest,
   .release = commonPostRelease,
 };
 
@@ -292,11 +505,34 @@ int NQWebUsersRestListenersInit(NQWebExecutor* executor, NQWebUsersRestListeners
     return ret;
   }
 
+  ret = NQWebExecutor_addRequestListener(executor, &listeners->updateListener, &kUpdateOps, listeners, NQ_HTTP_POST, params->updateUrl);
+  if (ret) {
+    NQWebExecutor_removeRequestListener(executor, &listeners->loginListener);
+    NQWebExecutor_removeRequestListener(executor, &listeners->signupListener);
+    NQUserDataStoreExit(listeners->database);
+    NQSQLiteDatabase_release(listeners->database);
+    return ret;
+  }
+
+  ret = NQWebExecutor_addRequestListener(executor, &listeners->deleteListener, &kDeleteOps, listeners, NQ_HTTP_POST, params->deleteUrl);
+  if (ret) {
+    NQWebExecutor_removeRequestListener(executor, &listeners->updateListener);
+    NQWebExecutor_removeRequestListener(executor, &listeners->loginListener);
+    NQWebExecutor_removeRequestListener(executor, &listeners->signupListener);
+    NQUserDataStoreExit(listeners->database);
+    NQSQLiteDatabase_release(listeners->database);
+    return ret;
+  }
+
+  listeners->passwordMin = params->passwordMin;
+
   return 0;
 }
 
 void NQWebUsersRestListenersFinalize(NQWebExecutor* executor, NQWebUsersRestListeners* listeners)
 {
+  NQWebExecutor_removeRequestListener(executor, &listeners->deleteListener);
+  NQWebExecutor_removeRequestListener(executor, &listeners->updateListener);
   NQWebExecutor_removeRequestListener(executor, &listeners->loginListener);
   NQWebExecutor_removeRequestListener(executor, &listeners->signupListener);
   NQUserDataStoreExit(listeners->database);

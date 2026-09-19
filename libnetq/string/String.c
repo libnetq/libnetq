@@ -11,7 +11,7 @@
 #include "libnetq/string/String.h"
 
 #include <libnetq/Malloc.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/Assert.h>
 
 #ifndef NQ_HAVE_ARCH_STRLEN

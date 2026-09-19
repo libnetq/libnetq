@@ -12,7 +12,7 @@
 
 #define NQGetMin(a, b) ((a) > (b) ? (b) : (a))
 #define NQGetMax(a, b) ((a) < (b) ? (b) : (a))
-#define NQGetClamp(_value, _min, _max) (_value > _min ? (_value < _max ? _value : _max) : _min)
+#define NQGetClamp(val, min, max) ((val) > (min) ? ((val) < (max) ? (val) : (max)) : (min))
 #define NQGetDiff(a, b) (NQGetMax(a, b) - NQGetMin(a, b))
 
 #endif /* _LIBNETQ_MINMAX_H */

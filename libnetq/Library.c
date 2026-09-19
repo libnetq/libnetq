@@ -10,7 +10,7 @@
 #include "config.h"
 #include "libnetq/Library.h"
 
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/Assert.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Log.h>

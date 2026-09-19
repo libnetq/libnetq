@@ -11,7 +11,7 @@
 #define _LIBNETQ_WINDOWEVENT_H
 
 #include <libnetq/Event.h>
-#include <libnetq/Rect.h>
+#include <libnetq/gfx/Rect.h>
 
 typedef struct NQWindowCreateEvent {
   int type;

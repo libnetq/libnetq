@@ -16,7 +16,7 @@
 #include <libnetq/String.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Limits.h>
-#include <libnetq/FileHandle.h>
+#include <libnetq/fs/FileHandle.h>
 #include <libnetq/Log.h>
 
 static NQUint8Array s_zeroArray = { 0, {0} };

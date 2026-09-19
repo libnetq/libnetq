@@ -14,7 +14,7 @@
 #include <libnetq/CType.h>
 #include <libnetq/String.h>
 #include <libnetq/Assert.h>
-#include <libnetq/CStrConverter.h>
+#include <libnetq/string/CStrToNum.h>
 #include <libnetq/Log.h>
 
 #define kCIdentifierMax 128

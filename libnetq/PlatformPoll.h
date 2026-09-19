@@ -11,7 +11,7 @@
 #define _LIBNETQ_PLATFORMPOLL_H
 
 #include <libnetq/ErrorCode.h>
-#include <libnetq/SocketHandle.h>
+#include <libnetq/net/SocketHandle.h>
 
 #if defined(NQ_OS_KERNEL)
 #include <linux/poll.h>

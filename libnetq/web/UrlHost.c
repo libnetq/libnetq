@@ -12,7 +12,7 @@
 
 #include <libnetq/Limits.h>
 #include <libnetq/String.h>
-#include <libnetq/Strtox.h>
+#include <libnetq/string/Strtox.h>
 #include <libnetq/Network.h>
 #include <libnetq/Malloc.h>
 

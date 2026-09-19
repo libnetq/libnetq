@@ -10,7 +10,7 @@
 #ifndef _LIBNETQ_LOOPERSOURCE_H
 #define _LIBNETQ_LOOPERSOURCE_H
 
-#include <libnetq/SocketHandle.h>
+#include <libnetq/net/SocketHandle.h>
 
 #ifdef NQ_OS_ANDROID
 #include <android/input.h>
@@ -21,7 +21,7 @@
 #endif
 
 #include <libnetq/Event.h>
-#include <libnetq/FileHandle.h>
+#include <libnetq/fs/FileHandle.h>
 
 #ifdef __cplusplus
 extern "C" {

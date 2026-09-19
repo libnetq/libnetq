@@ -11,7 +11,7 @@
 #include "libnetq/Time.h"
 
 #include <libnetq/string/String.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/ConstExpr.h>
 #include <libnetq/Assert.h>
 
@@ -277,7 +277,7 @@ void nq_gmtimems(NQTimeMs time, struct tm* ptm, int* pms)
 #endif
 }
 
-void nq_gmtime(const time_t* timep, struct tm* result)
+void NQGmtime(const time_t* timep, struct tm* result)
 {
 #if defined(HAVE_GMTIME_R)
   gmtime_r(timep, result);

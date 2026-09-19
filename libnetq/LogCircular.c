@@ -13,12 +13,11 @@
 #include "config.h"
 #include "libnetq/LogCircular.h"
 
-#include <libnetq/OS.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Limits.h>
 #include <libnetq/MinMax.h>
-#include <libnetq/Sprintf.h>
-#include <libnetq/String.h>
+#include <libnetq/string/Sprintf.h>
+#include <libnetq/string/String.h>
 #include <libnetq/Time.h>
 #include <libnetq/Assert.h>
 

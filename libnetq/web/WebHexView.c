@@ -12,11 +12,11 @@
 
 #include <libnetq/string/StringPrint.h>
 #include <libnetq/string/String.h>
-#include <libnetq/HttpHeader.h>
-#include <libnetq/HttpMultiPartParser.h>
+#include <libnetq/http/HttpHeader.h>
+#include <libnetq/http/HttpMultiPartParser.h>
 #include <libnetq/ByteBuffer.h>
 #include <libnetq/json/JSONWriter.h>
-#include <libnetq/MediaType.h>
+#include <libnetq/http/MediaType.h>
 #include <libnetq/Env.h>
 #include <libnetq/Event.h>
 #include <libnetq/ErrorCode.h>
@@ -158,7 +158,7 @@ static bool WebRequest_onMultiPartParser(void* userdata, NQHTTPMultiPartType typ
         if (ctx->inFileState == kContentInit) {
           if (NQStringRangeIsEqual(&formData.name, "file")) {
             NQStringPrint_write(&ctx->filename, formData.filename.characters, formData.filename.length);
-            memcpy(ctx->lastContentType, ctx->contentType, kContentTypeMax);
+            memcpy(ctx->contentType, ctx->lastContentType, kContentTypeMax);
             ctx->inFileState = kContentProcess;
           }
         }

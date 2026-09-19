@@ -17,13 +17,13 @@
 #include <libnetq/Malloc.h>
 #include <libnetq/Limits.h>
 #include <libnetq/Log.h>
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/Network.h>
-#include <libnetq/HttpHeader.h>
+#include <libnetq/http/HttpHeader.h>
 #include <libnetq/asset/FileSystemAsset.h>
 #include <libnetq/URL.h>
 #include <libnetq/UrlPath.h>
-#include <libnetq/MediaType.h>
+#include <libnetq/http/MediaType.h>
 #include <libnetq/Assert.h>
 #include <libnetq/MinMax.h>
 #include <libnetq/ErrorCode.h>
@@ -137,13 +137,18 @@ bool NQWebServer_init(NQWebServer* thiz, const NQWebServerParams* params, NQWebS
     }
   }
 
+  thiz->host = NQUrlHost_create(params->host);
+  if (thiz->host == NULL) {
+    if (thiz->parent == NULL || thiz->parent->looper != thiz->looper)
+      NQNetworkLooper_destroy(thiz->looper);
+    return false;
+  }
+
   NQStringData_init(&thiz->workDir);
   NQStringData_set(&thiz->workDir, params->workDir);
 
   NQStringData_init(&thiz->resourceDir);
   NQStringData_set(&thiz->resourceDir, params->resourceDir);
-
-  thiz->host = NQUrlHost_create(params->host);
 
   thiz->tlsEnabled = params->tlsEnabled;
   if (!NQUrlHost_hasPort(thiz->host)) {
@@ -478,7 +483,7 @@ int NQWebExecutor_addRequestListener(NQWebExecutor* executor, struct NQWebReques
 
   char* newMethod = NQCStrDuplicate(method);
   if (newMethod == NULL) {
-    NQCStrFree(newMethod);
+    NQCStrFree(newPattern);
     return -NQ_ENOMEM;
   }
 
@@ -518,7 +523,7 @@ static int addSocketListener(NQWebServer* thiz, struct NQWebSocketListener* entr
       NQListHead_addBack(&thiz->socketExecutors, &entry->list);
       break;
     }
-    struct NQWebRequestListener* it = NQ_CONTAINER_OF(iter, struct NQWebRequestListener, list);
+    struct NQWebSocketListener* it = NQ_CONTAINER_OF(iter, struct NQWebSocketListener, list);
     if (it->patternKind > entry->patternKind) {
       NQListHead_addBack(&it->list, &entry->list);
       break;
@@ -698,7 +703,7 @@ NQWebExecutor* NQWebServer_createSocketExecutorEx(NQWebServer* thiz, const NQWeb
   }
 
   execApi->listenerCount = listenerCount;
-  execApi->executor.release = releaseRequestExecutor;
+  execApi->executor.release = releaseSocketExecutor;
   return &execApi->executor;
 }
 
@@ -799,7 +804,7 @@ const char* NQWebServer_getMimeType(const NQWebServer* thiz, const char* filenam
 
 bool NQWebServer_addMimeType(NQWebServer* thiz, const char* mimetype, const char* extname)
 {
-  return NQKeyVal_set(thiz->mimetypes, mimetype, extname);
+  return NQKeyVal_set(thiz->mimetypes, extname, mimetype);
 }
 
 struct NQWebCatalogEntry* NQWebCatalogEntryCreate(const NQWebCatalogParams* params)

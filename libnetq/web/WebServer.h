@@ -15,10 +15,10 @@
 #include <libnetq/Array.h>
 #include <libnetq/string/StringData.h>
 #include <libnetq/string/StringRef.h>
-#include <libnetq/HttpStatus.h>
-#include <libnetq/HttpMethod.h>
+#include <libnetq/http/HttpStatus.h>
+#include <libnetq/http/HttpMethod.h>
+#include <libnetq/http/HttpStatistics.h>
 #include <libnetq/PrimitiveStorage.h>
-#include <libnetq/web/HttpStatistics.h>
 #include <libnetq/web/UrlHost.h>
 #include <libnetq/json/JSON.h>
 #include <libnetq/KeyVal.h>

@@ -16,12 +16,57 @@
 #include <libnetq/Assert.h>
 #include <libnetq/Log.h>
 
-static NQStringArray16 s_empty16 = {
+static NQStringArray8 s_empty8 = {
   .length = 0,
   .characters = { '\0' },
 };
 
-static NQStringArray s_empty = {
+NQStringArray8* NQStringArray8_alloc(size_t length)
+{
+  if (length == 0) {
+    return &s_empty8;
+  }
+
+  if (length >= NQ_UINT8_MAX) {
+    NQ_LOGE("String length exceeded");
+    return NULL;
+  }
+
+  NQStringArray8* thiz = (NQStringArray8*)NQMalloc(sizeof(*thiz) + length);
+  thiz->characters[length] = '\0';
+  thiz->length = (uint8_t)length;
+  return thiz;
+}
+
+NQStringArray8* NQStringArray8_create(const char* characters)
+{
+  return NQStringArray8_create2(characters, NQStrlen(characters));
+}
+
+NQStringArray8* NQStringArray8_create2(const char* characters, size_t length)
+{
+  NQStringArray8* thiz = NQStringArray8_alloc(length);
+  if (thiz != NULL && length != 0)
+    memcpy(thiz->characters, characters, length);
+  return thiz;
+}
+
+void NQStringArray8_destroy(NQStringArray8* thiz)
+{
+  if (thiz != &s_empty8)
+    NQFree((void*)thiz);
+}
+
+void NQStringArray8_shrink(NQStringArray8* thiz, size_t newLength)
+{
+  NQ_ASSERT(newLength <= thiz->length);
+  if (newLength < thiz->length) {
+    thiz->characters[newLength] = '\0';
+    thiz->length = (uint8_t)newLength;
+  }
+}
+
+static NQStringArray16 s_empty16 = {
   .length = 0,
   .characters = { '\0' },
 };
@@ -45,7 +90,7 @@ NQStringArray16* NQStringArray16_alloc(size_t length)
 
 NQStringArray16* NQStringArray16_create(const char* characters)
 {
-  return NQStringArray16_create2(characters, strlen(characters));
+  return NQStringArray16_create2(characters, NQStrlen(characters));
 }
 
 NQStringArray16* NQStringArray16_create2(const char* characters, size_t length)
@@ -71,6 +116,11 @@ void NQStringArray16_shrink(NQStringArray16* thiz, size_t newLength)
   }
 }
 
+static NQStringArray s_empty = {
+  .length = 0,
+  .characters = { '\0' },
+};
+
 NQStringArray* NQStringArray_alloc(size_t length)
 {
   if (length == 0) {
@@ -90,7 +140,7 @@ NQStringArray* NQStringArray_alloc(size_t length)
 
 NQStringArray* NQStringArray_create(const char* characters)
 {
-  return NQStringArray_create2(characters, strlen(characters));
+  return NQStringArray_create2(characters, NQStrlen(characters));
 }
 
 NQStringArray* NQStringArray_create2(const char* characters, size_t length)

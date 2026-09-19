@@ -14,10 +14,10 @@
 #include <libnetq/ErrorCode.h>
 #include <libnetq/List.h>
 #include <libnetq/Log.h>
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/Assert.h>
 #include <libnetq/Malloc.h>
-#include <libnetq/HttpHeader.h>
+#include <libnetq/http/HttpHeader.h>
 #include <libnetq/web/WebRequest.h>
 #include <libnetq/web/WebResponse.h>
 

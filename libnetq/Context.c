@@ -16,10 +16,10 @@
 // Module
 #include <libnetq/Module.h>
 #include <libnetq/Library.h>
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/Mutex.h>
 #include <libnetq/Malloc.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/Executable.h>
 #include <libnetq/string/StringUtil.h>
 

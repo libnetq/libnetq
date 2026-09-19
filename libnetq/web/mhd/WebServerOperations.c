@@ -15,21 +15,37 @@
 #include <microhttpd.h>
 
 #include <libnetq/Malloc.h>
-#include <libnetq/WebSocketCalcAccept.h>
-#include <libnetq/String.h>
-#include <libnetq/HttpHeader.h>
+#include <libnetq/string/String.h>
+#include <libnetq/http/HttpHeader.h>
 #include <libnetq/Base64.h>
-#include <libnetq/SocketHandle.h>
-#include <libnetq/WebSocketFrame.h>
+#include <libnetq/net/SocketHandle.h>
 #include <libnetq/BufferBuilder.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Assert.h>
 #include <libnetq/Mutex.h>
 #include <libnetq/URL.h>
+#include <libnetq/web/WebSocketCalcAccept.h>
+#include <libnetq/web/WebSocketFrame.h>
 #include <libnetq/web/WebRequest.h>
 #include <libnetq/web/WebResponse.h>
 #include <libnetq/web/WebServer.h>
 #include <libnetq/web/WebSocket.h>
+
+#if MHD_VERSION < 0x00095300
+# define MHD_USE_INTERNAL_POLLING_THREAD 0
+# define MHD_ALLOW_UPGRADE 0
+# define MHD_USE_ERROR_LOG 0
+#endif
+
+#if MHD_VERSION > 0x00095300
+# define HAVE_MHD_STRICT_FOR_CLIENT
+#endif
+
+#if MHD_VERSION > 0x00097000
+typedef enum MHD_Result MHDWebResult;
+#else
+typedef int MHDWebResult;
+#endif
 
 #define WS_VERSION "13"
 
@@ -123,9 +139,9 @@ static int requestInit(struct MHDWebRequest* request, const struct MHDRequestPar
   request->base.method = request->method;
   request->base.version = request->version;
 
-  strncpy(request->url, params->url, sizeof(request->url));
-  strncpy(request->method, params->method, sizeof(request->method));
-  strncpy(request->version, params->version, sizeof(request->version));
+  strncpy(request->url, params->url, sizeof(request->url) - 1);
+  strncpy(request->method, params->method, sizeof(request->method) - 1);
+  strncpy(request->version, params->version, sizeof(request->version) - 1);
 
   request->queryParams = NQKeyVal_create();
   request->cookies = NQKeyVal_create();
@@ -169,6 +185,7 @@ static const struct NQWebResponseOperations kResponseOperations = {
 static int responseInit(struct MHDWebResponse* response, NQWebRequest* request)
 {
   NQWebResponse_init(&response->base, &kResponseOperations, request);
+
   response->headers = NQKeyVal_create();
   NQStringPrint_init(&response->buffer);
   return 0;
@@ -178,6 +195,8 @@ static void responseRelease(struct MHDWebResponse* response)
 {
   NQKeyVal_destroy(response->headers);
   NQStringPrint_finalize(&response->buffer);
+
+  NQWebResponse_finalize(&response->base);
 }
 
 static int websocketSend2(struct MHDWebSocket* thiz, const uint8_t* data, size_t size, uint8_t opcode, bool fin)
@@ -449,7 +468,7 @@ static const NQWebRequestOperations kWebSocketUpgradeOps = {
   .release = websocketUpgradeRelease,
 };
 
-static int keyValueIterator(void* cls, enum MHD_ValueKind kind, const char* key, const char* value)
+static MHDWebResult keyValueIterator(void* cls, enum MHD_ValueKind kind, const char* key, const char* value)
 {
   struct MHDWebRequest* request = (struct MHDWebRequest*)cls;
 
@@ -510,7 +529,7 @@ static struct MHDWebContext* contextCreate(NQWebServer* server, const struct MHD
   return thiz;
 }
 
-static int serverAccessHandler(void* cls, struct MHD_Connection* connection,
+static MHDWebResult serverAccessHandler(void* cls, struct MHD_Connection* connection,
                                const char* url, const char* method, const char* version,
                                const char* uploadDataPtr, size_t* uploadDataSize,
                                void** ptr)
@@ -603,10 +622,17 @@ static bool serverInit(NQWebServer* thiz)
   return true;
 }
 
-static int serverStart(NQWebServer* thiz)
+struct MHDWebDaemonParams {
+  uint16_t port;
+  bool addressReuse;
+  int connectionTimeout;
+  const char* keyPEM;
+  const char* certPEM;
+};
+
+static struct MHD_Daemon* createDaemon(NQWebServer* thiz, const struct MHDWebDaemonParams* params)
 {
   unsigned int flags = 0;
-  uint16_t port = NQUrlHost_port(thiz->host);
 
   flags |= MHD_USE_THREAD_PER_CONNECTION | MHD_USE_INTERNAL_POLLING_THREAD | MHD_USE_POLL | MHD_ALLOW_UPGRADE;
 
@@ -618,35 +644,47 @@ static int serverStart(NQWebServer* thiz)
   NULL, NULL, \
   &serverAccessHandler, thiz, \
   MHD_OPTION_NOTIFY_COMPLETED, &serverRequestCompleted, thiz, \
-  MHD_OPTION_LISTENING_ADDRESS_REUSE, 1, \
-  MHD_OPTION_CONNECTION_TIMEOUT, 120, \
-  MHD_OPTION_STRICT_FOR_CLIENT, NULL
+  MHD_OPTION_LISTENING_ADDRESS_REUSE, params->addressReuse ? 1 : 0, \
+  MHD_OPTION_CONNECTION_TIMEOUT, params->connectionTimeout
 
-  const char* keyPEM = NULL;
-  const char* certPEM = NULL;
-
-  struct MHD_Daemon* daemon;
-  if (thiz->tlsEnabled) {
+  if (params->keyPEM && params->certPEM) {
     flags |= MHD_USE_TLS;
-
-    keyPEM = NQWebServer_tlsKey(thiz);
-    if (keyPEM == NULL)
-      return -NQ_EINVAL;
-
-    certPEM = NQWebServer_tlsCert(thiz);
-    if (certPEM == NULL)
-      return -NQ_EINVAL;
-
-    daemon = MHD_start_daemon(flags, port, MHD_OPTION_LIST,
-                                    MHD_OPTION_HTTPS_MEM_KEY, keyPEM,
-                                    MHD_OPTION_HTTPS_MEM_CERT, certPEM,
-                                    MHD_OPTION_END);
-  }
-  else {
-    daemon = MHD_start_daemon(flags, port, MHD_OPTION_LIST,
-                                    MHD_OPTION_END);
+    return MHD_start_daemon(flags, params->port, MHD_OPTION_LIST,
+#ifdef HAVE_MHD_STRICT_FOR_CLIENT
+                            MHD_OPTION_STRICT_FOR_CLIENT, NULL,
+#endif
+                            MHD_OPTION_HTTPS_MEM_KEY, params->keyPEM,
+                            MHD_OPTION_HTTPS_MEM_CERT, params->certPEM,
+                            MHD_OPTION_END);
   }
 
+  return MHD_start_daemon(flags, params->port, MHD_OPTION_LIST,
+#ifdef HAVE_MHD_STRICT_FOR_CLIENT
+                            MHD_OPTION_STRICT_FOR_CLIENT, NULL,
+#endif
+                            MHD_OPTION_END);
+}
+
+static int serverStart(NQWebServer* thiz)
+{
+  struct MHDWebDaemonParams params;
+  params.port = NQUrlHost_port(thiz->host);
+  params.addressReuse = true;
+  params.connectionTimeout = 120;
+  params.keyPEM = NULL;
+  params.certPEM = NULL;
+
+  if (thiz->tlsEnabled) {
+    params.keyPEM = NQWebServer_tlsKey(thiz);
+    if (params.keyPEM == NULL)
+      return -NQ_EINVAL;
+
+    params.certPEM = NQWebServer_tlsCert(thiz);
+    if (params.certPEM == NULL)
+      return -NQ_EINVAL;
+  }
+
+  struct MHD_Daemon* daemon = createDaemon(thiz, &params);
   if (daemon == NULL)
     return -NQ_EIO;
 

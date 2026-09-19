@@ -12,7 +12,7 @@
 
 #include <libnetq/VA.h>
 #include <libnetq/UrlPath.h>
-#include <libnetq/HttpMethod.h>
+#include <libnetq/http/HttpMethod.h>
 
 #ifdef __cplusplus
 extern "C" {

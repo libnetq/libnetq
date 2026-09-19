@@ -12,6 +12,9 @@
 
 #include <libnetq/Log.h>
 #include <libnetq/crypto/BCrypt.h>
+#include <libnetq/crypto/SecureErase.h>
+#include <libnetq/Assert.h>
+#include <libnetq/Limits.h>
 
 #define USERS_TABLE "users"
 #define ID_KEY     "id"
@@ -32,6 +35,9 @@
 
 #define LOGIN_QUERY \
   "SELECT " HASH_KEY ", " SALT_KEY " FROM " USERS_TABLE " WHERE " USER_KEY "=?;"
+
+#define UPDATE_QUERY \
+  "UPDATE " USERS_TABLE " SET " HASH_KEY "=?, " SALT_KEY "=? WHERE " USER_KEY "=?;"
 
 #define DELETE_QUERY \
   "DELETE FROM " USERS_TABLE " WHERE " USER_KEY "=?;"
@@ -98,16 +104,23 @@ bool NQUserDataStoreSignup(NQSQLiteDatabase* database, const char* username, con
   NQSQLiteStatement* statement = NQSQLiteDatabase_prepare(database, SIGNUP_QUERY);
   if (statement == NULL) {
     NQ_LOGE("Failed to prepare signup query");
+    NQSecureErase(hash, sizeof(hash));
+    NQSecureErase(salt, sizeof(salt));
     return false;
   }
 
   bool result = signupRequest(statement, username, salt, hash);
   NQSQLiteStatement_release(statement);
+  NQSecureErase(hash, sizeof(hash));
+  NQSecureErase(salt, sizeof(salt));
   return result;
 }
 
 static bool loginRequest(NQSQLiteStatement* statement, const char* username, const char* password)
 {
+  static const uint8_t kDummySalt[NQ_BCRYPT_SALTSIZE] = { 0 };
+  static const uint8_t kDummyHash[NQ_BCRYPT_HASHSIZE] = { 0 };
+
   if (!NQSQLiteStatement_bindText(statement, 1, username)) {
     NQ_LOGE("Failed to bind username parameter");
     return false;
@@ -119,26 +132,37 @@ static bool loginRequest(NQSQLiteStatement* statement, const char* username, con
     return false;
   }
 
-  if (done) {
+  /* Always run the password hash comparison, even when the user does not
+   * exist or the stored hash/salt is malformed, so that the response time
+   * does not leak whether the username is valid. */
+  bool userFound = !done;
+  const uint8_t* hash = kDummyHash;
+  const uint8_t* salt = kDummySalt;
+
+  if (userFound) {
+    size_t hashSize = NQSQLiteStatement_columnSize(statement, 0);
+    const uint8_t* rowHash = (const uint8_t*)NQSQLiteStatement_columnBlob(statement, 0);
+    size_t saltSize = NQSQLiteStatement_columnSize(statement, 1);
+    const uint8_t* rowSalt = (const uint8_t*)NQSQLiteStatement_columnBlob(statement, 1);
+
+    if (rowHash != NULL && hashSize == NQ_BCRYPT_HASHSIZE && rowSalt != NULL && saltSize == NQ_BCRYPT_SALTSIZE) {
+      hash = rowHash;
+      salt = rowSalt;
+    }
+    else {
+      NQ_LOGE("Invalid password hash/salt for user '%s'", username);
+      userFound = false;
+    }
+  }
+
+  bool verified = NQBCryptVerifyPassword(password, salt, hash);
+
+  if (!userFound) {
     NQ_LOGE("Login failed: user '%s' does not exist", username);
     return false;
   }
 
-  size_t hashSize = NQSQLiteStatement_columnSize(statement, 0);
-  const uint8_t* hash = (const uint8_t*)NQSQLiteStatement_columnBlob(statement, 0);
-  if (hash == NULL || hashSize != NQ_BCRYPT_HASHSIZE) {
-    NQ_LOGE("Invalid password hash for user '%s'", username);
-    return false;
-  }
-
-  size_t saltSize = NQSQLiteStatement_columnSize(statement, 1);
-  const uint8_t* salt = (const uint8_t*)NQSQLiteStatement_columnBlob(statement, 1);
-  if (salt == NULL || saltSize != NQ_BCRYPT_SALTSIZE) {
-    NQ_LOGE("Invalid password salt for user '%s'", username);
-    return false;
-  }
-
-  if (!NQBCryptVerifyPassword(password, salt, hash)) {
+  if (!verified) {
     NQ_LOGE("Invalid password for user '%s'", username);
     return false;
   }
@@ -156,6 +180,72 @@ bool NQUserDataStoreLogin(NQSQLiteDatabase* database, const char* username, cons
 
   bool result = loginRequest(statement, username, password);
   NQSQLiteStatement_release(statement);
+  return result;
+}
+
+static bool updateRequest(NQSQLiteDatabase* database, NQSQLiteStatement* statement, const char* username, const void* salt, const void* hash)
+{
+  if (!NQSQLiteStatement_bindBlob(statement, 1, hash, NQ_BCRYPT_HASHSIZE)) {
+    NQ_LOGE("Failed to bind password hash parameter");
+    return false;
+  }
+
+  if (!NQSQLiteStatement_bindBlob(statement, 2, salt, NQ_BCRYPT_SALTSIZE)) {
+    NQ_LOGE("Failed to bind password salt parameter");
+    return false;
+  }
+
+  if (!NQSQLiteStatement_bindText(statement, 3, username)) {
+    NQ_LOGE("Failed to bind username parameter");
+    return false;
+  }
+
+  bool done;
+  if (!NQSQLiteStatement_step(statement, &done)) {
+    NQ_LOGE("Failed to execute update query for user '%s'", username);
+    return false;
+  }
+
+  if (!done) {
+    NQ_LOGE("Update query did not complete properly for user '%s'", username);
+    return false;
+  }
+
+  if (NQSQLiteStatement_changes(database) == 0) {
+    NQ_LOGE("No rows updated for user '%s' (user may not exist)", username);
+    return false;
+  }
+
+  return true;
+}
+
+bool NQUserDataStoreUpdate(NQSQLiteDatabase* database, const char* username, const char* password)
+{
+  uint8_t salt[NQ_BCRYPT_SALTSIZE];
+  uint8_t hash[NQ_BCRYPT_HASHSIZE];
+
+  if (!NQBCryptGenerateSalt(salt)) {
+    NQ_LOGE("Failed to generate bcrypt salt");
+    return false;
+  }
+
+  if (!NQBCryptHashPassword(password, salt, hash)) {
+    NQ_LOGE("Failed to hash password for user '%s'", username);
+    return false;
+  }
+
+  NQSQLiteStatement* statement = NQSQLiteDatabase_prepare(database, UPDATE_QUERY);
+  if (statement == NULL) {
+    NQ_LOGE("Failed to prepare update query");
+    NQSecureErase(hash, sizeof(hash));
+    NQSecureErase(salt, sizeof(salt));
+    return false;
+  }
+
+  bool result = updateRequest(database, statement, username, salt, hash);
+  NQSQLiteStatement_release(statement);
+  NQSecureErase(hash, sizeof(hash));
+  NQSecureErase(salt, sizeof(salt));
   return result;
 }
 
@@ -217,7 +307,9 @@ static bool userIdRequest(NQSQLiteStatement* statement, const char* username, ui
   }
 
   if (id) {
-    *id = (uint32_t)NQSQLiteStatement_columnInt64(statement, 0);
+    int64_t rowId = NQSQLiteStatement_columnInt64(statement, 0);
+    NQ_ASSERT(rowId >= 0 && rowId <= NQ_UINT32_MAX);
+    *id = (uint32_t)rowId;
   }
 
   return true;

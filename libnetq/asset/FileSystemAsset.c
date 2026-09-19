@@ -13,11 +13,11 @@
 #include "config.h"
 #include "libnetq/asset/FileSystemAsset.h"
 
-#include <libnetq/String.h>
-#include <libnetq/Path.h>
+#include <libnetq/string/String.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/Limits.h>
 #include <libnetq/Malloc.h>
-#include <libnetq/FileHandle.h>
+#include <libnetq/fs/FileHandle.h>
 #include <libnetq/string/StringPrint.h>
 #include <libnetq/Assert.h>
 #include <libnetq/Log.h>

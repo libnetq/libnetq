@@ -12,7 +12,7 @@
 
 #include <libnetq/CPU.h>
 #include <libnetq/Compiler.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 
 const char* NQGetBuildCPU(void)
 {

@@ -12,9 +12,9 @@
 
 #include <libnetq/string/StringPrint.h>
 #include <libnetq/string/String.h>
-#include <libnetq/HttpHeader.h>
+#include <libnetq/http/HttpHeader.h>
 #include <libnetq/ByteBuffer.h>
-#include <libnetq/MediaType.h>
+#include <libnetq/http/MediaType.h>
 #include <libnetq/web/JsonRpcTypes.h>
 #include <libnetq/Env.h>
 #include <libnetq/Event.h>
@@ -68,8 +68,10 @@ static int mainHandler(NQWebRequest* request, NQWebResponse* response)
       continue;
 
     if (NQByteBuffer_size(&buf) <= len) {
-      if (!NQByteBuffer_resize(&buf, len + 1))
+      if (!NQByteBuffer_resize(&buf, len + 1)) {
+        NQEnviron_destroy(env);
         return NQ_HTTP_INTERNAL_SERVER_ERROR;
+      }
       NQEnvironIter_read(iter, (char*)NQByteBuffer_data(&buf), NQByteBuffer_size(&buf));
     }
 
@@ -181,6 +183,7 @@ static void setterRelease(NQWebRequest* request)
   struct SetterContext* ctx = (struct SetterContext*)request->userdata;
   if (ctx != NULL)
     NQStringPrint_finalize(&ctx->buffer);
+  NQFree(ctx);
 }
 
 static const NQWebRequestOperations kSetterRequestOps = {

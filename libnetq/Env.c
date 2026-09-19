@@ -167,7 +167,7 @@ NQEnviron* NQEnviron_create(void)
 #if defined(NQ_OS_WINDOWS)
   return (NQEnviron*)GetEnvironmentStringsW();
 #elif defined(NQ_OS_DARWIN)
-  return (NQEnviron*)_NSGetEnviron();
+  return (NQEnviron*)*_NSGetEnviron();
 #elif defined(NQ_OS_UNIX)
   return (NQEnviron*)environ;
 #else

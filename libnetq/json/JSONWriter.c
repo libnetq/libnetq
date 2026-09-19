@@ -15,7 +15,7 @@
 
 #include <libnetq/CType.h>
 #include <libnetq/String.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/Assert.h>
 #include <libnetq/json/JSON.h>
 #include <libnetq/Log.h>

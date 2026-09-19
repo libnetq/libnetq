@@ -159,7 +159,7 @@ static inline int NQPlatformSocketOpen(int family, int type, int protocol, NQPla
 {
   NQPlatformSocket sock = socket(family, type, protocol);
   if (sock == -1)
-    return -errno;
+    return -NQGetLastError();
   *result = sock;
   return 0;
 }
@@ -177,7 +177,7 @@ static inline int NQPlatformSocketSend(NQPlatformSocket sock, const void* buf, s
 #endif
   ssize_t ret = send(sock, buf, NQGetMin(len, NQ_INT32_MAX), flags);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return (int)ret;
 }
 
@@ -190,7 +190,7 @@ static inline int NQPlatformSocketRecv(NQPlatformSocket sock, void* buf, size_t 
   // flags |= MSG_DONTWAIT; // TODO
   ssize_t ret = recv(sock, buf, NQGetMin(len, NQ_INT32_MAX), flags);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return (int)ret;
 }
 
@@ -198,7 +198,7 @@ static inline int NQPlatformSocketConnect(NQPlatformSocket sock, const NQSockAdd
 {
   int ret = connect(sock, addr, (socklen_t)addrlen);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return ret;
 }
 
@@ -215,7 +215,7 @@ static inline int NQPlatformSocketAccept(NQPlatformSocket sock, NQSockAddr* addr
   }
 
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
 
   *result = ret;
   return 0;
@@ -225,7 +225,7 @@ static inline int NQPlatformSocketListen(NQPlatformSocket sock, int backlog)
 {
   int ret = listen(sock, backlog);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return ret;
 }
 
@@ -233,7 +233,7 @@ static inline int NQPlatformSocketBind(NQPlatformSocket sock, const NQSockAddr* 
 {
   int ret = bind(sock, addr, (socklen_t)addrlen);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return ret;
 }
 
@@ -250,7 +250,7 @@ static inline int NQPlatformSocketGetOpt(NQPlatformSocket sock, int level, int o
   }
 
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
 
   return ret;
 }
@@ -259,7 +259,7 @@ static inline int NQPlatformSocketSetOpt(NQPlatformSocket sock, int level, int o
 {
   int ret = setsockopt(sock, level, optname, optval, (socklen_t)optlen);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return ret;
 }
 
@@ -271,7 +271,7 @@ static inline int NQPlatformSocketSendto(NQPlatformSocket sock, const void* buf,
 #endif
   ssize_t ret = sendto(sock, buf, NQGetMin(len, NQ_INT32_MAX), flags, addr, (socklen_t)addrlen);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return (int)ret;
 }
 
@@ -279,7 +279,7 @@ static inline int NQPlatformSocketShutdown(NQPlatformSocket sock, int how)
 {
   int ret = shutdown(sock, how);
   if (ret == -1)
-    return -errno;
+    return -NQGetLastError();
   return ret;
 }
 

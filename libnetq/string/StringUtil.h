@@ -22,6 +22,7 @@ extern "C" {
 #define NQ_CSTR_LENGTH(s) (NQ_ARRAY_LENGTH(s)-1)
 
 NQ_EXPORT const char* NQCStrEmpty(void);
+NQ_EXPORT const char* NQCStrEnsure(const char* str);
 NQ_EXPORT void NQCStrFree(const char* str);
 NQ_EXPORT size_t NQCStrLen16(const uint16_t* str);
 NQ_EXPORT char* NQCStrDuplicate(const char* str);

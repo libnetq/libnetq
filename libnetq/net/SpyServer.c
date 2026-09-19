@@ -10,7 +10,7 @@
 #include "config.h"
 #include "libnetq/net/SpyServer.h"
 
-#include <libnetq/SocketHandle.h>
+#include <libnetq/net/SocketHandle.h>
 #include <libnetq/PlatformPoll.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/ErrorCode.h>

@@ -11,7 +11,7 @@
 #define _LIBNETQ_POLL_H
 
 #include <libnetq/Basic.h>
-#include <libnetq/SocketHandle.h>
+#include <libnetq/net/SocketHandle.h>
 
 #ifdef __cplusplus
 extern "C" {

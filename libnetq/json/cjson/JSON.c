@@ -15,7 +15,10 @@
 
 #ifdef NQCONFIG_USE_CJSON_JSON
 
-#include <libnetq/String.h>
+#include <libnetq/string/String.h>
+#include <libnetq/string/StringRef.h>
+#include <libnetq/Math.h>
+#include <libnetq/Limits.h>
 
 const char* NQJSON_package(void)
 {
@@ -129,8 +132,18 @@ bool NQJSON_isDouble(const NQJSON* json)
 
 bool NQJSON_isInt64(const NQJSON* json)
 {
-  NQ_UNUSED_PARAM(json);
-  return false;
+  double num = cJSON_GetNumberValue(json);
+  if (!isfinite(num) || num != floor(num)) {
+    return false;
+  }
+  /* (double)NQ_INT64_MAX rounds up to 2^63 because INT64_MAX (2^63 - 1)
+   * isn't exactly representable as a double, so this comparison must be
+   * '>=' (not '>') to correctly reject num == 2^63, which is already
+   * out of range for int64_t. */
+  if (num < (double)NQ_INT64_MIN || num >= (double)NQ_INT64_MAX) {
+    return false;
+  }
+  return true;
 }
 
 bool NQJSON_isString(const NQJSON* json)
@@ -171,7 +184,7 @@ const char* NQJSON_asString(const NQJSON* json)
 size_t NQJSON_stringLength(const NQJSON* json)
 {
   const char* str = cJSON_GetStringValue((const cJSON*)json);
-  return str ? strlen(str) : 0;
+  return str ? NQStrlen(str) : 0;
 }
 
 size_t NQJSON_arraySize(const NQJSON* json)

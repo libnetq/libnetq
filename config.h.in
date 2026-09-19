@@ -115,6 +115,9 @@
 /* Define if you have PSAPI */
 #cmakedefine WITH_PSAPI 1
 
+/* Define if you have libcurl */
+#cmakedefine WITH_CURL 1
+
 /* Define to 2 if the system does not provide POSIX.1 features except with
 this defined. */
 #cmakedefine _POSIX_1_SOURCE 1

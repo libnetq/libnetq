@@ -14,7 +14,7 @@
 #include <unistd.h>
 #include <sys/eventfd.h>
 #else
-#include <libnetq/SocketHandle.h>
+#include <libnetq/net/SocketHandle.h>
 #include <libnetq/Limits.h>
 #define USE_SOCKETPAIR
 #endif

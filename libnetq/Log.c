@@ -10,14 +10,14 @@
 #include "config.h"
 #include "libnetq/Log.h"
 
-#include <libnetq/String.h>
-#include <libnetq/Sprintf.h>
+#include <libnetq/string/String.h>
+#include <libnetq/string/Sprintf.h>
 #include <libnetq/MinMax.h>
 #include <libnetq/Time.h>
 #include <libnetq/Abort.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Assert.h>
-#include <libnetq/FileHandle.h>
+#include <libnetq/fs/FileHandle.h>
 #include <libnetq/ErrorCode.h>
 
 #ifdef NQ_OS_ANDROID

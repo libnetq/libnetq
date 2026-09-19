@@ -10,7 +10,7 @@
 #ifndef _LIBNETQ_NETWORKLOOPER_H
 #define _LIBNETQ_NETWORKLOOPER_H
 
-#include <libnetq/SocketHandle.h>
+#include <libnetq/net/SocketHandle.h>
 
 #ifdef __cplusplus
 extern "C" {

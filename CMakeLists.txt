@@ -1,13 +1,19 @@
 cmake_minimum_required(VERSION 3.12)
-project(libnetq VERSION 1.0.18
+project(libnetq VERSION 1.0.19
   DESCRIPTION "The cross-platform library"
   HOMEPAGE_URL "https://github.com/libnetq/libnetq"
   LANGUAGES "C"
   )
 
-message(STATUS "Project ${PROJECT_NAME}/${PROJECT_VERSION} (${PROJECT_DESCRIPTION})")
+message(STATUS "Package: ${PROJECT_NAME}/${PROJECT_VERSION} (${PROJECT_DESCRIPTION})")
 message(STATUS "URL: ${PROJECT_HOMEPAGE_URL}")
-message(STATUS "System: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "OS: ${CMAKE_SYSTEM_NAME}")
+
+if (MSVC_CXX_ARCHITECTURE_ID)
+  message(STATUS "CPU: ${MSVC_CXX_ARCHITECTURE_ID}")
+else ()
+  message(STATUS "CPU: ${CMAKE_SYSTEM_PROCESSOR}")
+endif ()
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
@@ -163,6 +169,7 @@ LNQ_ADD_LIBRARY(SQLite3)
 LNQ_ADD_LIBRARY(CJOSE)
 LNQ_ADD_LIBRARY(LibJWT)
 LNQ_ADD_LIBRARY(MHD)
+LNQ_ADD_LIBRARY(CURL)
 
 if (LibJWT_FOUND AND LibJWT_VERSION VERSION_GREATER_EQUAL "3.0.0")
   if (LNQ_WITH_LIBJWT STREQUAL "AUTO")
@@ -429,7 +436,32 @@ set(libnetq_HEADERS
   libnetq/fs/kernel/Stat.h
   libnetq/fs/posix/Stat.h
   libnetq/fs/win32/Stat.h
+  libnetq/fs/Dir.h
+  libnetq/fs/FileHandle.h
+  libnetq/fs/FileSystem.h
+  libnetq/fs/Path.h
   libnetq/fs/Stat.h
+
+  libnetq/gfx/ColorSpace.h
+  libnetq/gfx/ColorUtils.h
+  libnetq/gfx/Image.h
+  libnetq/gfx/ImageBuilder.h
+  libnetq/gfx/Rect.h
+
+  libnetq/http/curl/CURLAdapter.h
+  libnetq/http/curl/CURLHeaders.h
+  libnetq/http/HttpStatistics.h
+  libnetq/http/HttpBuilder.h
+  libnetq/http/HttpHeader.h
+  libnetq/http/HttpMethod.h
+  libnetq/http/HttpMultiPartBuilder.h
+  libnetq/http/HttpMultiPartParser.h
+  libnetq/http/HttpRequest.h
+  libnetq/http/HttpStatus.def
+  libnetq/http/HttpStatus.h
+  libnetq/http/HttpVersion.h
+  libnetq/http/MediaType.h
+  libnetq/http/MimeTypes.def
 
   libnetq/io/kernel/UIO.h
   libnetq/io/unix/UIO.h
@@ -449,13 +481,16 @@ set(libnetq_HEADERS
   libnetq/json/JSONWriter.h
 
   libnetq/net/ChunkBuffer.h
-  libnetq/net/Socket.h
+  libnetq/net/EndPoint.h
   libnetq/net/NetBufferQueue.h
   libnetq/net/Netinet.h
   libnetq/net/PlatformSocket.h
+  libnetq/net/Socket.h
+  libnetq/net/SocketHandle.h
   libnetq/net/SpyModule.h
   libnetq/net/SpyModuleList.h
   libnetq/net/SpyServer.h
+  libnetq/net/WakeOnLan.h
 
   libnetq/random/CryptoRandom.h
   libnetq/random/UnlimitedRandom.h
@@ -466,6 +501,8 @@ set(libnetq_HEADERS
   libnetq/sql/UrlDataStore.h
   libnetq/sql/UserDataStore.h
 
+  libnetq/string/CStrToNum.h
+  libnetq/string/Sprintf.h
   libnetq/string/String.h
   libnetq/string/StringArray.h
   libnetq/string/StringData.h
@@ -474,6 +511,7 @@ set(libnetq_HEADERS
   libnetq/string/StringRange.h
   libnetq/string/StringRef.h
   libnetq/string/StringUtil.h
+  libnetq/string/Strtox.h
 
   libnetq/sync/atomic/Atomic.h
   libnetq/sync/kernel/Atomic.h
@@ -494,8 +532,9 @@ set(libnetq_HEADERS
   libnetq/sync/Atomic.h
   libnetq/sync/Once.h
   libnetq/sync/OnceCallback.h
+  libnetq/sync/RWLock.h
 
-  libnetq/web/HttpStatistics.h
+  libnetq/web/civetweb/CivetWebAdapter.h
   libnetq/web/JsonRpcResponse.h
   libnetq/web/JsonRpcTypes.h
   libnetq/web/UrlHost.h
@@ -511,6 +550,9 @@ set(libnetq_HEADERS
   libnetq/web/WebResponse.h
   libnetq/web/WebServer.h
   libnetq/web/WebSocket.h
+  libnetq/web/WebSocketCalcAccept.h
+  libnetq/web/WebSocketFrame.h
+  libnetq/web/WebSocketTypes.h
   libnetq/web/WebUsersRestExecutor.h
   libnetq/web/WebWriter.h
 
@@ -545,17 +587,13 @@ set(libnetq_HEADERS
   libnetq/ByteBuffer.h
   libnetq/ByteOrder.h
   libnetq/CoherentLooper.h
-  libnetq/ColorSpace.h
-  libnetq/ColorUtils.h
   libnetq/Compiler.h
   libnetq/Cond.h
   libnetq/ConstExpr.h
   libnetq/Context.h
   libnetq/CPU.h
-  libnetq/CStrConverter.h
   libnetq/CType.h
   libnetq/DescSet.h
-  libnetq/Dir.h
   libnetq/DispatchQueue.h
   libnetq/Endian.h
   libnetq/Env.h
@@ -566,23 +604,11 @@ set(libnetq_HEADERS
   libnetq/EventWakeup.h
   libnetq/Executable.h
   libnetq/Export.h
-  libnetq/FileHandle.h
-  libnetq/FileSystem.h
   libnetq/GetComputerName.h
   libnetq/GetSineWave.h
   libnetq/GetUserName.h
   libnetq/Hash.h
   libnetq/HexViewer.h
-  libnetq/HttpBuilder.h
-  libnetq/HttpHeader.h
-  libnetq/HttpMethod.h
-  libnetq/HttpMultiPartBuilder.h
-  libnetq/HttpMultiPartParser.h
-  libnetq/HttpStatus.def
-  libnetq/HttpStatus.h
-  libnetq/HttpVersion.h
-  libnetq/Image.h
-  libnetq/ImageBuilder.h
   libnetq/JSON.h
   libnetq/KeyboardEvent.h
   libnetq/KeyVal.h
@@ -597,8 +623,6 @@ set(libnetq_HEADERS
   libnetq/LooperTypes.h
   libnetq/Malloc.h
   libnetq/Math.h
-  libnetq/MediaType.h
-  libnetq/MimeTypes.def
   libnetq/MinMax.h
   libnetq/Module.h
   libnetq/MotionEvent.h
@@ -608,7 +632,6 @@ set(libnetq_HEADERS
   libnetq/NetworkLooper.h
   libnetq/Notifier.h
   libnetq/OS.h
-  libnetq/Path.h
   libnetq/PlatformLooper.h
   libnetq/PlatformPoll.h
   libnetq/Poll.h
@@ -616,17 +639,12 @@ set(libnetq_HEADERS
   libnetq/PrimitiveStorage.h
   libnetq/PrimitiveType.h
   libnetq/Random.h
-  libnetq/Rect.h
   libnetq/RefCount.h
   libnetq/Regex.h
-  libnetq/RWLock.h
   libnetq/Signal.h
   libnetq/Sleep.h
-  libnetq/SocketHandle.h
-  libnetq/Sprintf.h
   libnetq/SQL.h
   libnetq/String.h
-  libnetq/Strtox.h
   libnetq/Tarball.h
   libnetq/Thread.h
   libnetq/ThreadData.h
@@ -641,10 +659,6 @@ set(libnetq_HEADERS
   libnetq/UUID.h
   libnetq/VA.h
   libnetq/Version.h
-  libnetq/WakeOnLan.h
-  libnetq/WebSocketCalcAccept.h
-  libnetq/WebSocketFrame.h
-  libnetq/WebSocketTypes.h
   libnetq/Window.h
   libnetq/WindowEvent.h
   libnetq/WindowManager.h
@@ -688,8 +702,29 @@ set(libnetq_SOURCES
   libnetq/dbc/DBCJ1939.c
   libnetq/dbc/DBCTypes.c
 
+  libnetq/http/curl/CURLHeaders.c
+  libnetq/http/curl/HttpRequestCURL.c
+  libnetq/http/stub/HttpRequestStub.c
+  libnetq/http/HttpBuilder.c
+  libnetq/http/HttpHeader.c
+  libnetq/http/HttpMethod.c
+  libnetq/http/HttpMultiPartBuilder.c
+  libnetq/http/HttpMultiPartParser.c
+  libnetq/http/HttpStatistics.c
+
+  libnetq/fs/kernel/FileHandle.c
   libnetq/fs/kernel/Stat.c
+  libnetq/fs/posix/FileHandle.c
+  libnetq/fs/win32/FileHandle.c
   libnetq/fs/win32/Stat.c
+  libnetq/fs/Dir.c
+  libnetq/fs/FileHandle.c
+  libnetq/fs/FileSystem.c
+  libnetq/fs/Path.c
+
+  libnetq/gfx/ColorUtils.c
+  libnetq/gfx/Image.c
+  libnetq/gfx/ImageBuilder.c
 
   libnetq/io/ByteBufferChannel.c
   libnetq/io/ByteBufferWriter.c
@@ -706,9 +741,12 @@ set(libnetq_SOURCES
   libnetq/json/JSONWriter.c
 
   libnetq/net/ChunkBuffer.c
+  libnetq/net/EndPoint.c
   libnetq/net/NetBufferQueue.c
+  libnetq/net/SocketHandle.c
   libnetq/net/SpyModuleList.c
   libnetq/net/SpyServer.c
+  libnetq/net/WakeOnLan.c
 
   libnetq/random/CryptoRandomOpenSSL.c
   libnetq/random/CryptoRandomPlatform.c
@@ -722,6 +760,7 @@ set(libnetq_SOURCES
   libnetq/sql/UrlDataStore.c
   libnetq/sql/UserDataStore.c
 
+  libnetq/string/CStrToNum.c
   libnetq/string/String.c
   libnetq/string/StringArray.c
   libnetq/string/StringData.c
@@ -731,16 +770,18 @@ set(libnetq_SOURCES
   libnetq/string/StringUtil.c
 
   libnetq/sync/kernel/Cond.c
+  libnetq/sync/kernel/RWLock.c
   libnetq/sync/posix/Cond.c
+  libnetq/sync/posix/RWLock.c
   libnetq/sync/win32/Cond.c
   libnetq/sync/win32/Once.c
+  libnetq/sync/win32/RWLock.c
 
   libnetq/wasm/Module.c
   libnetq/wasm/ModuleTypes.c
 
   libnetq/web/civetweb/WebServerOperations.c
   libnetq/web/mhd/WebServerOperations.c
-  libnetq/web/HttpStatistics.c
   libnetq/web/JsonRpcResponse.c
   libnetq/web/UrlHost.c
   libnetq/web/WebDirAccess.c
@@ -753,6 +794,8 @@ set(libnetq_SOURCES
   libnetq/web/WebRestArchApi.c
   libnetq/web/WebResponse.c
   libnetq/web/WebServer.c
+  libnetq/web/WebSocketCalcAccept.c
+  libnetq/web/WebSocketFrame.c
   libnetq/web/WebUsersRestExecutor.c
 
   libnetq/xml/expat/XMLParser.c
@@ -772,12 +815,9 @@ set(libnetq_SOURCES
   libnetq/BuildInfo.c
   libnetq/ByteBuffer.c
   libnetq/CoherentLooper.c
-  libnetq/ColorUtils.c
   libnetq/Context.c
   libnetq/CPU.c
-  libnetq/CStrConverter.c
   libnetq/DescSet.c
-  libnetq/Dir.c
   libnetq/DispatchQueue.c
   libnetq/Endian.c
   libnetq/Env.c
@@ -785,23 +825,11 @@ set(libnetq_SOURCES
   libnetq/EventTarget.c
   libnetq/EventWakeup.c
   libnetq/Executable.c
-  libnetq/FileHandle.c
-  libnetq/FileHandleKernel.c
-  libnetq/FileHandlePosix.c
-  libnetq/FileHandleWin.c
-  libnetq/FileSystem.c
   libnetq/GetComputerName.c
   libnetq/GetSineWave.c
   libnetq/GetUserName.c
   libnetq/Hash.c
   libnetq/HexViewer.c
-  libnetq/HttpBuilder.c
-  libnetq/HttpHeader.c
-  libnetq/HttpMethod.c
-  libnetq/HttpMultiPartBuilder.c
-  libnetq/HttpMultiPartParser.c
-  libnetq/Image.c
-  libnetq/ImageBuilder.c
   libnetq/KeyVal.c
   libnetq/Leb128.c
   libnetq/Library.c
@@ -815,9 +843,7 @@ set(libnetq_SOURCES
   libnetq/LooperSource.c
   libnetq/Malloc.c
   libnetq/Math.c
-  libnetq/Network.c
   libnetq/NetworkLooper.c
-  libnetq/Path.c
   libnetq/PlatformLooperCF.c
   libnetq/PlatformLooperStub.c
   libnetq/PlatformLooperWin.c
@@ -826,14 +852,9 @@ set(libnetq_SOURCES
   libnetq/PollVector.c
   libnetq/PrimitiveStorage.c
   libnetq/PrimitiveType.c
-  libnetq/Rect.c
   libnetq/RefCount.c
-  libnetq/RWLockKernel.c
-  libnetq/RWLockPosix.c
-  libnetq/RWLockWin.c
   libnetq/Signal.c
   libnetq/Sleep.c
-  libnetq/SocketHandle.c
   libnetq/Tarball.c
   libnetq/ThreadDataPosix.c
   libnetq/ThreadDataWin.c
@@ -848,9 +869,6 @@ set(libnetq_SOURCES
   libnetq/UTF.c
   libnetq/UUID.c
   libnetq/Version.c
-  libnetq/WakeOnLan.c
-  libnetq/WebSocketCalcAccept.c
-  libnetq/WebSocketFrame.c
   libnetq/Window.c
   libnetq/WindowManager.c
   libnetq/Zip.c
@@ -869,8 +887,10 @@ set(libnetq_CMAKEFILES
   cmake/FindDBC.cmake
   cmake/FindExpat.cmake
   cmake/FindFreeType.cmake
+  cmake/FindGeoIP.cmake
   cmake/FindGIF.cmake
   cmake/FindGumbo.cmake
+  cmake/FindICAL.cmake
   cmake/FindIFF.cmake
   cmake/FindILBM.cmake
   cmake/FindJansson.cmake
@@ -886,6 +906,8 @@ set(libnetq_CMAKEFILES
   cmake/FindLibJpegTurbo.cmake
   cmake/FindLibJWT.cmake
   cmake/FindLibNetQ.cmake
+  cmake/FindLibPostal.cmake
+  cmake/FindLibPSL.cmake
   cmake/FindLibUV.cmake
   cmake/FindLibXml2.cmake
   cmake/FindLZ4.cmake
@@ -1050,6 +1072,13 @@ else ()
   set(NQCONFIG_USE_STUB_JWT 1)
 endif ()
 
+if (WITH_CURL)
+  set(NQCONFIG_USE_CURL_HTTPREQUESTSYNC 1)
+else ()
+  message("! HttpRequestSync has no implementation")
+  set(NQCONFIG_USE_STUB_HTTPREQUESTSYNC 1)
+endif ()
+
 if (WITH_CIVETWEB)
   list(APPEND libnetq_LIBRARIES CivetWeb::CivetWeb)
 endif ()
@@ -1161,6 +1190,10 @@ if (WITH_MHD)
   list(APPEND libnetq_LIBRARIES MHD::MHD)
 endif ()
 
+if (WITH_CURL)
+  list(APPEND libnetq_LIBRARIES CURL::libcurl)
+endif ()
+
 configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
 configure_file(libnetq/GenConfig.h.in "${CMAKE_CURRENT_BINARY_DIR}/generated/libnetq/GenConfig.h" @ONLY)
 configure_file(libnetq/GenVersion.h.in "${CMAKE_CURRENT_BINARY_DIR}/generated/libnetq/GenVersion.h" @ONLY)
@@ -1199,7 +1232,6 @@ foreach (_header ${libnetq_HEADERS})
 endforeach ()
 
 install(FILES ${libnetq_CMAKEFILES} DESTINATION "${CMAKE_INSTALL_DATADIR}/libnetq/cmake")
-install(FILES ${libnetq_CMAKEFILES} DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/libnetq")
 
 install(TARGETS libnetq
   RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
@@ -1227,4 +1259,5 @@ message(STATUS "SQLite3  . . . . . . . . . . . . . . . . . . ${WITH_SQLITE3} (HA
 message(STATUS "CJOSE  . . . . . . . . . . . . . . . . . . . ${WITH_CJOSE} (HAVE ${HAVE_CJOSE})")
 message(STATUS "LibJWT . . . . . . . . . . . . . . . . . . . ${WITH_LIBJWT} (HAVE ${HAVE_LIBJWT})")
 message(STATUS "MHD  . . . . . . . . . . . . . . . . . . . . ${WITH_MHD} (HAVE ${HAVE_MHD})")
+message(STATUS "CURL . . . . . . . . . . . . . . . . . . . . ${WITH_CURL} (HAVE ${HAVE_CURL})")
 message(STATUS "Psapi  . . . . . . . . . . . . . . . . . . . ${WITH_PSAPI} (HAVE ${HAVE_PSAPI})")

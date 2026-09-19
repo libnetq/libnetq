@@ -174,7 +174,6 @@ NQ_WASM_OPCODE(F64Mul,                        "f64.mul",                        
 NQ_WASM_OPCODE(F64Div,                        "f64.div",                             0xa3)
 NQ_WASM_OPCODE(F64Min,                        "f64.min",                             0xa4)
 NQ_WASM_OPCODE(F64Max,                        "f64.max",                             0xa5)
-NQ_WASM_OPCODE(F64Max,                        "f64.max",                             0xa5)
 NQ_WASM_OPCODE(F64Copysign,                   "f64.copysign",                        0xa6)
 NQ_WASM_OPCODE(I32WrapI64,                    "i32.wrap_i64",                        0xa7)
 NQ_WASM_OPCODE(I32TruncF32S,                  "i32.trunc_f32_s",                     0xa8)

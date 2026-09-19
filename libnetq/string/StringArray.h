@@ -22,6 +22,24 @@ struct NQStringArray8 {
   char characters[1];
 };
 
+NQ_EXPORT NQStringArray8* NQStringArray8_alloc(size_t length);
+NQ_EXPORT NQStringArray8* NQStringArray8_create(const char* characters);
+NQ_EXPORT NQStringArray8* NQStringArray8_create2(const char* characters, size_t length);
+NQ_EXPORT void NQStringArray8_destroy(NQStringArray8*);
+NQ_EXPORT void NQStringArray8_shrink(NQStringArray8*, size_t newLength);
+
+#define NQStringArray8_characters(thiz) (thiz)->characters
+
+static inline size_t NQStringArray8_length(const NQStringArray8* thiz)
+{
+  return thiz->length;
+}
+
+static inline bool NQStringArray8_isEmpty(const NQStringArray8* thiz)
+{
+  return thiz->length == 0;
+}
+
 typedef struct NQStringArray16 NQStringArray16;
 struct NQStringArray16 {
   uint16_t length;

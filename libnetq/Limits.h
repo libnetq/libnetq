@@ -39,6 +39,14 @@
 #define NQ_UINT_MIN (0)
 #define NQ_UINT_MAX UINT_MAX
 
+/* LONG */
+#define NQ_LONG_MIN LONG_MIN
+#define NQ_LONG_MAX LONG_MAX
+
+/* ULONG */
+#define NQ_ULONG_MIN (0)
+#define NQ_ULONG_MAX ULONG_MAX
+
 /* LLONG */
 #define NQ_LLONG_MIN LLONG_MIN
 #define NQ_LLONG_MAX LLONG_MAX

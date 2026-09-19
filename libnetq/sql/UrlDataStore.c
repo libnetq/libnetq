@@ -13,7 +13,7 @@
 #include <libnetq/Assert.h>
 #include <libnetq/Log.h>
 #include <libnetq/MinMax.h>
-#include <libnetq/Path.h>
+#include <libnetq/fs/Path.h>
 #include <libnetq/string/StringPrint.h>
 #include <libnetq/crypto/BCrypt.h>
 

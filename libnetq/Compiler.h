@@ -10,8 +10,8 @@
 #ifndef _LIBNETQ_COMPILER_H
 #define _LIBNETQ_COMPILER_H
 
-#define NQ_VERSION_DEC(major, minor, patch) (major * 10000 + minor * 100 + patch)
-#define NQ_VERSION_HEX(major, minor, patch) (major * 0x10000 + minor * 0x100 + patch)
+#define NQ_VERSION_DEC(major, minor, patch) ((major) * 10000 + (minor) * 100 + (patch))
+#define NQ_VERSION_HEX(major, minor, patch) ((major) * 0x10000 + (minor) * 0x100 + (patch))
 
 #if defined(__GNUC__)
 #define NQ_COMPILER_GCC 1
