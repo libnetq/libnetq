@@ -47,7 +47,7 @@ NQStringArray8* NQStringArray8_create2(const char* characters, size_t length)
 {
   NQStringArray8* thiz = NQStringArray8_alloc(length);
   if (thiz != NULL && length != 0)
-    memcpy(thiz->characters, characters, length);
+    NQMemcpy(thiz->characters, characters, length);
   return thiz;
 }
 
@@ -97,7 +97,7 @@ NQStringArray16* NQStringArray16_create2(const char* characters, size_t length)
 {
   NQStringArray16* thiz = NQStringArray16_alloc(length);
   if (thiz != NULL && length != 0)
-    memcpy(thiz->characters, characters, length);
+    NQMemcpy(thiz->characters, characters, length);
   return thiz;
 }
 
@@ -147,7 +147,7 @@ NQStringArray* NQStringArray_create2(const char* characters, size_t length)
 {
   NQStringArray* thiz = NQStringArray_alloc(length);
   if (thiz != NULL && length != 0)
-    memcpy(thiz->characters, characters, length);
+    NQMemcpy(thiz->characters, characters, length);
   return thiz;
 }
 

@@ -8,11 +8,11 @@
  */
 
 #include "config.h"
-#include "libnetq/crypto/BCrypt.h"
+#include "libnetq/crypto/CryptoPw.h"
 
-#ifdef NQCONFIG_USE_STUB_BCRYPT
+#ifdef CRYPTOPW_BACKEND_STUB
 
-bool NQBCryptHashPassword(const char* password, const void* salt, void* hash)
+bool NQCryptoPwHash(const char* password, const void* salt, void* hash)
 {
   NQ_UNUSED_PARAM(password);
   NQ_UNUSED_PARAM(salt);
@@ -20,7 +20,7 @@ bool NQBCryptHashPassword(const char* password, const void* salt, void* hash)
   return false;
 }
 
-bool NQBCryptVerifyPassword(const char* password, const void* salt, const void* hash)
+bool NQCryptoPwVerify(const char* password, const void* salt, const void* hash)
 {
   NQ_UNUSED_PARAM(password);
   NQ_UNUSED_PARAM(salt);
@@ -28,4 +28,4 @@ bool NQBCryptVerifyPassword(const char* password, const void* salt, const void* 
   return false;
 }
 
-#endif /* NQCONFIG_USE_STUB_BCRYPT */
+#endif /* CRYPTOPW_BACKEND_STUB */

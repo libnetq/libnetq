@@ -55,7 +55,7 @@ NQString* NQString_create(const char* characters)
   if (thiz == NULL)
     return NULL;
 
-  memcpy(thiz->characters, characters, length + 1);
+  NQMemcpy(thiz->characters, characters, length + 1);
   return thiz;
 }
 
@@ -65,7 +65,7 @@ NQString* NQString_create2(const char* characters, size_t length)
   if (thiz == NULL)
     return NULL;
 
-  memcpy(thiz->characters, characters, length);
+  NQMemcpy(thiz->characters, characters, length);
   thiz->characters[length] = '\0';
   return thiz;
 }
@@ -85,7 +85,7 @@ NQString* NQString_format(const char* format, ...)
   ret = _vscprintf(format, args);
 #else
   char ch;
-  ret = vsnprintf(&ch, 1, format, args);
+  ret = NQVsnprintf(&ch, 1, format, args);
   va_end(args);
   va_start(args, format);
 #endif
@@ -96,7 +96,7 @@ NQString* NQString_format(const char* format, ...)
     length = (size_t)ret;
     s = NQString_alloc(length);
     if (s != NULL)
-      vsnprintf((char*)s->characters, length + 1, format, args);
+      NQVsnprintf((char*)s->characters, length + 1, format, args);
   }
 
   va_end(args);

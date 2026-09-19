@@ -36,6 +36,8 @@ typedef int NQErrorCode;
 # define NQ_ENAMETOOLONG     ENAMETOOLONG
 # define NQ_EOVERFLOW        EOVERFLOW
 # define NQ_EACCES           EACCES
+# define NQ_EISDIR           EISDIR
+# define NQ_EEXIST           EEXIST
 
 #if defined(NQ_OS_KERNEL)
 # define NQ_ENOTSUPP         ENOTSUPP
@@ -48,7 +50,7 @@ typedef int NQErrorCode;
 #endif
 
 #elif defined(NQ_OS_WINDOWS)
-# define NQ_ENOENT           ERROR_FILE_NOT_FOUND
+# define NQ_ENOENT           ERROR_PATH_NOT_FOUND
 # define NQ_ENOMEM           ERROR_NOT_ENOUGH_MEMORY
 # define NQ_EBUSY            ERROR_BUSY
 # define NQ_EINVAL           ERROR_INVALID_PARAMETER
@@ -63,6 +65,27 @@ typedef int NQErrorCode;
 # define NQ_ENAMETOOLONG     ERROR_FILENAME_EXCED_RANGE
 # define NQ_EOVERFLOW        ERROR_ARITHMETIC_OVERFLOW
 # define NQ_EACCES           ERROR_ACCESS_DENIED
+# define NQ_EISDIR           ERROR_ACCESS_DENIED
+# define NQ_EEXIST           ERROR_ALREADY_EXISTS
+
+#else
+# define NQ_ENOENT           2
+# define NQ_ENOMEM           12
+# define NQ_EBUSY            16
+# define NQ_EINVAL           22
+# define NQ_ENOSYS           38
+# define NQ_ETIMEDOUT        110
+# define NQ_ENOTSUPP         524
+# define NQ_EINPROGRESS      115
+# define NQ_EWOULDBLOCK      11
+# define NQ_ERESTARTSYS      512
+# define NQ_ERANGE           34
+# define NQ_EIO              121
+# define NQ_ENAMETOOLONG     36
+# define NQ_EOVERFLOW        75
+# define NQ_EACCES           13
+# define NQ_EISDIR           21
+# define NQ_EEXIST           17
 
 #endif
 

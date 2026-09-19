@@ -74,11 +74,11 @@ bool NQImageBuilder_addLine(NQImageBuilder* builder, const uint8_t* line)
     return false;
   }
 
-  memcpy(thiz->current, line, thiz->lineSize);
+  NQMemcpy(thiz->current, line, thiz->lineSize);
   thiz->current += thiz->lineSize;
 
   if (thiz->paddingSize != 0) {
-    memset(thiz->current, 0, thiz->paddingSize);
+    NQMemset(thiz->current, 0, thiz->paddingSize);
     thiz->current += thiz->paddingSize;
   }
 

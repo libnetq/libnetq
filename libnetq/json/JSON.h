@@ -12,11 +12,11 @@
 
 #include <libnetq/string/StringPrint.h>
 
-#if defined(NQCONFIG_USE_CJSON_JSON)
+#if defined(JSON_BACKEND_CJSON)
 # include <cjson/cJSON.h>
 typedef cJSON NQJSON;
 typedef cJSON NQJSON_ObjectIter;
-#elif defined(NQCONFIG_USE_JANSSON_JSON)
+#elif defined(JSON_BACKEND_JANSSON)
 # include <jansson.h>
 typedef json_t NQJSON;
 typedef void NQJSON_ObjectIter;

@@ -69,8 +69,8 @@ void NQHTTPMultiPartParser_init(NQHTTPMultiPartParser* thiz, const char* boundar
   thiz->delimiterLength = boundaryLength + kDelimiterLength;
   thiz->totalBodyPartBytes = 0;
 
-  memcpy(thiz->delimiter, kDelimiterPrefix, kDelimiterLength);
-  memcpy(thiz->delimiter + kDelimiterLength, boundary, boundaryLength);
+  NQMemcpy(thiz->delimiter, kDelimiterPrefix, kDelimiterLength);
+  NQMemcpy(thiz->delimiter + kDelimiterLength, boundary, boundaryLength);
 }
 
 NQHTTPMultiPartParser* NQHTTPMultiPartParser_create(const char* boundary, NQHTTPMultiPartParserCallback callback, void* userdata)
@@ -326,7 +326,7 @@ bool NQHTTPMultiPartParser_append(NQHTTPMultiPartParser* thiz, const char* data,
         thiz->state = kErrorToken;
         return false;
       }
-      memcpy(thiz->buffer, start, len);
+      NQMemcpy(thiz->buffer, start, len);
       thiz->bufferLength = len;
     }
   }

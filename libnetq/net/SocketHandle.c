@@ -11,7 +11,9 @@
 #include "libnetq/net/SocketHandle.h"
 
 #include <libnetq/net/PlatformSocket.h>
+#include <libnetq/net/Socket.h>
 #include <libnetq/string/String.h> // for memset
+#include <libnetq/Endian.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Assert.h>
 
@@ -158,69 +160,69 @@ static inline int normalizeOptName(int opt)
 
 #endif
 
-static void NQIPv4EndPoint_initWithInet4(NQIPv4EndPoint* thiz, const struct sockaddr_in* addr)
+static void NQIPv4EndPoint_initWithInet4(NQIPv4EndPoint* thiz, const NQSockAddrIn* addr)
 {
-  memcpy(thiz->address.data, &addr->sin_addr.s_addr, 4);
-  thiz->port = htons(addr->sin_port);
+  NQMemcpy(thiz->address.data, &addr->sin_addr.s_addr, 4);
+  thiz->port = NQHtons(addr->sin_port);
 }
 
-static int NQIPv4EndPoint_toInet4(const NQIPv4EndPoint* ep, struct sockaddr_in* result)
+static int NQIPv4EndPoint_toInet4(const NQIPv4EndPoint* ep, NQSockAddrIn* result)
 {
-  memset(result, 0, sizeof(*result));
-  result->sin_family = AF_INET;
-  memcpy(&result->sin_addr.s_addr, ep->address.data, 4);
-  result->sin_port = htons(ep->port);
+  NQMemset(result, 0, sizeof(*result));
+  result->sin_family = NQ_AF_INET;
+  NQMemcpy(&result->sin_addr.s_addr, ep->address.data, 4);
+  result->sin_port = NQHtons(ep->port);
   return sizeof(*result);
 }
 
-static void NQIPv6EndPoint_initWithInet6(NQIPv6EndPoint* thiz, const struct sockaddr_in6* addr)
+static void NQIPv6EndPoint_initWithInet6(NQIPv6EndPoint* thiz, const NQSockAddrIn6* addr)
 {
-  memcpy(&thiz->address.data[0], &addr->sin6_addr.s6_addr[0], sizeof(addr->sin6_addr.s6_addr));
-  thiz->port = htons(addr->sin6_port);
+  NQMemcpy(&thiz->address.data[0], &addr->sin6_addr.s6_addr[0], sizeof(addr->sin6_addr.s6_addr));
+  thiz->port = NQHtons(addr->sin6_port);
 }
 
-static int NQIPv6EndPoint_toInet6(const NQIPv6EndPoint* ep, struct sockaddr_in6* result)
+static int NQIPv6EndPoint_toInet6(const NQIPv6EndPoint* ep, NQSockAddrIn6* result)
 {
-  memset(result, 0, sizeof(*result));
-  result->sin6_family = AF_INET6;
-  memcpy(&result->sin6_addr.s6_addr[0], &ep->address.data[0], sizeof(ep->address.data));
-  result->sin6_port = htons(ep->port);
+  NQMemset(result, 0, sizeof(*result));
+  result->sin6_family = NQ_AF_INET6;
+  NQMemcpy(&result->sin6_addr.s6_addr[0], &ep->address.data[0], sizeof(ep->address.data));
+  result->sin6_port = NQHtons(ep->port);
   return sizeof(*result);
 }
 
-static bool NQEndPoint_initWithInet(NQEndPoint* thiz, const struct sockaddr* addr, int len)
+static bool NQEndPoint_initWithInet(NQEndPoint* thiz, const NQSockAddr* addr, int len)
 {
-  if (addr->sa_family == AF_INET) {
+  if (addr->sa_family == normalizeSockFamily(NQ_AF_INET)) {
     if (len < sizeof(NQSockAddrIn))
       return false;
     thiz->family = NQ_AF_INET;
-    NQIPv4EndPoint_initWithInet4(&thiz->ip4ep, (const struct sockaddr_in*)addr);
+    NQIPv4EndPoint_initWithInet4(&thiz->ip4ep, (const NQSockAddrIn*)addr);
     return true;
   }
 
-  if (addr->sa_family == AF_INET6) {
+  if (addr->sa_family == normalizeSockFamily(NQ_AF_INET6)) {
     if (len < sizeof(NQSockAddrIn6))
       return false;
     thiz->family = NQ_AF_INET6;
-    NQIPv6EndPoint_initWithInet6(&thiz->ip6ep, (const struct sockaddr_in6*)addr);
+    NQIPv6EndPoint_initWithInet6(&thiz->ip6ep, (const NQSockAddrIn6*)addr);
     return true;
   }
 
   return false;
 }
 
-static int NQEndPoint_toInet(const NQEndPoint* thiz, struct sockaddr* addr, int len)
+static int NQEndPoint_toInet(const NQEndPoint* thiz, NQSockAddr* addr, int len)
 {
   if (thiz->family == NQ_AF_INET) {
     if (len < sizeof(NQSockAddrIn))
       return 0;
-    return NQIPv4EndPoint_toInet4(&thiz->ip4ep, (struct sockaddr_in*)addr);
+    return NQIPv4EndPoint_toInet4(&thiz->ip4ep, (NQSockAddrIn*)addr);
   }
 
   if (thiz->family == NQ_AF_INET6) {
     if (len < sizeof(NQSockAddrIn6))
       return 0;
-    return NQIPv6EndPoint_toInet6(&thiz->ip6ep, (struct sockaddr_in6*)addr);
+    return NQIPv6EndPoint_toInet6(&thiz->ip6ep, (NQSockAddrIn6*)addr);
   }
 
   return 0;
@@ -317,17 +319,17 @@ int NQSocketConnect(NQSocketHandle handle, const NQEndPoint* ep)
 int NQSocketConnect4(NQSocketHandle handle, const NQIPv4EndPoint* ep)
 {
   NQ_ASSERT(ep);
-  struct sockaddr_in addr;
+  NQSockAddrIn addr;
   int size = NQIPv4EndPoint_toInet4(ep, &addr);
-  return NQPlatformSocketConnect(handle, (struct sockaddr*)&addr, size);
+  return NQPlatformSocketConnect(handle, (NQSockAddr*)&addr, size);
 }
 
 int NQSocketConnect6(NQSocketHandle handle, const NQIPv6EndPoint* ep)
 {
   NQ_ASSERT(ep);
-  struct sockaddr_in6 addr;
+  NQSockAddrIn6 addr;
   int size = NQIPv6EndPoint_toInet6(ep, &addr);
-  return NQPlatformSocketConnect(handle, (struct sockaddr*)&addr, size);
+  return NQPlatformSocketConnect(handle, (NQSockAddr*)&addr, size);
 }
 
 int NQSocketAccept(NQSocketHandle handle, NQEndPoint* ep, NQSocketHandle* result)
@@ -391,14 +393,14 @@ int NQSocketSendTo4(NQSocketHandle handle, const uint8_t* buf, size_t len, int f
 {
   NQSockAddrIn addr;
   int size = NQIPv4EndPoint_toInet4(ep, &addr);
-  return NQPlatformSocketSendto(handle, buf, len, flags, (struct sockaddr*)&addr, size);
+  return NQPlatformSocketSendto(handle, buf, len, flags, (NQSockAddr*)&addr, size);
 }
 
 int NQSocketSendTo6(NQSocketHandle handle, const uint8_t* buf, size_t len, int flags, const NQIPv6EndPoint* ep)
 {
   NQSockAddrIn6 addr;
   int size = NQIPv6EndPoint_toInet6(ep, &addr);
-  return NQPlatformSocketSendto(handle, buf, len, flags, (struct sockaddr*)&addr, size);
+  return NQPlatformSocketSendto(handle, buf, len, flags, (NQSockAddr*)&addr, size);
 }
 
 bool NQSocketIsSelectable(NQSocketHandle handle)

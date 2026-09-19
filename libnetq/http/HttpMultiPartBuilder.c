@@ -83,9 +83,9 @@ static inline bool onMultiPartBoundary(NQHttpMultiPartBuilder* thiz, const char*
 static inline bool onMultiPartFieldName(NQHttpMultiPartBuilder* thiz, const char* data, size_t size)
 {
   if (thiz->state == kBoundaryState || thiz->state == kFieldValueState) {
-    if (NQ_CSTR_LENGTH(NQHTTP_HEADER_CONTENT_DISPOSITION) == size && memcmp(NQHTTP_HEADER_CONTENT_DISPOSITION, data, size) == 0)
+    if (NQ_CSTR_LENGTH(NQHTTP_HEADER_CONTENT_DISPOSITION) == size && NQMemcmp(NQHTTP_HEADER_CONTENT_DISPOSITION, data, size) == 0)
       thiz->state = kContentDispositionState;
-    else if (NQ_CSTR_LENGTH(NQHTTP_HEADER_CONTENT_TYPE) == size && memcmp(NQHTTP_HEADER_CONTENT_TYPE, data, size) == 0)
+    else if (NQ_CSTR_LENGTH(NQHTTP_HEADER_CONTENT_TYPE) == size && NQMemcmp(NQHTTP_HEADER_CONTENT_TYPE, data, size) == 0)
       thiz->state = kContentTypeState;
     else
       thiz->state = kFieldNameState;
@@ -110,16 +110,16 @@ static inline bool onMultiPartFieldValue(NQHttpMultiPartBuilder* thiz, const cha
 
     entry = thiz->first;
     while (entry != NULL) {
-      if (entry->nameLength == formData.name.length && memcmp(entry->formData.name, formData.name.characters, formData.name.length) == 0) {
+      if (entry->nameLength == formData.name.length && NQMemcmp(entry->formData.name, formData.name.characters, formData.name.length) == 0) {
         if (entry->flags & kNQHttpFormDataWithFilename) {
           if (formData.filename.length == 0 || formData.filename.length >= kFileNameMax)
             return false;
-          memcpy(entry->filename, formData.filename.characters, formData.filename.length);
+          NQMemcpy(entry->filename, formData.filename.characters, formData.filename.length);
           entry->filename[formData.filename.length] = 0;
           entry->formData.filename = entry->filename;
         }
         if (thiz->hasContentType) {
-          memcpy(entry->contentType, thiz->contentType, kContentTypeMax);
+          NQMemcpy(entry->contentType, thiz->contentType, kContentTypeMax);
           entry->formData.contentType = entry->contentType;
         }
         thiz->curr = entry;
@@ -135,12 +135,12 @@ static inline bool onMultiPartFieldValue(NQHttpMultiPartBuilder* thiz, const cha
       return false;
 
     if (thiz->curr != NULL) {
-      memcpy(thiz->curr->contentType, data, size);
+      NQMemcpy(thiz->curr->contentType, data, size);
       thiz->curr->contentType[size] = 0;
       thiz->curr->formData.contentType = thiz->curr->contentType;
     }
     else {
-      memcpy(thiz->contentType, data, size);
+      NQMemcpy(thiz->contentType, data, size);
       thiz->contentType[size] = 0;
       thiz->hasContentType = true;
     }
@@ -266,7 +266,7 @@ bool NQHttpMultiPartBuilder_enableFormData(NQHttpMultiPartBuilder* thiz, const c
   if (thiz->state != kInitState)
     return false;
 
-  size_t nameLength = strlen(name);
+  size_t nameLength = NQStrlen(name);
   if (nameLength >= NQ_UINT8_MAX)
     return false;
 
@@ -276,7 +276,7 @@ bool NQHttpMultiPartBuilder_enableFormData(NQHttpMultiPartBuilder* thiz, const c
 
   entry->formData.name = (char*)entry + sizeof(struct NQHttpFormDataEntry);
   entry->nameLength = (uint8_t)nameLength;
-  memcpy(entry->formData.name, name, nameLength + 1);
+  NQMemcpy(entry->formData.name, name, nameLength + 1);
 
   entry->formData.filename = NULL;
   entry->formData.contentType = NULL;
@@ -334,11 +334,11 @@ bool NQHttpMultiPartBuilder_finish(NQHttpMultiPartBuilder* thiz)
 NQHttpFormDataBuffer* NQHttpMultiPartBuilder_formData(NQHttpMultiPartBuilder* thiz, const char* name)
 {
   if (thiz->state != kDoneState)
-    return false;
+    return NULL;
 
   struct NQHttpFormDataEntry* entry = thiz->first;
   while (entry != NULL) {
-    if (!strcmp(entry->formData.name, name))
+    if (!NQStrcmp(entry->formData.name, name))
       return entry->hasFormData ? &entry->formData : NULL;
     entry = entry->next;
   }

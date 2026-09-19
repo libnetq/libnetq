@@ -160,8 +160,7 @@ bool NQWebServer_init(NQWebServer* thiz, const NQWebServerParams* params, NQWebS
   thiz->asset = NQCStrIsNullOrEmpty(params->resourceDir) ? NULL : NQFileSystemAssetCreate(params->resourceDir);
 
   NQListHead_init(&thiz->executors);
-  NQListHead_init(&thiz->requestExecutors);
-  NQListHead_init(&thiz->socketExecutors);
+  NQListHead_init(&thiz->listeners);
   NQListHead_init(&thiz->writerExecutors);
   NQListHead_init(&thiz->moduleList);
   NQListHead_init(&thiz->catalogEntries);
@@ -289,9 +288,9 @@ static bool comparePattern(const char* pattern, const char* url)
   }
 }
 
-bool NQWebServer_initRequest(NQWebServer* thiz, NQWebRequest* request)
+bool NQWebServer_initRequest(NQWebServer* thiz, NQWebRequest* request, NQWebSocket* sock)
 {
-  NQListHead* head = &thiz->requestExecutors;
+  NQListHead* head = &thiz->listeners;
   const char* url = NQWebRequest_url(request);
   const char* method = NQWebRequest_method(request);
 
@@ -303,6 +302,10 @@ bool NQWebServer_initRequest(NQWebServer* thiz, NQWebRequest* request)
   NQListHead* iter;
   for (iter = head->next; iter != head; iter = iter->next) {
     struct NQWebRequestListener* entry = NQ_CONTAINER_OF(iter, struct NQWebRequestListener, list);
+    if (sock == NULL && entry->operations == NULL)
+      continue;
+    if (sock != NULL && entry->operations != NULL)
+      continue;
 
     if (NQStrcmp(entry->method, method) != 0)
       continue;
@@ -335,86 +338,31 @@ bool NQWebServer_initRequest(NQWebServer* thiz, NQWebRequest* request)
       continue;
     }
 
-    request->operations = entry->operations;
-    request->userdata = entry->userdata;
-    if (request->operations->init == NULL || request->operations->init(request, entry->userdata) == 0) {
-      if (request->urlPath != urlPath)
-        NQUrlPath_destroy(urlPath);
-      return true;
+    if (entry->operations != NULL) {
+      request->operations = entry->operations;
+      request->userdata = entry->userdata;
+      if (request->operations->init == NULL || request->operations->init(request, request->userdata) == 0) {
+        if (request->urlPath != urlPath)
+          NQUrlPath_destroy(urlPath);
+        return true;
+      }
+      request->operations = NULL;
+      request->userdata = NULL;
+    }
+    else {
+      struct NQWebSocketListener* socketListener = NQ_CONTAINER_OF(entry, struct NQWebSocketListener, requestListener);
+      sock->operations = socketListener->operations;
+      sock->userdata = socketListener->userdata;
+      if (sock->operations->init == NULL || sock->operations->init(sock, sock->userdata) == 0) {
+        if (request->urlPath != urlPath)
+          NQUrlPath_destroy(urlPath);
+        return true;
+      }
     }
 
     if (request->urlPath != urlPath)
       NQUrlPath_destroy(request->urlPath);
-
-    request->operations = NULL;
     request->urlPath = NULL;
-    request->userdata = NULL;
-  }
-
-  NQUrlPath_destroy(urlPath);
-  return false;
-}
-
-bool NQWebServer_initSocket(NQWebServer* thiz, NQWebRequest* request, NQWebSocket* sock)
-{
-  NQListHead* head = &thiz->socketExecutors;
-  const char* url = NQWebRequest_url(request);
-  const char* method = NQWebRequest_method(request);
-
-  NQ_ASSERT(!request->urlPath);
-  NQUrlPath* urlPath = NQUrlPath_create(url, NULL, false);
-  if (urlPath == NULL)
-    return false;
-
-  NQListHead* iter;
-  for (iter = head->next; iter != head; iter = iter->next) {
-    struct NQWebSocketListener* entry = NQ_CONTAINER_OF(iter, struct NQWebSocketListener, list);
-
-    if (NQStrcmp(entry->method, method) != 0)
-      continue;
-
-    switch (entry->patternKind) {
-    case kMatchText:
-      if (NQStrcmp(entry->pattern, url) != 0)
-        continue;
-      request->urlPath = urlPath;
-      break;
-
-    case kMatchSegments:
-      request->urlPath = NQUrlPath_create(url, entry->pattern, true);
-      if (request->urlPath == NULL)
-        continue;
-      break;
-
-    case kMatchPattern:
-      if (!comparePattern(entry->pattern, url))
-        continue;
-      request->urlPath = urlPath;
-      break;
-
-    case kMatchAnyBefore:
-    case kMatchAny:
-      request->urlPath = urlPath;
-      break;
-
-    default:
-      continue;
-    }
-
-    sock->operations = entry->operations;
-    sock->userdata = entry->userdata;
-    if (sock->operations->init == NULL || sock->operations->init(sock, entry->userdata) == 0) {
-      if (request->urlPath != urlPath)
-        NQUrlPath_destroy(urlPath);
-      return true;
-    }
-
-    if (request->urlPath != urlPath)
-      NQUrlPath_destroy(request->urlPath);
-
-    request->operations = NULL;
-    request->urlPath = NULL;
-    request->userdata = NULL;
   }
 
   NQUrlPath_destroy(urlPath);
@@ -442,10 +390,10 @@ static int addRequestListener(NQWebServer* thiz, struct NQWebRequestListener* en
 
   entry->patternKind = getPatternKind(entry->pattern);
 
-  NQListHead* iter = thiz->requestExecutors.next;
+  NQListHead* iter = thiz->listeners.next;
   for (;;) {
-    if (iter == &thiz->requestExecutors) {
-      NQListHead_addBack(&thiz->requestExecutors, &entry->list);
+    if (iter == &thiz->listeners) {
+      NQListHead_addBack(&thiz->listeners, &entry->list);
       break;
     }
     struct NQWebRequestListener* it = NQ_CONTAINER_OF(iter, struct NQWebRequestListener, list);
@@ -456,19 +404,15 @@ static int addRequestListener(NQWebServer* thiz, struct NQWebRequestListener* en
     iter = iter->next;
   }
 
-  if (entry->patternKind == kMatchText) {
-    NQWebServer_allowMetric(thiz, entry->method, entry->pattern);
-  }
-
   return 0;
 }
 
-static void removeRequestListener(NQWebServer* thiz, struct NQWebRequestListener* executor)
+static void removeRequestListener(NQWebServer* thiz, struct NQWebRequestListener* listener)
 {
-  NQ_ASSERT(!NQListHead_isEmpty(&executor->list));
-  // if (entry->type == kMatchText)
-  // NQWebServer_removeMetric
-  NQListHead_remove(&executor->list);
+  NQ_ASSERT(!NQListHead_isEmpty(&listener->list));
+  if (listener->patternKind == kMatchText)
+    // TODO: NQWebServer_removeMetric();
+  NQListHead_remove(&listener->list);
 }
 
 int NQWebExecutor_addRequestListener(NQWebExecutor* executor, struct NQWebRequestListener* listener, const NQWebRequestOperations* operations, void* userdata, const char* method, const char* format, ...)
@@ -499,6 +443,9 @@ int NQWebExecutor_addRequestListener(NQWebExecutor* executor, struct NQWebReques
     NQCStrFree(newMethod);
     NQCStrFree(newPattern);
   }
+  else if (listener->patternKind == kMatchText) {
+    NQWebServer_allowMetric(executor->server, listener->method, listener->pattern);
+  }
 
   return ret;
 }
@@ -510,33 +457,9 @@ void NQWebExecutor_removeRequestListener(NQWebExecutor* executor, struct NQWebRe
   NQCStrFree(listener->pattern);
 }
 
-static int addSocketListener(NQWebServer* thiz, struct NQWebSocketListener* entry)
-{
-  if (entry->method == NULL || entry->pattern == NULL)
-    return -NQ_EINVAL;
-
-  entry->patternKind = getPatternKind(entry->pattern);
-
-  NQListHead* iter = thiz->socketExecutors.next;
-  for (;;) {
-    if (iter == &thiz->socketExecutors) {
-      NQListHead_addBack(&thiz->socketExecutors, &entry->list);
-      break;
-    }
-    struct NQWebSocketListener* it = NQ_CONTAINER_OF(iter, struct NQWebSocketListener, list);
-    if (it->patternKind > entry->patternKind) {
-      NQListHead_addBack(&it->list, &entry->list);
-      break;
-    }
-    iter = iter->next;
-  }
-
-  return 0;
-}
-
 static void removeSocketListener(NQWebServer* thiz, struct NQWebSocketListener* executor)
 {
-  NQListHead_remove(&executor->list);
+  NQListHead_remove(&executor->requestListener.list);
 }
 
 int NQWebExecutor_addSocketListener(NQWebExecutor* executor, struct NQWebSocketListener* listener, const NQWebSocketOperations* operations, void* userdata, const char* method, const char* format, ...)
@@ -555,14 +478,16 @@ int NQWebExecutor_addSocketListener(NQWebExecutor* executor, struct NQWebSocketL
     return -NQ_ENOMEM;
   }
 
-  listener->method = newMethod;
-  listener->pattern = newPattern;
-  listener->executor = executor;
-  NQListHead_init(&listener->list);
+  listener->requestListener.method = newMethod;
+  listener->requestListener.pattern = newPattern;
+  listener->requestListener.executor = executor;
+  NQListHead_init(&listener->requestListener.list);
+  listener->requestListener.userdata = NULL;
+  listener->requestListener.operations = NULL;
   listener->userdata = userdata;
   listener->operations = operations;
 
-  int ret = addSocketListener(executor->server, listener);
+  int ret = addRequestListener(executor->server, &listener->requestListener);
   if (ret) {
     NQCStrFree(newMethod);
     NQCStrFree(newPattern);
@@ -574,8 +499,8 @@ int NQWebExecutor_addSocketListener(NQWebExecutor* executor, struct NQWebSocketL
 void NQWebExecutor_removeSocketListener(NQWebExecutor* executor, struct NQWebSocketListener* listener)
 {
   removeSocketListener(executor->server, listener);
-  NQCStrFree(listener->method);
-  NQCStrFree(listener->pattern);
+  NQCStrFree(listener->requestListener.method);
+  NQCStrFree(listener->requestListener.pattern);
 }
 
 struct NQWebRequestExecutor {

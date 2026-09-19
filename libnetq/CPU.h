@@ -81,6 +81,18 @@
 #  endif
 # endif
 
+#ifdef NQ_CPU_STRICT_MODE
+# ifndef NQ_CPU_NAME
+#  error "NQ_CPU_STRICT_MODE: NQ_CPU_NAME is not defined"
+# endif
+# if !defined(NQ_CPU_LITTLE_ENDIAN) && !defined(NQ_CPU_BIG_ENDIAN)
+#  error "NQ_CPU_STRICT_MODE: CPU endianness could not be detected"
+# endif
+# if !defined(NQ_CPU_64BIT) && !defined(NQ_CPU_32BIT)
+#  error "NQ_CPU_STRICT_MODE: CPU word size could not be detected"
+# endif
+#endif
+
 #ifndef NQ_CPU_NAME
 # define NQ_CPU_NAME "Unknown"
 #endif

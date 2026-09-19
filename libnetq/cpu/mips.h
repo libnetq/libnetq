@@ -54,7 +54,17 @@
 #define NQ_CPU_LITTLE_ENDIAN 1
 #endif
 
-#if defined(__LP64__) || defined(__mips64)
+/* __mips64 means 64-bit registers, not 64-bit pointers: n32 has both __mips64 and 32-bit pointers */
+#if defined(_MIPS_SIM) && defined(_ABI64) && _MIPS_SIM == _ABI64
+#define NQ_CPU_ABI "mips64"
+#define NQ_CPU_64BIT 1
+#elif defined(_MIPS_SIM) && defined(_ABIN32) && _MIPS_SIM == _ABIN32
+#define NQ_CPU_ABI "mipsn32"
+#define NQ_CPU_32BIT 1
+#elif defined(_MIPS_SIM)
+#define NQ_CPU_ABI "mips"
+#define NQ_CPU_32BIT 1
+#elif defined(__LP64__) || defined(__mips64)
 #define NQ_CPU_ABI "mips64"
 #define NQ_CPU_64BIT 1
 #else

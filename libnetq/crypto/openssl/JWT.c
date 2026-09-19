@@ -275,13 +275,13 @@ NQJWT* NQJWT_parse(const char* token, const void* seckey, size_t sklen)
     }
 
     size_t signingSize = NQJWTTokenInfo_signingSize(&info);
-    if (!updateDigest(thiz, (const uint8_t*)token, signingSize, seckey, sklen) || memcmp(thiz->digest, digest, digestSize) != 0) {
+    if (!updateDigest(thiz, (const uint8_t*)token, signingSize, seckey, sklen) || NQMemcmp(thiz->digest, digest, digestSize) != 0) {
       NQJWT_release(thiz);
       return NULL;
     }
   }
 
-  memcpy(NQByteBuffer_data(&thiz->token), token, tokenLength);
+  NQMemcpy(NQByteBuffer_data(&thiz->token), token, tokenLength);
   return thiz;
 }
 
@@ -365,7 +365,7 @@ bool NQJWT_claimSetString(NQJWT* thiz, const char* name, const char* value)
 
 static bool addDataAsBase64ToToken(NQJWT* thiz, const uint8_t* data, size_t size)
 {
-  size_t b64Size = ((size + 2) / 3) * 4;
+  size_t b64Size = NQBase64EncodeLength(size);
 
   size_t oldb64Size = NQByteBuffer_size(&thiz->token);
   if (!NQByteBuffer_resize(&thiz->token, oldb64Size + b64Size)) {
@@ -463,9 +463,9 @@ int NQJWT_token(NQJWT* thiz, char* buffer, size_t length)
 
   size_t result = NQByteBuffer_size(&thiz->token);
   if (length < (result + 1))
-    memcpy(buffer, NQByteBuffer_data(&thiz->token), length);
+    NQMemcpy(buffer, NQByteBuffer_data(&thiz->token), length);
   else {
-    memcpy(buffer, NQByteBuffer_data(&thiz->token), result);
+    NQMemcpy(buffer, NQByteBuffer_data(&thiz->token), result);
     buffer[result] = '\0';
   }
 

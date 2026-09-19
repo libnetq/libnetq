@@ -42,7 +42,7 @@ static bool reserveCapacity(NQStringPrint* thiz, size_t newCapacity)
   if (newBuffer == NULL)
     return false;
 
-  memcpy(newBuffer, thiz->characters, thiz->length + 1);
+  NQMemcpy(newBuffer, thiz->characters, thiz->length + 1);
   if (thiz->characters != thiz->buffer)
     NQFree(thiz->characters);
 
@@ -68,7 +68,7 @@ int NQStringPrint_vprintf(NQStringPrint* thiz, const char* format, va_list list)
   va_list listCopy;
 
   va_copy(listCopy, list);
-  int n = vsnprintf(thiz->characters + thiz->length, thiz->capacity - thiz->length, format, listCopy);
+  int n = NQVsnprintf(thiz->characters + thiz->length, thiz->capacity - thiz->length, format, listCopy);
   va_end(listCopy);
 
   if (n < 0)
@@ -86,7 +86,7 @@ int NQStringPrint_vprintf(NQStringPrint* thiz, const char* format, va_list list)
   if (!reserveCapacity(thiz, newSize))
     return -NQ_ENOMEM;
 
-  int ret = vsnprintf(thiz->characters + thiz->length, thiz->capacity - thiz->length, format, list);
+  int ret = NQVsnprintf(thiz->characters + thiz->length, thiz->capacity - thiz->length, format, list);
   
   NQ_ASSERT(thiz->length + ret + 1 <= thiz->capacity);
 
@@ -111,7 +111,7 @@ int NQStringPrint_write(NQStringPrint* thiz, const char* characters, size_t leng
   if (newSize > thiz->capacity && !reserveCapacity(thiz, newSize))
     return -NQ_ENOMEM;
 
-  memcpy(thiz->characters + thiz->length, characters, length);
+  NQMemcpy(thiz->characters + thiz->length, characters, length);
   thiz->length += length;
   thiz->characters[thiz->length] = '\0';
 
@@ -130,7 +130,7 @@ bool NQStringPrint_writeAll(NQStringPrint* thiz, const char* characters, size_t 
   if (newSize > thiz->capacity && !reserveCapacity(thiz, newSize))
     return false;
 
-  memcpy(thiz->characters + thiz->length, characters, length);
+  NQMemcpy(thiz->characters + thiz->length, characters, length);
   thiz->length += length;
   thiz->characters[thiz->length] = '\0';
 
@@ -155,7 +155,7 @@ bool NQStringPrint_resize(NQStringPrint* thiz, size_t length)
   if (length < thiz->length)
     thiz->characters[length] = '\0';
   else
-    memset(thiz->characters + thiz->length + 1, 0, newSize - thiz->length - 1);
+    NQMemset(thiz->characters + thiz->length + 1, 0, newSize - thiz->length - 1);
 
   thiz->length = length;
   return true;

@@ -19,9 +19,21 @@
 
 #define NQ_CPU_ARM64 1
 #define NQ_CPU_NAME "ARM64"
-#define NQ_CPU_ABI "arm64-v8a"
+
+#if defined(__AARCH64EB__) || defined(__ARM_BIG_ENDIAN)
+#define NQ_CPU_BIG_ENDIAN 1
+#else
 #define NQ_CPU_LITTLE_ENDIAN 1
+#endif
+
+/* ILP32 ABI runs AArch64 code with 32-bit pointers */
+#if defined(__ILP32__) || defined(_ILP32)
+#define NQ_CPU_ABI "arm64-ilp32"
+#define NQ_CPU_32BIT 1
+#else
+#define NQ_CPU_ABI "arm64-v8a"
 #define NQ_CPU_64BIT 1
+#endif
 
 #endif
 
