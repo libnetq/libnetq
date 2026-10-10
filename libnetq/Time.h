@@ -16,16 +16,41 @@
 #ifdef NQ_OS_KERNEL
 #include <linux/time.h>
 typedef time64_t time_t;
+typedef struct tm NQDataTime;
 typedef struct timespec64 NQTimeSpec;
 typedef struct NQTimeVal NQTimeVal;
 struct NQTimeVal {
   time64_t tv_sec;
   long tv_usec;
 };
-#else
+#elif defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX) || defined(NQCONFIG_USE_TIME_H)
 #include <time.h>
+typedef struct tm NQDataTime;
 typedef struct timespec NQTimeSpec;
 typedef struct timeval NQTimeVal;
+#else
+typedef int64_t time_t;
+typedef struct NQTimeSpec NQTimeSpec;
+struct NQTimeSpec {
+  time_t tv_sec;
+  long tv_nsec;
+};
+typedef struct NQTimeVal NQTimeVal;
+struct NQTimeVal {
+  time_t tv_sec;
+  long tv_usec;
+};
+typedef struct NQDataTime NQDataTime;
+struct NQDataTime {
+  int tm_sec;
+  int tm_min;
+  int tm_hour;
+  int tm_mday;
+  int tm_mon;
+  long tm_year;
+  int tm_wday;
+  int tm_yday;
+};
 #endif
 
 #ifdef __cplusplus
@@ -46,23 +71,6 @@ extern "C" {
 #define NQ_EPOCH_YEAR     1970
 
 #define NQIsLeapYear(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
-
-// NQDataTime.h
-typedef struct NQDataTime {
-  int year;
-  int month;
-  int yearDay;
-  int monthDay;
-  int weekDay;
-  int hour;
-  int minute;
-  int second;
-  int utcOffset;
-  int isDST;
-} NQDataTime;
-
-NQ_EXPORT void NQDataTime_init(NQDataTime*);
-NQ_EXPORT void NQDataTime_initLocalTime(NQDataTime*);
 
 #define NQ_TIME_MAX NQ_INT64_MAX
 
@@ -86,10 +94,10 @@ static inline int64_t NQGetUnixTime(void)
 
 NQ_EXPORT NQTickMs NQGetCPUTickMs(void);
 
-NQ_EXPORT void NQGetLocaltime(const time_t* t, struct tm* tm);
-NQ_EXPORT void nq_gmtimems(NQTimeMs time, struct tm* ptm, int* pms);
-NQ_EXPORT void NQGmtime(const time_t* t, struct tm* tm);
-NQ_EXPORT time_t nq_timegm(const struct tm* tm);
+NQ_EXPORT void NQGetLocaltime(const time_t* t, NQDataTime* tm);
+NQ_EXPORT void nq_gmtimems(NQTimeMs time, NQDataTime* ptm, int* pms);
+NQ_EXPORT void NQGmtime(const time_t* t, NQDataTime* tm);
+NQ_EXPORT time_t nq_timegm(const NQDataTime* tm);
 
 enum NQTimeFormat {
   NQ_DT_UNIXEPOCH,           // 1539993600

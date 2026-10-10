@@ -43,9 +43,11 @@ static NQLibrary openWinLibraryW(const WCHAR* path)
 NQLibrary NQLibraryOpen(const char* path)
 {
 #if defined(NQ_OS_WINDOWS)
-  WCHAR winpath[MAX_PATH];
-  NQWinPathFrom(winpath, MAX_PATH, path);
-  NQLibrary handle = openWinLibraryW(winpath);
+  NQWinPath winpath;
+  if (!NQWinPathInit(&winpath, path))
+    return NULL;
+  NQLibrary handle = openWinLibraryW(winpath.characters);
+  NQWinPathFinalize(&winpath);
   if (handle == NULL)
     handle = openWinLibraryA(path);
   return handle;

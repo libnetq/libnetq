@@ -434,6 +434,18 @@ static int DBCLexer_next(DBCLexer* thiz, const char** start, const char* end, DB
   return ret;
 }
 
+#if defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX)
+#define NQStrtod strtod
+#else
+static inline double NQStrtod(const char* str, char** endptr)
+{
+  NQ_UNUSED_PARAM(str);
+  NQ_UNUSED_PARAM(endptr);
+  NQ_ASSERT_NOT_REACHED();
+  return 0;
+}
+#endif
+
 typedef uint8_t DBCStackValueType;
 enum DBCStackValueType {
   kDBCValueCIdentifier,
@@ -772,7 +784,7 @@ static bool DBCMachine_next2(DBCMachine* thiz, const DBCToken* token)
   case _DOUBLE:
     if (token->type != kSIntegerToken && token->type != kUIntegerToken && token->type != kNumberToken)
       return false;
-    number = strtod(token->data, &end);
+    number = NQStrtod(token->data, &end);
     if (token->data + token->size != end)
       return false;
     DBCMachine_pushDouble(thiz, number);
@@ -803,7 +815,7 @@ static bool DBCMachine_next2(DBCMachine* thiz, const DBCToken* token)
       break;
 
     case kNumberToken:
-      number = strtod(token->data, &end);
+      number = NQStrtod(token->data, &end);
       if (token->data + token->size != end)
         return false;
       DBCMachine_pushDouble(thiz, number);
@@ -903,7 +915,7 @@ static bool DBCMachine_next2(DBCMachine* thiz, const DBCToken* token)
   case _ACCESS:
     if (token->type != kCIdentifierToken)
       return false;
-    if (token->size <= 17 || strncmp(token->data, "DUMMY_NODE_VECTOR", 17) != 0)
+    if (token->size <= 17 || NQStrncmp(token->data, "DUMMY_NODE_VECTOR", 17) != 0)
       return false;
     uinteger = NQCStrToUint32(token->data + 17, &end, 16);
     if (token->data + token->size != end)
@@ -914,7 +926,7 @@ static bool DBCMachine_next2(DBCMachine* thiz, const DBCToken* token)
     return true;
 
   case _CMIGNORE:
-    if (token->type == kSymbolToken && memchr(token->data, '\n', token->size) != 0)
+    if (token->type == kSymbolToken && NQMemchr(token->data, '\n', token->size) != 0)
       return false;
     thiz->position++;
     return true;
@@ -922,7 +934,7 @@ static bool DBCMachine_next2(DBCMachine* thiz, const DBCToken* token)
   case _NOTBSKW:
     if (token->type != kCIdentifierToken)
       return false;
-    if (token->size == 3 && memcmp(token->data, "BS_", token->size) == 0)
+    if (token->size == 3 && NQMemcmp(token->data, "BS_", token->size) == 0)
       return false;
     DBCMachine_pushCIdentifier(thiz, token->data);
     thiz->position++;
@@ -931,7 +943,7 @@ static bool DBCMachine_next2(DBCMachine* thiz, const DBCToken* token)
   default:
     if (token->type != kCIdentifierToken && token->type != kSymbolToken)
       return false;
-    if (strncmp(thiz->position, token->data, token->size) != 0)
+    if (NQStrncmp(thiz->position, token->data, token->size) != 0)
       return false;
     thiz->position += token->size;
     return true;

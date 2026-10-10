@@ -25,7 +25,7 @@
 
 void NQDBCJ1939DM1_init(NQDBCJ1939DM1* dm1)
 {
-  memset(dm1, 0, sizeof(*dm1));
+  NQMemset(dm1, 0, sizeof(*dm1));
   dm1->size = 2;
 }
 
@@ -77,7 +77,7 @@ bool NQDBCJ1939DM1_addDTC(NQDBCJ1939DM1* dm1, int spn, uint8_t fmi, uint8_t oc)
 
 size_t NQDBCJ1939DM1_read(const NQDBCJ1939DM1* dm1, void* data, size_t size)
 {
-  memcpy(data, dm1->data, NQGetMin(dm1->size, size));
+  NQMemcpy(data, dm1->data, NQGetMin(dm1->size, size));
   return dm1->size;
 }
 
@@ -226,7 +226,7 @@ uint32_t NQDBCJ1939kDM1DTC(int spn, uint8_t fmi, uint8_t oc)
 
 void NQDBCCanFrame_init(NQDBCCanFrame* frame, uint32_t id, const uint8_t* data, size_t size)
 {
-  memset(frame, 0, sizeof(*frame));
+  NQMemset(frame, 0, sizeof(*frame));
 
   frame->id = id;
   if (data == NULL)
@@ -235,7 +235,7 @@ void NQDBCCanFrame_init(NQDBCCanFrame* frame, uint32_t id, const uint8_t* data, 
     NQ_ASSERT_NOT_REACHED();
   else {
     frame->size = (uint8_t)size;
-    memcpy(frame->data, data, size);
+    NQMemcpy(frame->data, data, size);
   }
 }
 
@@ -244,7 +244,7 @@ bool NQDBCCanFrame_append(NQDBCCanFrame* frame, const uint8_t* data, size_t size
   if ((sizeof(frame->data) - frame->size) < size)
     return false;
 
-  memcpy(frame->data + frame->size, data, size);
+  NQMemcpy(frame->data + frame->size, data, size);
   frame->size += (uint8_t)size;
   return true;
 }
@@ -255,7 +255,7 @@ void NQDBCCanFrame_dump(NQDBCCanFrame* frame, char* buffer, size_t n)
 
 void NQDBCJ1939TPBuilder_init(NQDBCJ1939TPBuilder* builder, uint8_t p, uint32_t pgn, uint8_t da, uint8_t sa)
 {
-  memset(builder, 0, sizeof(*builder));
+  NQMemset(builder, 0, sizeof(*builder));
   builder->p = p;
   builder->sa = sa;
   builder->da = da;
@@ -265,7 +265,7 @@ void NQDBCJ1939TPBuilder_init(NQDBCJ1939TPBuilder* builder, uint8_t p, uint32_t 
   frame->size = 8;
   frame->data[0] = NQDBC_DS_BAM;
   frame->data[4] = 0xFF;
-  memcpy(&frame->data[5], &pgn, 3);
+  NQMemcpy(&frame->data[5], &pgn, 3);
 }
 
 bool NQDBCJ1939TPBuilder_append(NQDBCJ1939TPBuilder* builder, const uint8_t* data, size_t size)
@@ -287,10 +287,10 @@ bool NQDBCJ1939TPBuilder_append(NQDBCJ1939TPBuilder* builder, const uint8_t* dat
   }
 
   if (frame->size < 8)
-    memset(&frame->data[frame->size], 0xFF, 8 - frame->size);
+    NQMemset(&frame->data[frame->size], 0xFF, 8 - frame->size);
 
   frame = &builder->frames[0];
-  memcpy(&frame->data[1], &builder->nbyte, sizeof(builder->nbyte));
+  NQMemcpy(&frame->data[1], &builder->nbyte, sizeof(builder->nbyte));
   frame->data[3] = builder->sn;
 
   return true;

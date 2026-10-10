@@ -75,9 +75,9 @@ static inline void pathWritePush(struct PathWrite* ctx, const char* segment, siz
     }
   }
 
-  NQ_ASSERT(memchr(segment, NQ_PATH_SEPARATOR, length) == NULL);
+  NQ_ASSERT(NQMemchr(segment, NQ_PATH_SEPARATOR, length) == NULL);
 
-  if (length == 2 && segment[0] == '.' && segment[1] == '.') {
+  if (NQIsParentDir2(segment, length)) {
     if (ctx->segmentCount != 0) {
       ctx->segmentCount--;
       if (ctx->start == NULL)
@@ -97,7 +97,7 @@ static inline void pathWritePush(struct PathWrite* ctx, const char* segment, siz
     else if (isWin32Absolute(ctx->first, ctx->length))
       return;
   }
-  else if (ctx->length != 0 || !(length == 2 && segment[1] == ':' && NQIsAlpha(segment[0]))) {
+  else if (ctx->length != 0 || !isWin32Absolute(segment, length)) {
     ctx->segmentCount++;
   }
 
@@ -111,7 +111,7 @@ static inline void pathWritePush(struct PathWrite* ctx, const char* segment, siz
 
   size_t n = NQGetMin(length, ctx->end - ctx->position);
   if (n != 0) {
-    memmove(ctx->position, segment, n);
+    NQMemmove(ctx->position, segment, n);
     ctx->position += n;
   }
 
@@ -131,7 +131,7 @@ static inline int pathWriteFinish(struct PathWrite* ctx)
       *ctx->position++ = '.';
     ctx->length++;
   }
-  else if (ctx->length == 2 && ctx->first[1] == ':' && NQIsAlpha(ctx->first[0])) {
+  else if (isWin32Absolute(ctx->first, ctx->length)) {
     if (ctx->position < ctx->end)
       *ctx->position++ = NQ_PATH_SEPARATOR;
     ctx->length++;
@@ -140,7 +140,7 @@ static inline int pathWriteFinish(struct PathWrite* ctx)
   if (ctx->position < ctx->end)
     *ctx->position = '\0';
 
-  NQ_ASSERT(ctx->start == NULL || ctx->length == ctx->position - ctx->start);
+  NQ_ASSERT(ctx->start == NULL || ctx->length == ctx->position - ctx->start || ctx->position == ctx->end);
   return (int)ctx->length;
 }
 
@@ -156,7 +156,7 @@ static inline void pathReadInit(struct PathRead* ctx, const char** paths, bool r
   if (resolve) {
     for (const char** p = paths; *p; p++) {
       const char* iter = *p;
-      if (isAnyPathSeparator(iter[0]) || (iter[1] == ':' && NQIsAlpha(iter[0]) && (iter[2] == '\0' || isAnyPathSeparator(iter[2]))))
+      if (isAnyPathSeparator(iter[0]) || (NQIsAlpha(iter[0]) && iter[1] == ':' && (iter[2] == '\0' || isAnyPathSeparator(iter[2]))))
         paths = p;
     }
   }
@@ -289,7 +289,7 @@ static bool pathBuilderReserveCapacity(NQPathBuilder* thiz, size_t newCapacity)
   if (newCharacters == NULL)
     return false;
 
-  memcpy(newCharacters, oldCharacters, thiz->length + 1);
+  NQMemcpy(newCharacters, oldCharacters, thiz->length + 1);
   if (oldCharacters != thiz->buffer) {
     NQFree(oldCharacters);
   }
@@ -324,7 +324,19 @@ void NQPathBuilder_clear(NQPathBuilder* thiz, const char* path)
 static inline bool pathBuilderJoin(NQPathBuilder* thiz, const char** paths)
 {
   NQ_ASSERT(paths[0] == thiz->characters);
-  size_t length = NQPathJoin(paths, NULL, 0);
+  size_t length;
+  if (thiz->length == 0) {
+    length = NQPathJoin(paths, thiz->characters, thiz->capacity);
+    if (thiz->capacity > length) {
+      thiz->length = (uint16_t)length;
+      NQ_ASSERT(thiz->characters[thiz->length] == '\0');
+      return true;
+    }
+    thiz->characters[0] = '\0';
+  }
+  else {
+    length = NQPathJoin(paths, NULL, 0);
+  }
   if (!pathBuilderExpandCapacity(thiz, length + 1))
     return false;
   NQ_ASSERT(thiz->characters[thiz->length] == '\0');
@@ -338,7 +350,19 @@ static inline bool pathBuilderJoin(NQPathBuilder* thiz, const char** paths)
 static inline bool pathBuilderResolve(NQPathBuilder* thiz, const char** paths)
 {
   NQ_ASSERT(paths[0] == thiz->characters);
-  size_t length = NQPathResolve(paths, NULL, 0);
+  size_t length;
+  if (thiz->length == 0) {
+    length = NQPathResolve(paths, thiz->characters, thiz->capacity);
+    if (thiz->capacity > length) {
+      thiz->length = (uint16_t)length;
+      NQ_ASSERT(thiz->characters[thiz->length] == '\0');
+      return true;
+    }
+    thiz->characters[0] = '\0';
+  }
+  else {
+    length = NQPathResolve(paths, NULL, 0);
+  }
   if (!pathBuilderExpandCapacity(thiz, length + 1))
     return false;
   NQ_ASSERT(thiz->characters[thiz->length] == '\0');
@@ -405,9 +429,20 @@ void NQWinPathBuilder_init(NQWinPathBuilder* thiz)
   thiz->capacity = NQ_ARRAY_LENGTH(thiz->buffer);
 }
 
+void NQWinPathBuilder_finalize(NQWinPathBuilder* thiz)
+{
+  if (thiz->characters != thiz->buffer)
+    NQFree(thiz->characters);
+}
+
+bool NQWinPathBuilder_join1(NQWinPathBuilder* thiz, const char* path1)
+{
+  return false;
+}
+
 bool NQPathInfoParse(const char* path, NQPathInfo* result)
 {
-  return NQPathInfoParse2(path, strlen(path), result);
+  return NQPathInfoParse2(path, NQStrlen(path), result);
 }
 
 bool NQPathInfoParse2(const char* path, size_t length, NQPathInfo* result)
@@ -528,7 +563,7 @@ size_t NQGetAbsolutePath(char* buffer, size_t n, const char* path)
   //  NQIsAbsolutePath(path)
   size_t len = NQStrlen(path);
   size_t sz = NQGetMin(n, len + 1);
-  memcpy(buffer, path, sz);
+  NQMemcpy(buffer, path, sz);
   return len;
 }
 
@@ -566,16 +601,22 @@ size_t NQWinPathFrom(NQWChar* buffer, size_t n, const char* path)
   return utf16Start - (uint16_t*)buffer;
 }
 
-size_t NQGetAbsoluteWinPath(NQWChar* buffer, size_t n, const char* path)
+int NQAbsoluteWinPath(NQWChar* buffer, size_t n, const char* path)
 {
 #ifdef NQ_OS_WINDOWS
-  WCHAR winpath[MAX_PATH];
-  size_t length = NQWinPathFrom(winpath, sizeof(winpath), path);
-  if (length != 0 && length < NQ_ARRAY_LENGTH(winpath) && n <= MAXDWORD)
-    return (size_t)GetFullPathNameW(winpath, (DWORD)n, buffer, NULL);
+  NQWinPath winpath;
+  if (!NQWinPathInit(&winpath, path))
+    return -NQ_ENOMEM;
+  DWORD ret = GetFullPathNameW(winpath.characters, (DWORD)n, buffer, NULL);
+  NQWinPathFinalize(&winpath);
+  if (ret == 0)
+    return -NQGetLastError();
+  if (ret > NQ_INT32_MAX)
+    return -NQ_EOVERFLOW;
+  return (int)ret;
+#else
+  return -NQ_ENOTSUPP;
 #endif
-
-  return 0;
 }
 
 bool NQIsAbsolutePath(const char* path) {

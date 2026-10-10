@@ -10,7 +10,7 @@
 #include "config.h"
 #include "libnetq/io/ByteBufferChannel.h"
 
-#include <libnetq/String.h>
+#include <libnetq/string/String.h>
 #include <libnetq/MinMax.h>
 
 size_t NQByteBufferChannel_read(NQByteBufferChannel* thiz, void* data, size_t size)
@@ -18,7 +18,7 @@ size_t NQByteBufferChannel_read(NQByteBufferChannel* thiz, void* data, size_t si
   size_t sz = NQByteBuffer_size(&thiz->buffer) - thiz->position;
   size = NQGetMin(sz, size);
   if (size != 0 && data != NULL)
-    memcpy(data, NQByteBuffer_data(&thiz->buffer) + thiz->position, size);
+    NQMemcpy(data, NQByteBuffer_data(&thiz->buffer) + thiz->position, size);
   thiz->position += size;
   return size;
 }
@@ -32,9 +32,9 @@ size_t NQByteBufferChannel_write(NQByteBufferChannel* thiz, const void* data, si
     }
     uint8_t* ptr = NQByteBuffer_data(&thiz->buffer) + thiz->position;
     if (data == NULL)
-      memset(ptr, 0, size);
+      NQMemset(ptr, 0, size);
     else
-      memcpy(ptr, data, size);
+      NQMemcpy(ptr, data, size);
   }
   else {
     if (data == NULL) {
@@ -43,7 +43,7 @@ size_t NQByteBufferChannel_write(NQByteBufferChannel* thiz, const void* data, si
           return 0;
       }
       uint8_t* ptr = NQByteBuffer_data(&thiz->buffer) + thiz->position;
-      memset(ptr, 0, size);
+      NQMemset(ptr, 0, size);
     }
     else if (!NQByteBuffer_insert(&thiz->buffer, thiz->position, data, size))
       return 0;

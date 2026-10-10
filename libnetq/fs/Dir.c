@@ -108,21 +108,28 @@ NQDir* NQDir_open(const char* pathname)
 #endif
 
 #ifdef USE_WINDOWS_DIR
-  WCHAR winpath[MAX_PATH];
-  size_t n = NQWinPathFrom(winpath, MAX_PATH, pathname);
-  if (n == 0 || n > (MAX_PATH - 3))
+  NQWinPath winpath;
+  if (!NQWinPathInit(&winpath, pathname))
     return NULL;
+  if (winpath.length > (NQ_ARRAY_LENGTH(winpath.characters) - 3)) {
+    NQWinPathFinalize(&winpath);
+    return NULL;
+  }
 
-  if (winpath[n - 1] != NQ_WIN32_PATH_SEPARATOR)
-    winpath[n++] = NQ_WIN32_PATH_SEPARATOR;
-  winpath[n++] = '*';
-  winpath[n++] = '\0';
+  if (winpath.characters[winpath.length - 1] != NQ_WIN32_PATH_SEPARATOR)
+    winpath.characters[winpath.length++] = NQ_WIN32_PATH_SEPARATOR;
+  winpath.characters[winpath.length++] = '*';
+  winpath.characters[winpath.length++] = '\0';
 
   dir = (NQDir*)NQMalloc(sizeof(NQDir));
-  if (dir == NULL)
+  if (dir == NULL) {
+    NQWinPathFinalize(&winpath);
     return NULL;
+  }
 
-  dir->handle = FindFirstFileW(winpath, &dir->data);
+  dir->handle = FindFirstFileW(winpath.characters, &dir->data);
+  NQWinPathFinalize(&winpath);
+
   if (dir->handle != INVALID_HANDLE_VALUE) {
     dir->mode = NQ_DIR_OPEN_MODE;
     NQPathFrom((char*)dir->path, sizeof(dir->path), dir->data.cFileName);

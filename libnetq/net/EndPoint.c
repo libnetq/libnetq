@@ -10,10 +10,11 @@
 #include "config.h"
 #include "libnetq/Network.h"
 
+#include <libnetq/Limits.h>
 #include <libnetq/string/String.h>
 #include <libnetq/string/Sprintf.h>
 #include <libnetq/string/Strtox.h>
-#include <libnetq/Limits.h>
+#include <libnetq/net/Socket.h>
 
 static const NQIPv4Address s_ip4AddressAny = {{ 0, 0, 0, 0 }};
 static const NQIPv4Address s_ip4AddressLoopback = {{ 127, 0, 0, 1 }};
@@ -29,7 +30,7 @@ void NQIPv4Address_init(NQIPv4Address* ip4, uint8_t b1, uint8_t b2, uint8_t b3, 
 
 int NQIPv4Address_sprintf(const NQIPv4Address* ip4, char* s, size_t n)
 {
-  return snprintf(s, n, "%i.%i.%i.%i", ip4->data[0], ip4->data[1], ip4->data[2], ip4->data[3]);
+  return NQSnprintf(s, n, "%i.%i.%i.%i", ip4->data[0], ip4->data[1], ip4->data[2], ip4->data[3]);
 }
 
 static bool parseIPDigits(const char* start, const char* end, const char** tokenEnd, uint8_t* result)
@@ -70,7 +71,7 @@ static bool parseIPDigits(const char* start, const char* end, const char** token
 
 bool NQIPv4Address_parse(NQIPv4Address* ip4, const char* s)
 {
-  return NQIPv4Address_parse2(ip4, s, strlen(s));
+  return NQIPv4Address_parse2(ip4, s, NQStrlen(s));
 }
 
 bool NQIPv4Address_parse2(NQIPv4Address* ip4, const char* s, size_t n)
@@ -107,12 +108,12 @@ bool NQIPv4Address_parse2(NQIPv4Address* ip4, const char* s, size_t n)
 
 bool NQIPv4Address_isBroadcast(const NQIPv4Address* ip4)
 {
-  return !memcmp(ip4, &s_ip4AddressBroadcast, sizeof(*ip4));
+  return NQMemcmp(ip4, &s_ip4AddressBroadcast, sizeof(*ip4)) == 0;
 }
 
 bool NQIPv4Address_isAny(const NQIPv4Address* ip4)
 {
-  return !memcmp(ip4, &s_ip4AddressAny, sizeof(*ip4));
+  return NQMemcmp(ip4, &s_ip4AddressAny, sizeof(*ip4)) == 0;
 }
 
 bool NQIPv4Address_isUnicast(const NQIPv4Address* ip4)
@@ -138,17 +139,17 @@ const NQIPv4Address* NQIPv4Address_broadcast(void)
 void NQIPv4EndPoint_init(NQIPv4EndPoint* ep4, const NQIPv4Address* address, uint16_t port)
 {
   ep4->port = port;
-  memcpy(&ep4->address, address, sizeof(*address));
+  NQMemcpy(&ep4->address, address, sizeof(*address));
 }
 
 int NQIPv4EndPoint_sprintf(const NQIPv4EndPoint* ep4, char* s, size_t n)
 {
-  return snprintf(s, n, "%i.%i.%i.%i:%i", ep4->address.data[0], ep4->address.data[1], ep4->address.data[2], ep4->address.data[3], ep4->port);
+  return NQSnprintf(s, n, "%i.%i.%i.%i:%i", ep4->address.data[0], ep4->address.data[1], ep4->address.data[2], ep4->address.data[3], ep4->port);
 }
 
 bool NQIPv4EndPoint_parse(NQIPv4EndPoint* ep4, const char* s)
 {
-  return NQIPv4EndPoint_parse2(ep4, s, strlen(s));
+  return NQIPv4EndPoint_parse2(ep4, s, NQStrlen(s));
 }
 
 bool NQIPv4EndPoint_parse2(NQIPv4EndPoint* ep4, const char* s, size_t n)
@@ -178,19 +179,19 @@ void NQEndPoint_init4(NQEndPoint* ep, const uint8_t data[4], uint16_t port)
 {
   ep->family = NQ_AF_INET;
   ep->ip4ep.port = port;
-  memcpy(ep->ip4ep.address.data, data, sizeof(ep->ip4ep.address.data));
+  NQMemcpy(ep->ip4ep.address.data, data, sizeof(ep->ip4ep.address.data));
 }
 
 void NQEndPoint_init6(NQEndPoint* ep, const uint8_t data[16], uint16_t port)
 {
   ep->family = NQ_AF_INET6;
   ep->ip6ep.port = port;
-  memcpy(ep->ip6ep.address.data, data, sizeof(ep->ip6ep.address.data));
+  NQMemcpy(ep->ip6ep.address.data, data, sizeof(ep->ip6ep.address.data));
 }
 
 bool NQEndPoint_parse(NQEndPoint* ep, const char* s)
 {
-  return NQEndPoint_parse2(ep, s, strlen(s));
+  return NQEndPoint_parse2(ep, s, NQStrlen(s));
 }
 
 bool NQEndPoint_parse2(NQEndPoint* ep, const char* s, size_t len)
@@ -215,7 +216,7 @@ int NQEndPoint_sprintf(const NQEndPoint* ep, char* s, size_t n)
 
 void NQMACAddress_reset(NQMACAddress* mac)
 {
-  memset(mac, 0, sizeof(*mac));
+  NQMemset(mac, 0, sizeof(*mac));
 }
 
 static bool parseMACAddress(const char* s, size_t n, const char* format, NQMACAddress* result)
@@ -256,7 +257,7 @@ static bool parseMACAddress(const char* s, size_t n, const char* format, NQMACAd
   if (start < end)
     return false;
 
-  memcpy(result, &mac, sizeof(mac));
+  NQMemcpy(result, &mac, sizeof(mac));
   return true;
 }
 
@@ -268,5 +269,5 @@ bool NQMACAddress_parse2(NQMACAddress* mac, const char* s, size_t n)
 
 int NQMACAddress_sprintf(const NQMACAddress* mac, char* s, size_t n)
 {
-  return snprintf(s, n, "%02X-%02X-%02X-%02X-%02X-%02X", mac->data[0], mac->data[1], mac->data[2], mac->data[3], mac->data[4], mac->data[5]);
+  return NQSnprintf(s, n, "%02X-%02X-%02X-%02X-%02X-%02X", mac->data[0], mac->data[1], mac->data[2], mac->data[3], mac->data[4], mac->data[5]);
 }

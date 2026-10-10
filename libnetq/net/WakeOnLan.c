@@ -16,9 +16,9 @@ void NQWOLPacket_init(NQWOLPacket* packet, const NQMACAddress* address)
 {
   uint8_t* ptr = packet->data;
 
-  memset(ptr, 0xFF, sizeof(address->data));
+  NQMemset(ptr, 0xFF, sizeof(address->data));
   ptr += sizeof(address->data);
 
   for (size_t i = 0; i < 16; i++, ptr += sizeof(address->data))
-    memcpy(ptr, address->data, sizeof(address->data));
+    NQMemcpy(ptr, address->data, sizeof(address->data));
 }

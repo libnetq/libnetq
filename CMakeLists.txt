@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(libnetq VERSION 1.0.19
+project(libnetq VERSION 1.1.0
   DESCRIPTION "The cross-platform library"
   HOMEPAGE_URL "https://github.com/libnetq/libnetq"
   LANGUAGES "C"
@@ -68,6 +68,7 @@ LNQ_OPTION_DEFINE(LIBRARY_TYPE "Choose the library type: SHARED, STATIC, OBJECT"
 LNQ_OPTION_DEFINE(CHECK_LEVEL "Runtime check in debug mode only" NUMBER 0)
 LNQ_OPTION_DEFINE(ENV_LOGFD "File descriptor name used for logging output" STRING "")
 LNQ_OPTION_DEFINE(USE_LOGHANDLER "External handler used for logging output" BOOLEAN FALSE)
+LNQ_OPTION_DEFINE(JSON_BACKEND "Choose the JSON backend" ENUM STUB OFF ON JANSSON CJSON)
 LNQ_FEATURE_DEFINE(USE_EXPORT "Enable symbol export as a shared library")
 
 if (NOT LNQ_USE_EXPORT STREQUAL AUTO)
@@ -98,12 +99,12 @@ endif ()
 set(HAVE_PTHREAD FALSE)
 set(WITH_PTHREAD OFF)
 find_package(Threads)
-if(Threads_FOUND)
+if (Threads_FOUND)
   set(HAVE_PTHREAD TRUE)
   set(WITH_PTHREAD ON)
   if (COMPILER_SUPPORTS_PTHREAD)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-  endif()
+  endif ()
 endif ()
 
 set(HAVE_OLE32 FALSE)
@@ -155,8 +156,6 @@ endif ()
 
 LNQ_ADD_LIBRARY(ZLIB)
 LNQ_ADD_LIBRARY(OpenSSL)
-LNQ_ADD_LIBRARY(Jansson)
-LNQ_ADD_LIBRARY(CJSON)
 LNQ_ADD_LIBRARY(PCRE2)
 LNQ_ADD_LIBRARY(CivetWeb)
 LNQ_ADD_LIBRARY(LibEvent)
@@ -165,6 +164,7 @@ LNQ_ADD_LIBRARY(Expat)
 LNQ_ADD_LIBRARY(AtomicOps)
 LNQ_ADD_LIBRARY(LibBase58)
 LNQ_ADD_LIBRARY(Secp256k1)
+LNQ_ADD_LIBRARY(Sodium)
 LNQ_ADD_LIBRARY(SQLite3)
 LNQ_ADD_LIBRARY(CJOSE)
 LNQ_ADD_LIBRARY(LibJWT)
@@ -409,9 +409,10 @@ set(libnetq_HEADERS
   libnetq/crypto/kernel/CryptoHash.h
   libnetq/crypto/openssl/CryptoHash.h
   libnetq/crypto/stub/CryptoHash.h
-  libnetq/crypto/BCrypt.h
+  libnetq/crypto/CryptoAead.h
   libnetq/crypto/CryptoAlgorithm.h
   libnetq/crypto/CryptoHash.h
+  libnetq/crypto/CryptoPw.h
   libnetq/crypto/HMAC_SHA1.h
   libnetq/crypto/JWT.h
   libnetq/crypto/MD4.h
@@ -433,12 +434,23 @@ set(libnetq_HEADERS
   libnetq/dbc/DBCErrorCode.h
   libnetq/dbc/DBCTypes.h
 
+  libnetq/fs/kernel/Link.h
+  libnetq/fs/kernel/Mkdir.h
   libnetq/fs/kernel/Stat.h
+  libnetq/fs/posix/Link.h
+  libnetq/fs/posix/Mkdir.h
   libnetq/fs/posix/Stat.h
+  libnetq/fs/stub/Link.h
+  libnetq/fs/stub/Mkdir.h
+  libnetq/fs/stub/Stat.h
+  libnetq/fs/win32/Link.h
+  libnetq/fs/win32/Mkdir.h
   libnetq/fs/win32/Stat.h
   libnetq/fs/Dir.h
   libnetq/fs/FileHandle.h
   libnetq/fs/FileSystem.h
+  libnetq/fs/Link.h
+  libnetq/fs/Mkdir.h
   libnetq/fs/Path.h
   libnetq/fs/Stat.h
 
@@ -477,6 +489,7 @@ set(libnetq_HEADERS
   libnetq/io/UIO.h
 
   libnetq/json/JSON.h
+  libnetq/json/JSONParser.h
   libnetq/json/JSONTypes.h
   libnetq/json/JSONWriter.h
 
@@ -485,6 +498,7 @@ set(libnetq_HEADERS
   libnetq/net/NetBufferQueue.h
   libnetq/net/Netinet.h
   libnetq/net/PlatformSocket.h
+  libnetq/net/SockAddr.h
   libnetq/net/Socket.h
   libnetq/net/SocketHandle.h
   libnetq/net/SpyModule.h
@@ -678,15 +692,18 @@ set(libnetq_SOURCES
   libnetq/crypto/cjose/JWT.c
   libnetq/crypto/kernel/CryptoHash.c
   libnetq/crypto/libjwt/JWT.c
-  libnetq/crypto/openssl/BCrypt.c
   libnetq/crypto/openssl/JWT.c
+  libnetq/crypto/openssl/CryptoAead.c
   libnetq/crypto/openssl/CryptoHash.c
+  libnetq/crypto/openssl/CryptoPw.c
   libnetq/crypto/openssl/MD4.c
   libnetq/crypto/openssl/MD5.c
   libnetq/crypto/openssl/SHA1.c
   libnetq/crypto/openssl/SHA256.c
   libnetq/crypto/secp256k1/Secp256k1.c
-  libnetq/crypto/stub/BCrypt.c
+  libnetq/crypto/sodium/JWT.c
+  libnetq/crypto/stub/CryptoAead.c
+  libnetq/crypto/stub/CryptoPw.c
   libnetq/crypto/stub/JWT.c
   libnetq/crypto/stub/Secp256k1.c
   libnetq/crypto/HMAC_SHA1.c
@@ -713,9 +730,13 @@ set(libnetq_SOURCES
   libnetq/http/HttpStatistics.c
 
   libnetq/fs/kernel/FileHandle.c
+  libnetq/fs/kernel/Link.c
+  libnetq/fs/kernel/Mkdir.c
   libnetq/fs/kernel/Stat.c
   libnetq/fs/posix/FileHandle.c
   libnetq/fs/win32/FileHandle.c
+  libnetq/fs/win32/Link.c
+  libnetq/fs/win32/Mkdir.c
   libnetq/fs/win32/Stat.c
   libnetq/fs/Dir.c
   libnetq/fs/FileHandle.c
@@ -738,6 +759,7 @@ set(libnetq_SOURCES
   libnetq/json/jansson/JSON.c
   libnetq/json/stub/JSON.c
   libnetq/json/JSON.c
+  libnetq/json/JSONParser.c
   libnetq/json/JSONWriter.c
 
   libnetq/net/ChunkBuffer.c
@@ -875,6 +897,7 @@ set(libnetq_SOURCES
   )
 
 set(libnetq_CMAKEFILES
+  cmake/FindALSA.cmake
   cmake/FindAmiVideo.cmake
   cmake/FindApr.cmake
   cmake/FindAtomicOps.cmake
@@ -921,6 +944,7 @@ set(libnetq_CMAKEFILES
   cmake/FindSDL3.cmake
   cmake/FindSDL3_ttf.cmake
   cmake/FindSecp256k1.cmake
+  cmake/FindSodium.cmake
   cmake/FindSQLite3.cmake
   cmake/FindTidy.cmake
   cmake/FindTIFF.cmake
@@ -949,6 +973,10 @@ set(libnetq_LIBRARIES
 set(libnetq_DEFINITIONS
   )
 
+set(libnetq_OPTIONS
+  $<$<COMPILE_LANG_AND_ID:C,GNU,Clang,AppleClang>:-Werror=switch;-Werror=return-type>
+  )
+
 set(libnetq_GENERATED
   )
 
@@ -972,10 +1000,17 @@ else ()
 endif ()
 
 if (WITH_OPENSSL)
-  set(NQCONFIG_USE_OPENSSL_BCRYPT 1)
+  set(CRYPTOPW_BACKEND_OPENSSL 1)
 else ()
-  message("! BCrypt has no implementation")
-  set(NQCONFIG_USE_STUB_BCRYPT 1)
+  message("! CryptoPw has no implementation")
+  set(CRYPTOPW_BACKEND_STUB 1)
+endif ()
+
+if (WITH_OPENSSL)
+  set(CRYPTOAEAD_BACKEND_OPENSSL 1)
+else ()
+  message("! CryptoAead has no implementation")
+  set(CRYPTOAEAD_BACKEND_STUB 1)
 endif ()
 
 if (WITH_OPENSSL)
@@ -1017,13 +1052,34 @@ else ()
   set(NQ_USE_STUB_BINARYASSET 1)
 endif ()
 
-if (WITH_JANSSON)
-  set(NQCONFIG_USE_JANSSON_JSON 1)
-elseif (WITH_CJSON)
-  set(NQCONFIG_USE_CJSON_JSON 1)
-else ()
+set (ENABLE_JSON ON)
+if (LNQ_JSON_BACKEND MATCHES "OFF|FALSE|0")
   message("! JSON has no implementation")
-  set(NQCONFIG_USE_STUB_JSON 1)
+  set (ENABLE_JSON OFF)
+elseif (LNQ_JSON_BACKEND MATCHES "ON|TRUE|1")
+  find_package(Jansson)
+  find_package(CJSON)
+  if (Jansson_FOUND)
+    set(JSON_BACKEND_JANSSON 1)
+    list(APPEND libnetq_LIBRARIES Jansson::Jansson)
+  elseif (CJSON_FOUND)
+    set(JSON_BACKEND_CJSON 1)
+    list(APPEND libnetq_LIBRARIES CJSON::CJSON)
+  else ()
+    message(FATAL_ERROR "No Jansson or CJSON library available")
+  endif ()
+elseif (LNQ_JSON_BACKEND STREQUAL "JANSSON")
+  find_package(Jansson REQUIRED)
+  set(JSON_BACKEND_JANSSON 1)
+  list(APPEND libnetq_LIBRARIES Jansson::Jansson)
+elseif (LNQ_JSON_BACKEND STREQUAL "CJSON")
+  find_package(CJSON REQUIRED)
+  set(JSON_BACKEND_CJSON 1)
+  list(APPEND libnetq_LIBRARIES CJSON::CJSON)
+elseif (LNQ_JSON_BACKEND STREQUAL "STUB")
+  set(JSON_BACKEND_STUB 1)
+else ()
+  message(FATAL_ERROR "Unknown JSON backend ${LNQ_JSON_BACKEND}")
 endif ()
 
 if (WITH_PCRE2)
@@ -1061,12 +1117,14 @@ else ()
   set(NQCONFIG_USE_STUB_SQLITE 1)
 endif ()
 
-if (WITH_CJOSE AND (WITH_JANSSON OR WITH_CJSON))
+if (WITH_CJOSE AND ENABLE_JSON)
   set(NQCONFIG_USE_CJOSE_JWT 1)
 elseif (WITH_LIBJWT)
   set(NQCONFIG_USE_LIBJWT_JWT 1)
-elseif (WITH_OPENSSL AND (WITH_JANSSON OR WITH_CJSON))
+elseif (WITH_OPENSSL AND ENABLE_JSON)
   set(NQCONFIG_USE_OPENSSL_JWT 1)
+elseif (WITH_SODIUM AND ENABLE_JSON)
+  set(NQCONFIG_USE_SODIUM_JWT 1)
 else ()
   message("! JWT has no implementation")
   set(NQCONFIG_USE_STUB_JWT 1)
@@ -1174,6 +1232,10 @@ if (WITH_SECP256K1)
   list(APPEND libnetq_LIBRARIES Bitcoin::Secp256k1)
 endif ()
 
+if (WITH_SODIUM)
+  list(APPEND libnetq_LIBRARIES Sodium::Sodium)
+endif ()
+
 if (WITH_SQLITE3)
   list(APPEND libnetq_LIBRARIES SQLite3::SQLite3)
 endif ()
@@ -1207,6 +1269,7 @@ list(APPEND libnetq_GENERATED
 source_group(TREE "${CMAKE_CURRENT_BINARY_DIR}" FILES ${libnetq_GENERATED})
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${libnetq_HEADERS} ${libnetq_SOURCES} ${libnetq_CMAKEFILES} ${libnetq_DATAFILES})
 add_library(libnetq ${LNQ_LIBRARY_TYPE} ${libnetq_GENERATED} ${libnetq_HEADERS} ${libnetq_SOURCES} ${libnetq_CMAKEFILES} ${libnetq_DATAFILES})
+target_compile_options(libnetq PRIVATE ${libnetq_OPTIONS})
 target_include_directories(libnetq PUBLIC "$<BUILD_INTERFACE:${libnetq_INCLUDES}>")
 target_include_directories(libnetq PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_compile_definitions(libnetq PUBLIC "${libnetq_DEFINITIONS}")
@@ -1214,7 +1277,6 @@ target_link_libraries(libnetq PUBLIC ${libnetq_LIBRARIES})
 set_target_properties(libnetq PROPERTIES LINKER_LANGUAGE "C")
 set_target_properties(libnetq PROPERTIES PREFIX "" IMPORT_PREFIX "")
 set_target_properties(libnetq PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
-set_target_properties(libnetq PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(LibNetQ::LibNetQ ALIAS libnetq)
 
@@ -1245,8 +1307,6 @@ message(STATUS "ZLib . . . . . . . . . . . . . . . . . . . . ${WITH_ZLIB} (HAVE 
 message(STATUS "Ole32  . . . . . . . . . . . . . . . . . . . ${WITH_OLE32} (HAVE ${HAVE_OLE32})")
 message(STATUS "Advapi32 . . . . . . . . . . . . . . . . . . ${WITH_ADVAPI32} (HAVE ${HAVE_ADVAPI32})")
 message(STATUS "OpenSSL  . . . . . . . . . . . . . . . . . . ${WITH_OPENSSL} (HAVE ${HAVE_OPENSSL})")
-message(STATUS "Jansson  . . . . . . . . . . . . . . . . . . ${WITH_JANSSON} (HAVE ${HAVE_JANSSON})")
-message(STATUS "cJSON  . . . . . . . . . . . . . . . . . . . ${WITH_CJSON} (HAVE ${HAVE_CJSON})")
 message(STATUS "PCRE2  . . . . . . . . . . . . . . . . . . . ${WITH_PCRE2} (HAVE ${HAVE_PCRE2})")
 message(STATUS "CivetWeb . . . . . . . . . . . . . . . . . . ${WITH_CIVETWEB} (HAVE ${HAVE_CIVETWEB})")
 message(STATUS "LibEvent . . . . . . . . . . . . . . . . . . ${WITH_LIBEVENT} (HAVE ${HAVE_LIBEVENT})")
@@ -1255,6 +1315,7 @@ message(STATUS "Expat  . . . . . . . . . . . . . . . . . . . ${WITH_EXPAT} (HAVE
 message(STATUS "AtomicOps  . . . . . . . . . . . . . . . . . ${WITH_ATOMICOPS} (HAVE ${HAVE_ATOMICOPS})")
 message(STATUS "LibBase58  . . . . . . . . . . . . . . . . . ${WITH_LIBBASE58} (HAVE ${HAVE_LIBBASE58})")
 message(STATUS "Secp256k1  . . . . . . . . . . . . . . . . . ${WITH_SECP256K1} (HAVE ${HAVE_SECP256K1})")
+message(STATUS "Sodium . . . . . . . . . . . . . . . . . . . ${WITH_SODIUM} (HAVE ${HAVE_SODIUM})")
 message(STATUS "SQLite3  . . . . . . . . . . . . . . . . . . ${WITH_SQLITE3} (HAVE ${HAVE_SQLITE3})")
 message(STATUS "CJOSE  . . . . . . . . . . . . . . . . . . . ${WITH_CJOSE} (HAVE ${HAVE_CJOSE})")
 message(STATUS "LibJWT . . . . . . . . . . . . . . . . . . . ${WITH_LIBJWT} (HAVE ${HAVE_LIBJWT})")

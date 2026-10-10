@@ -350,16 +350,6 @@ int NQTimeMsFormat(NQTimeMs time, int format, char* buffer, size_t size)
   return n;
 }
 
-void NQDataTime_init(NQDataTime* datatime)
-{
-  memset(datatime, 0, sizeof(*datatime));
-}
-
-void NQDataTime_initLocalTime(NQDataTime* datatime)
-{
-  NQ_ASSERT_NOT_REACHED();
-}
-
 NQTimeVal* NQTimeMsToTimeVal(NQTimeMs time, NQTimeVal* tv)
 {
   if (time < 0)
