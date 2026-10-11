@@ -10,7 +10,7 @@
 #ifndef _LIBNETQ_NET_ENDPOINT_H
 #define _LIBNETQ_NET_ENDPOINT_H
 
-#include <libnetq/net/Socket.h>
+#include <libnetq/Basic.h>
 
 #ifdef __cplusplus
 extern "C" {

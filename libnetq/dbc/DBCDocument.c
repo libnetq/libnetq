@@ -188,11 +188,11 @@ bool DBCString_setCharacters(DBCContext* context, DBCString* thiz, const char* c
   if (characters == NULL)
     str = NULL;
   else {
-    size_t lenz = strlen(characters) + 1;
+    size_t lenz = NQStrlen(characters) + 1;
     str = DBCAlloc(context, lenz);
     if (str == NULL)
       return false;
-    memcpy(str, characters, lenz);
+    NQMemcpy(str, characters, lenz);
   }
 
   if (thiz->characters != NULL)
@@ -218,7 +218,7 @@ bool DBCSymbols_set(DBCContext* context, DBCSymbols* thiz, const char** symbols,
   size_t totalInBytes = sizeof(char*);
   for (i = 0; i < count; i++) {
     totalInBytes += sizeof(char*);
-    totalInBytes += strlen(symbols[i]) + 1;
+    totalInBytes += NQStrlen(symbols[i]) + 1;
   }
 
   char* dst = (char*)DBCAlloc(context, totalInBytes);
@@ -435,7 +435,7 @@ bool DBCRanges_add(DBCContext* context, DBCRanges* thiz, uint32_t first, uint32_
         return false;
 
       if (thiz->count > 0)
-        memcpy(newPointer, thiz->rangePointer, sizeof(NQDBCRange) * thiz->count);
+        NQMemcpy(newPointer, thiz->rangePointer, sizeof(NQDBCRange) * thiz->count);
 
       DBCFree(context, thiz->rangePointer);
       thiz->rangePointer = newPointer;
@@ -522,7 +522,7 @@ static bool DBCAttrSetString(NQDBCAttrProto* proto, DBCAttrVariant* variant, con
   case kNQDBCAttrValueEnum:  {
     uint16_t i;
     for (i = 0; i < proto->params.vEnum.count; i++) {
-      if (!strcmp(proto->params.vEnum.data[i], value)) {
+      if (!NQStrcmp(proto->params.vEnum.data[i], value)) {
         variant->vInt = i;
         return true;
       }
@@ -553,12 +553,12 @@ static NQDBCAttrProto* NQDBCAttrProto_create(DBCClass* clazz, const char* name, 
   if (params->type == kNQDBCAttrValueEnum) {
     for (size_t i = 0; i < params->vEnum.count; i++) {
       const char* desc = params->vEnum.data[i];
-      payloadSize += strlen(desc) + 1;
+      payloadSize += NQStrlen(desc) + 1;
     }
     payloadSize += params->vEnum.count * sizeof(char*);
   }
 
-  size_t nlenz = strlen(name) + 1;
+  size_t nlenz = NQStrlen(name) + 1;
   thiz = (NQDBCAttrProto*)DBCAlloc(clazz->context, classSize + payloadSize + nlenz);
   if (thiz == NULL)
     return NULL;
@@ -568,7 +568,7 @@ static NQDBCAttrProto* NQDBCAttrProto_create(DBCClass* clazz, const char* name, 
 
   thiz->params = *params;
   thiz->hasDefaultVariant = false;
-  memset(&thiz->defaultVariant, 0, sizeof(thiz->defaultVariant));
+  NQMemset(&thiz->defaultVariant, 0, sizeof(thiz->defaultVariant));
 
   char* str = (char*)thiz + classSize;
   if (params->type == kNQDBCAttrValueEnum) {
@@ -577,14 +577,14 @@ static NQDBCAttrProto* NQDBCAttrProto_create(DBCClass* clazz, const char* name, 
 
     for (size_t i = 0; i < params->vEnum.count; i++) {
       const char* desc = params->vEnum.data[i];
-      size_t nz = strlen(desc) + 1;
+      size_t nz = NQStrlen(desc) + 1;
       thiz->params.vEnum.data[i] = str;
-      memcpy(str, desc, nz);
+      NQMemcpy(str, desc, nz);
       str += nz;
     }
   }
 
-  memcpy(str, name, nlenz);
+  NQMemcpy(str, name, nlenz);
   thiz->name = str;
   str += nlenz;
 
@@ -752,7 +752,7 @@ NQDBCAttrProto* DBCAttrDefines_find(DBCContext* context, const DBCAttrDefines* t
 {
   uint16_t i;
   for (i = 0; i < thiz->size; i++) {
-    if (!strcmp(thiz->data[i]->name, name))
+    if (!NQStrcmp(thiz->data[i]->name, name))
       return thiz->data[i];
   }
   return NULL;
@@ -769,7 +769,7 @@ static bool DBCAttrDefines_reserve(DBCContext* context, DBCAttrDefines* thiz, si
       return false;
 
     if (thiz->size != 0) {
-      memcpy(newData, thiz->data, thiz->size * sizeof(*thiz->data));
+      NQMemcpy(newData, thiz->data, thiz->size * sizeof(*thiz->data));
       DBCFree(context, thiz->data);
     }
 
@@ -846,7 +846,7 @@ static bool DBCAttrMap_reserve(DBCContext* context, DBCAttrMap* thiz, size_t new
       return false;
 
     if (thiz->size != 0) {
-      memcpy(newData, thiz->data, thiz->size * sizeof(*thiz->data));
+      NQMemcpy(newData, thiz->data, thiz->size * sizeof(*thiz->data));
       DBCFree(context, thiz->data);
     }
 
@@ -875,7 +875,7 @@ static bool DBCAttrMap_add(DBCContext* context, DBCAttrMap* thiz, NQDBCAttribute
     }
   }
 
-  memcpy(&thiz->data[thiz->size], attr, sizeof(*attr));
+  NQMemcpy(&thiz->data[thiz->size], attr, sizeof(*attr));
   thiz->size++;
   return true;
 }
@@ -884,7 +884,7 @@ static NQDBCAttribute* DBCAttrMap_find(DBCContext* context, const DBCAttrMap* th
 {
   uint16_t i;
   for (i = 0; i < thiz->size; i++) {
-    if (!strcmp(thiz->data[i].proto->name, name))
+    if (!NQStrcmp(thiz->data[i].proto->name, name))
       return &thiz->data[i];
   }
   return NULL;
@@ -1226,7 +1226,7 @@ bool DBCArray_reserve(DBCContext* context, DBCArray* thiz, size_t newCapacity)
       return false;
 
     if (thiz->size != 0) {
-      memcpy(newObjects, thiz->objects, thiz->size * sizeof(*thiz->objects));
+      NQMemcpy(newObjects, thiz->objects, thiz->size * sizeof(*thiz->objects));
       DBCFree(context, thiz->objects);
     }
 
@@ -1283,7 +1283,7 @@ NQDBCDocument* NQDBCDocument_create2(const char* name, void* allocator, NQDBCAll
 
   NQ_ASSERT(alloc != NULL && free != NULL);
 
-  size_t lenz = strlen(name) + 1;
+  size_t lenz = NQStrlen(name) + 1;
   NQDBCDocument* thiz = (NQDBCDocument*)alloc(allocator, sizeof(struct NQDBCDocument) + lenz);
   if (thiz == NULL)
     return NULL;
@@ -1309,7 +1309,7 @@ NQDBCDocument* NQDBCDocument_create2(const char* name, void* allocator, NQDBCAll
   DBCObjectAttr_init(context, &thiz->base, clazz->id);
 
   char* str = (char*)thiz + sizeof(struct NQDBCDocument);
-  memcpy(str, name, lenz);
+  NQMemcpy(str, name, lenz);
   thiz->base.name = str;
 
   DBCString_init(context, &thiz->version);
@@ -1594,7 +1594,7 @@ NQDBCAttrProto* NQDBCDocument_findAttrProto(const NQDBCDocument* thiz, const cha
   const DBCAttrDefines* attrProtos = &thiz->context.attrProtos;
   for (size_t index = 0; index < attrProtos->size; index++) {
     NQDBCAttrProto* proto = attrProtos->data[index];
-    if (!strcmp(proto->name, name))
+    if (!NQStrcmp(proto->name, name))
       return proto;
   }
   return NULL;
@@ -1612,7 +1612,7 @@ NQDBCAttrProto* NQDBCDocument_attrProtoAt(const NQDBCDocument* thiz, size_t inde
 
 NQDBCNetNode* NQDBCNetNode_create(DBCContext* context, const char* name)
 {
-  size_t lenz = strlen(name) + 1;
+  size_t lenz = NQStrlen(name) + 1;
 
   NQDBCNetNode* thiz = (NQDBCNetNode*)DBCAlloc(context, sizeof(struct NQDBCNetNode) + lenz);
   if (thiz == NULL)
@@ -1621,7 +1621,7 @@ NQDBCNetNode* NQDBCNetNode_create(DBCContext* context, const char* name)
   DBCObjectAttr_init(context, &thiz->base, kNQDBCNetNodeIndex);
 
   char* str = (char*)thiz + sizeof(struct NQDBCNetNode);
-  memcpy(str, name, lenz);
+  NQMemcpy(str, name, lenz);
   thiz->base.name = str;
 
   return thiz;
@@ -1736,8 +1736,8 @@ bool NQDBCMessage_addTransmitter(NQDBCMessage* thiz, NQDBCNetNode* transmitter)
 
 NQDBCSignal* NQDBCSignal_create(DBCContext* context, const char* name, uint32_t startBit, const NQDBCSigInfo* info)
 {
-  size_t nlenz = strlen(name) + 1;
-  size_t ulenz = strlen(info->unit) + 1;
+  size_t nlenz = NQStrlen(name) + 1;
+  size_t ulenz = NQStrlen(info->unit) + 1;
 
   NQDBCSignal* thiz = (NQDBCSignal*)DBCAlloc(context, sizeof(struct NQDBCSignal) + nlenz + ulenz);
   if (thiz == NULL)
@@ -1746,7 +1746,7 @@ NQDBCSignal* NQDBCSignal_create(DBCContext* context, const char* name, uint32_t 
   DBCObjectAttr_init(context, &thiz->base, kNQDBCSignalIndex);
 
   char* str = (char*)thiz + sizeof(struct NQDBCSignal);
-  memcpy(str, name, nlenz);
+  NQMemcpy(str, name, nlenz);
   thiz->base.name = str;
 
   thiz->valueType = kNQDBCSigValueDouble;
@@ -1764,7 +1764,7 @@ NQDBCSignal* NQDBCSignal_create(DBCContext* context, const char* name, uint32_t 
   thiz->info.maximum = info->maximum;
 
   str += nlenz;
-  memcpy(str, info->unit, ulenz);
+  NQMemcpy(str, info->unit, ulenz);
   thiz->info.unit = str;
 
   thiz->valTable = NULL;
@@ -1991,7 +1991,7 @@ NQDBCEnvVar* NQDBCEnvVar_create(DBCContext* context, const char* name, const NQD
   DBCObjectAttr_init(context, &thiz->base, kNQDBCEnvVarIndex);
 
   char* str = (char*)thiz + sizeof(struct NQDBCEnvVar);
-  memcpy(str, name, nlenz);
+  NQMemcpy(str, name, nlenz);
   thiz->base.name = str;
 
   thiz->info.id = info->id;
@@ -2002,7 +2002,7 @@ NQDBCEnvVar* NQDBCEnvVar_create(DBCContext* context, const char* name, const NQD
   thiz->info.initialValue = info->initialValue;
 
   str += nlenz;
-  memcpy(str, info->unit, ulenz);
+  NQMemcpy(str, info->unit, ulenz);
   thiz->info.unit = str;
 
   thiz->dataSize = 0;
@@ -2103,7 +2103,7 @@ void NQDBCEnvVar_setValTable(NQDBCEnvVar* thiz, NQDBCValTable* valTable)
 
 NQDBCSigGroup* NQDBCSigGroup_create(DBCContext* context, const char* name, uint32_t repetitions)
 {
-  size_t lenz = strlen(name) + 1;
+  size_t lenz = NQStrlen(name) + 1;
 
   NQDBCSigGroup* thiz = (NQDBCSigGroup*)DBCAlloc(context, sizeof(struct NQDBCSigGroup) + lenz);
   if (thiz == NULL)
@@ -2112,7 +2112,7 @@ NQDBCSigGroup* NQDBCSigGroup_create(DBCContext* context, const char* name, uint3
   DBCObjectChild_init(context, &thiz->base, kNQDBCSigGroupIndex);
 
   char* str = (char*)thiz + sizeof(struct NQDBCSigGroup);
-  memcpy(str, name, lenz);
+  NQMemcpy(str, name, lenz);
   thiz->base.name = str;
 
   thiz->repetitions = repetitions;
@@ -2171,7 +2171,7 @@ bool NQDBCSigGroup_addSignal(NQDBCSigGroup* thiz, NQDBCSignal* signal)
 
 NQDBCMessage* NQDBCMessage_create(DBCContext* context, const char* name, uint32_t id, uint32_t sizeInBytes)
 {
-  size_t lenz = strlen(name) + 1;
+  size_t lenz = NQStrlen(name) + 1;
 
   NQDBCMessage* thiz = (NQDBCMessage*)DBCAlloc(context, sizeof(struct NQDBCMessage) + lenz);
   if (thiz == NULL)
@@ -2180,7 +2180,7 @@ NQDBCMessage* NQDBCMessage_create(DBCContext* context, const char* name, uint32_
   DBCObjectAttr_init(context, &thiz->base, kNQDBCMessageIndex);
 
   char* str = (char*)thiz + sizeof(struct NQDBCMessage);
-  memcpy(str, name, lenz);
+  NQMemcpy(str, name, lenz);
   thiz->base.name = str;
 
   thiz->id = id;
@@ -2190,7 +2190,7 @@ NQDBCMessage* NQDBCMessage_create(DBCContext* context, const char* name, uint32_
   DBCArray_init(context, &thiz->signals);
   DBCArray_init(context, &thiz->transmitters);
 
-  thiz->isPseudo = strcmp(name, "VECTOR__INDEPENDENT_SIG_MSG") == 0;
+  thiz->isPseudo = NQStrcmp(name, "VECTOR__INDEPENDENT_SIG_MSG") == 0;
 
   return thiz;
 }
@@ -2256,7 +2256,7 @@ NQDBCSignal* NQDBCMessage_findSignal(NQDBCMessage* thiz, const char* name)
   size_t i;
   for (i = 0; i < thiz->signals.size; i++) {
     NQDBCSignal* iter = toNQDBCSignal(thiz->signals.objects[i]);
-    if (!strcmp(iter->base.name, name))
+    if (!NQStrcmp(iter->base.name, name))
       return iter;
   }
   return NULL;
@@ -2341,7 +2341,7 @@ NQDBCNetNode* NQDBCDocument_findNetNode(NQDBCDocument* thiz, const char* name)
   size_t i;
   for (i = 0; i < thiz->netNodes.size; i++) {
     NQDBCNetNode* iter = toNQDBCNetNode(thiz->netNodes.objects[i]);
-    if (!strcmp(iter->base.name, name))
+    if (!NQStrcmp(iter->base.name, name))
       return iter;
   }
   return NULL;
@@ -2372,7 +2372,7 @@ NQDBCEnvVar* NQDBCDocument_findEnvVar(NQDBCDocument* thiz, const char* name)
   size_t i;
   for (i = 0; i < thiz->envVars.size; i++) {
     NQDBCEnvVar* iter = toNQDBCEnvVar(thiz->envVars.objects[i]);
-    if (!strcmp(iter->base.name, name))
+    if (!NQStrcmp(iter->base.name, name))
       return iter;
   }
   return NULL;
@@ -2383,7 +2383,7 @@ NQDBCValTable* NQDBCDocument_findValTable(NQDBCDocument* thiz, const char* name)
   size_t i;
   for (i = 0; i < thiz->valTables.size; i++) {
     NQDBCValTable* iter = toNQDBCValTable(thiz->valTables.objects[i]);
-    if (!strcmp(iter->base.name, name))
+    if (!NQStrcmp(iter->base.name, name))
       return iter;
   }
   return NULL;
@@ -2394,7 +2394,7 @@ NQDBCSigType* NQDBCDocument_findSigType(NQDBCDocument* thiz, const char* name)
   size_t i;
   for (i = 0; i < thiz->sigTypes.size; i++) {
     NQDBCSigType* iter = toNQDBCSigType(thiz->sigTypes.objects[i]);
-    if (!strcmp(iter->base.name, name))
+    if (!NQStrcmp(iter->base.name, name))
       return iter;
   }
   return NULL;
@@ -2444,12 +2444,12 @@ NQDBCValTable* NQDBCValTable_create(DBCContext* context, const char* name, const
 
   size_t totalInBytes = sizeof(struct NQDBCValTable);
 
-  size_t nlenz = strlen(name) + 1;
+  size_t nlenz = NQStrlen(name) + 1;
   totalInBytes += nlenz;
 
   for (i = 0; i < size; i++) {
     totalInBytes += sizeof(char*) + sizeof(uint32_t);
-    totalInBytes += strlen(items[i].description) + 1;
+    totalInBytes += NQStrlen(items[i].description) + 1;
   }
 
   NQDBCValTable* thiz = (NQDBCValTable*)DBCAlloc(context, totalInBytes);
@@ -2468,7 +2468,7 @@ NQDBCValTable* NQDBCValTable_create(DBCContext* context, const char* name, const
   str += sizeof(uint32_t) * size;
 
   thiz->base.name = str;
-  memcpy(str, name, nlenz);
+  NQMemcpy(str, name, nlenz);
   str += nlenz;
 
   thiz->size = (uint32_t)size;
@@ -2506,7 +2506,7 @@ NQDBCSigType* NQDBCSigType_create(DBCContext* context, const char* name, const N
   DBCObjectBase_init(context, &thiz->base, kNQDBCSigTypeIndex);
 
   char* str = (char*)thiz + sizeof(*thiz);
-  memcpy(str, name, nlenz);
+  NQMemcpy(str, name, nlenz);
   thiz->base.name = str;
 
   thiz->info.sizeInBits = info->sizeInBits;
@@ -2518,7 +2518,7 @@ NQDBCSigType* NQDBCSigType_create(DBCContext* context, const char* name, const N
   thiz->info.maximum = info->maximum;
 
   str += nlenz;
-  memcpy(str, info->unit, ulenz);
+  NQMemcpy(str, info->unit, ulenz);
   thiz->info.unit = str;
 
   thiz->defaultValue = defaultValue;

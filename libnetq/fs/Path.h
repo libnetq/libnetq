@@ -10,7 +10,6 @@
 #ifndef _LIBNETQ_FS_PATH_H
 #define _LIBNETQ_FS_PATH_H
 
-#include <libnetq/Basic.h>
 #include <libnetq/string/StringArray.h>
 #include <libnetq/string/StringRange.h>
 
@@ -165,6 +164,8 @@ struct NQWinPathBuilder {
 };
 
 NQ_EXPORT void NQWinPathBuilder_init(NQWinPathBuilder*);
+NQ_EXPORT void NQWinPathBuilder_finalize(NQWinPathBuilder*);
+NQ_EXPORT bool NQWinPathBuilder_join1(NQWinPathBuilder*, const char* path1);
 
 typedef struct NQPathInfo NQPathInfo;
 struct NQPathInfo {
@@ -182,7 +183,27 @@ NQ_EXPORT bool NQPathInfoParse2(const char* path, size_t length, NQPathInfo* res
 NQ_EXPORT size_t NQPathFrom(char* buffer, size_t n, const NQWChar* path);
 NQ_EXPORT size_t NQGetAbsolutePath(char* buffer, size_t n, const char* path);
 NQ_EXPORT size_t NQWinPathFrom(NQWChar* buffer, size_t n, const char* path);
-NQ_EXPORT size_t NQGetAbsoluteWinPath(NQWChar* buffer, size_t n, const char* path);
+NQ_EXPORT int NQAbsoluteWinPath(NQWChar* buffer, size_t n, const char* path);
+
+typedef struct NQWinPath NQWinPath;
+struct NQWinPath {
+  uint16_t length;
+  NQWChar characters[260];
+};
+
+static inline bool NQWinPathInit(NQWinPath* thiz, const char* path)
+{
+  size_t length = NQWinPathFrom(thiz->characters, NQ_ARRAY_LENGTH(thiz->characters), path);
+  if (length == 0 || length >= NQ_ARRAY_LENGTH(thiz->characters))
+    return false;
+  thiz->length = length;
+  return true;
+}
+
+static inline void NQWinPathFinalize(NQWinPath* thiz)
+{
+  NQ_UNUSED_PARAM(thiz);
+}
 
 static inline bool NQIsAbsolutePosixPath(const char* path)
 {
@@ -192,6 +213,26 @@ static inline bool NQIsAbsolutePosixPath(const char* path)
 static inline bool NQIsRootPosixPath(const char* path)
 {
   return path[0] == NQ_PATH_SEPARATOR && path[1] == '\0';
+}
+
+static inline bool NQIsCurrentDir(const char* path)
+{
+  return path[0] == '.' && path[1] == '\0';
+}
+
+static inline bool NQIsCurrentDir2(const char* path, size_t length)
+{
+  return length == 1 && path[0] == '.';
+}
+
+static inline bool NQIsParentDir(const char* path)
+{
+  return path[0] == '.' && path[1] == '.' && path[2] == '\0';
+}
+
+static inline bool NQIsParentDir2(const char* path, size_t length)
+{
+  return length == 2 && path[0] == '.' && path[1] == '.';
 }
 
 NQ_EXPORT bool NQIsAbsolutePath(const char* path);

@@ -24,7 +24,7 @@ static inline void NQSecureErase(void* data, size_t size)
 #ifdef NQ_OS_WINDOWS
   SecureZeroMemory(data, size);
 #else
-  memset(data, 0, size);
+  NQMemset(data, 0, size);
   NQCompilerFence();
 #endif
 }

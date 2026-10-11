@@ -14,33 +14,17 @@
 
 #if defined(NQ_OS_KERNEL)
 # include <linux/socket.h>
-# include <uapi/linux/in.h> // for sockaddr_in
-# include <uapi/linux/in6.h> // for sockaddr_in6
 #elif defined(NQ_OS_UNIX)
-# include <sys/socket.h>
 # include <unistd.h> // for close
 #elif defined(NQ_OS_WINDOWS)
 # include <winsock2.h>
-# include <ws2tcpip.h> // for sockaddr_in6
 #endif
 
 #include <libnetq/Assert.h>
 #include <libnetq/Limits.h>
 #include <libnetq/MinMax.h>
 #include <libnetq/ErrorCode.h>
-
-typedef struct sockaddr NQSockAddr;
-typedef struct sockaddr_in NQSockAddrIn;
-typedef struct sockaddr_in6 NQSockAddrIn6;
-typedef struct sockaddr_storage NQSockAddrStorage;
-
-typedef union NQUnionSockAddr NQUnionSockAddr;
-union NQUnionSockAddr {
-  NQSockAddr sa;
-  NQSockAddrIn in4;
-  NQSockAddrIn6 in6;
-  NQSockAddrStorage storage;
-};
+#include <libnetq/net/SockAddr.h>
 
 #if defined(NQ_OS_KERNEL)
 

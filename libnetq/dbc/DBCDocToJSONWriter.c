@@ -229,12 +229,12 @@ bool NQDBCDocumentWriteTo(const NQDBCDocument* thiz, const char* filename, NQJSO
   const char* dbName = NULL;
 
   if (NQDBCDocument_getAttrString(thiz, "DBName", &dbName)) {
-    dbNameLen = strlen(dbName);
+    dbNameLen = NQStrlen(dbName);
   }
   if (dbNameLen == 0 && filename != NULL) {
     dbName = filename;
     const char* ext = NQGetExtname(filename);
-    dbNameLen = ext ? ext - filename : strlen(filename);
+    dbNameLen = ext ? ext - filename : NQStrlen(filename);
   }
   if (dbNameLen == 0) {
     dbName = "DBC";
@@ -244,7 +244,7 @@ bool NQDBCDocumentWriteTo(const NQDBCDocument* thiz, const char* filename, NQJSO
   bool isJ1939 = false;
   const char* protocolType = NULL;
   if (NQDBCDocument_getAttrString(thiz, "ProtocolType", &protocolType)) {
-    isJ1939 = strcmp(protocolType, "J1939") == 0;
+    isJ1939 = NQStrcmp(protocolType, "J1939") == 0;
   }
 
   const char* busType = NULL;

@@ -84,7 +84,7 @@ int NQBase64EncodeEx(const void* inData, size_t inSize, char* outData, size_t ou
   if (inData == NULL)
     return -NQ_EINVAL;
 
-  size_t result = ((inSize + 2) / 3) * 4;
+  size_t result = NQBase64EncodeLength(inSize);
   if (result < inSize || NQ_INT32_MAX < result)
     return -NQ_EINVAL;
 
@@ -296,24 +296,4 @@ int NQBase64DecodeEx(const char* inData, size_t inSize, void* outData, size_t ou
     *outStart = '\0';
 
   return result;
-}
-
-int NQBase64Encode(const void* inData, size_t inSize, char* outData, size_t outSize)
-{
-  return NQBase64EncodeEx(inData, inSize, outData, outSize, 0);
-}
-
-int NQBase64Decode(const char* inData, size_t inSize, void* outData, size_t outSize)
-{
-  return NQBase64DecodeEx(inData, inSize, outData, outSize, 0);
-}
-
-int NQBase64URLEncode(const void* inData, size_t inSize, char* outData, size_t outSize)
-{
-  return NQBase64EncodeEx(inData, inSize, outData, outSize, NQ_BASE64_URL);
-}
-
-int NQBase64URLDecode(const char* inData, size_t inSize, void* outData, size_t outSize)
-{
-  return NQBase64DecodeEx(inData, inSize, outData, outSize, NQ_BASE64_URL);
 }

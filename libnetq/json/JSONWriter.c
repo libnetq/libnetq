@@ -13,8 +13,11 @@
 #include "config.h"
 #include "libnetq/json/JSONWriter.h"
 
+#ifdef ENABLE_JSON
+
 #include <libnetq/CType.h>
-#include <libnetq/String.h>
+#include <libnetq/string/String.h>
+#include <libnetq/string/StringUtil.h>
 #include <libnetq/string/Sprintf.h>
 #include <libnetq/Assert.h>
 #include <libnetq/json/JSON.h>
@@ -65,7 +68,7 @@ static inline bool writeImpl(NQJSONWriter* thiz, const char* characters, size_t 
 static inline bool writeHex(NQJSONWriter* thiz, uint16_t code)
 {
   char buf[8];
-  int length = sprintf(buf, "\\u%04u", code);
+  int length = NQSprintf(buf, "\\u%04u", code);
   return thiz->callback(thiz->userdata, buf, (size_t)length);
 }
 
@@ -309,7 +312,7 @@ static inline bool writeInt64(NQJSONWriter* thiz, int64_t val)
     return false;
 
   char buf[32];
-  int length = sprintf(buf, "%lli", (long long int)val);
+  int length = NQSprintf(buf, "%lli", (long long int)val);
   if (length < 0 || length >= sizeof(buf))
     return false;
 
@@ -326,7 +329,7 @@ static inline bool writeUint64(NQJSONWriter* thiz, uint64_t val)
     return false;
 
   char buf[32];
-  int length = sprintf(buf, "%llu", (long long unsigned)val);
+  int length = NQSprintf(buf, "%llu", (long long unsigned)val);
   if (length < 0 || length >= sizeof(buf))
     return false;
 
@@ -347,7 +350,7 @@ static inline bool writeDouble(NQJSONWriter* thiz, double val)
     return false;
 
   char buf[32];
-  int length = snprintf(buf, sizeof(buf), "%f", val);
+  int length = NQSnprintf(buf, sizeof(buf), "%f", val);
   if (length < 0 || length >= sizeof(buf))
     return false;
 
@@ -802,3 +805,5 @@ bool NQJSONWriter_writeKeyBool(NQJSONWriter* thiz, const char* key, bool val)
   }
   return false;
 }
+
+#endif

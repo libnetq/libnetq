@@ -12,46 +12,50 @@
 
 #include <libnetq/Basic.h>
 
-#ifdef NQ_OS_KERNEL
-#include <linux/kstrtox.h>
-#else
+#if defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX) || defined(NQCONFIG_USE_STDLIB_H)
 #include <stdlib.h>
+#elif defined(NQ_OS_KERNEL)
+#include <linux/kstrtox.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX) || defined(NQCONFIG_USE_STDLIB_H)
 static inline long NQSimpleStrtol(const char* str, char** endstr, unsigned base)
 {
-#ifdef NQ_OS_KERNEL
-  return simple_strtol(str, endstr, base);
-#else
   return strtol(str, endstr, (int)base);
-#endif
 }
 
 static inline unsigned long NQSimpleStrtoul(const char* str, char** endstr, unsigned base)
 {
-#ifdef NQ_OS_KERNEL
-  return simple_strtoul(str, endstr, base);
-#else
   return strtoul(str, endstr, (int)base);
-#endif
 }
 
 static inline long long NQSimpleStrtoll(const char* str, char** endstr, unsigned base)
 {
-#ifdef NQ_OS_KERNEL
-  return simple_strtoll(str, endstr, base);
-#else
   return strtoll(str, endstr, (int)base);
-#endif
 }
 
 static inline unsigned long long NQSimpleStrtoull(const char* str, char** endstr, unsigned base)
 {
-#ifdef NQ_OS_KERNEL
-  return simple_strtoull(str, endstr, base);
-#else
   return strtoull(str, endstr, (int)base);
-#endif
 }
+#elif defined(NQ_OS_KERNEL)
+#define NQSimpleStrtol simple_strtol
+#define NQSimpleStrtoul simple_strtoul
+#define NQSimpleStrtoll simple_strtoll
+#define NQSimpleStrtoull simple_strtoull
+#else
+NQ_EXPORT long NQSimpleStrtol(const char* str, char** endstr, unsigned base);
+NQ_EXPORT unsigned long NQSimpleStrtoul(const char* str, char** endstr, unsigned base);
+NQ_EXPORT long long NQSimpleStrtoll(const char* str, char** endstr, unsigned base);
+NQ_EXPORT unsigned long long NQSimpleStrtoull(const char* str, char** endstr, unsigned base);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _LIBNETQ_STRING_STRTOX_H */

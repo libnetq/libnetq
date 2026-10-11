@@ -54,11 +54,11 @@ bool NQChunkBuffer_append(NQChunkBuffer* thiz, const void* data, size_t size)
     uint16_t remainingSize = sizeof(chunk->data) - chunk->size;
     if (remainingSize != 0) {
       if (size < remainingSize) {
-        (void)memcpy(chunk->data + chunk->size, data, size);
+        (void)NQMemcpy(chunk->data + chunk->size, data, size);
         chunk->size += size;
         break;
       }
-      (void)memcpy(chunk->data + chunk->size, data, remainingSize);
+      (void)NQMemcpy(chunk->data + chunk->size, data, remainingSize);
       chunk->size += remainingSize;
       data = (const char*)data + remainingSize;
       size -= remainingSize;

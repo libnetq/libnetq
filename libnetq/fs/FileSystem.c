@@ -69,7 +69,7 @@ bool NQMakeDirectory(const char* path, bool recursive)
 
 #ifdef NQ_OS_WINDOWS
   WCHAR winpath[MAX_PATH];
-  if (NQGetAbsoluteWinPath(winpath, MAX_PATH, path) == 0)
+  if (NQAbsoluteWinPath(winpath, MAX_PATH, path) < 0)
     return false;
   if (SHCreateDirectoryExW(NULL, winpath, NULL) == ERROR_SUCCESS)
     return true;
@@ -136,11 +136,12 @@ int NQRemoveFile(const char* path)
     return -NQGetLastError();
   return 0;
 #elif defined(NQ_OS_WINDOWS)
-  WCHAR winpath[MAX_PATH];
-  NQWinPathFrom(winpath, MAX_PATH, path);
-  if (!DeleteFileW(winpath))
-    return -NQGetLastError();
-  return 0;
+  NQWinPath winpath;
+  if (!NQWinPathInit(&winpath, path))
+    return -NQ_ENOMEM;
+  WINBOOL success = DeleteFileW(winpath.characters);
+  NQWinPathFinalize(&winpath);
+  return success ? 0 : -NQGetLastError();
 #else
   return -NQ_ENOTSUPP;
 #endif

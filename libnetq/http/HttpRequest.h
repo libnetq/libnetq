@@ -30,6 +30,16 @@ NQ_EXPORT bool NQHttpRequest_setUrl(NQHttpRequest*, const char* url);
 NQ_EXPORT bool NQHttpRequest_setMethod(NQHttpRequest*, const char* method);
 NQ_EXPORT bool NQHttpRequest_setPostData(NQHttpRequest*, const void* data, size_t size);
 NQ_EXPORT bool NQHttpRequest_setFollowLocation(NQHttpRequest*, bool value);
+NQ_EXPORT bool NQHttpRequest_setVerifyingPeerSsl(NQHttpRequest* thiz, bool value);
+NQ_EXPORT bool NQHttpRequest_setVerifyingHostSsl(NQHttpRequest* thiz, bool value);
+
+static inline bool NQHttpRequest_setVerifyingSsl(NQHttpRequest* thiz, bool value)
+{
+  bool peerOk = NQHttpRequest_setVerifyingPeerSsl(thiz, value);
+  bool hostOk = NQHttpRequest_setVerifyingHostSsl(thiz, value);
+  return peerOk && hostOk;
+}
+
 NQ_EXPORT bool NQHttpRequest_setTimeoutMs(NQHttpRequest* thiz, int64_t timeoutMs);
 NQ_EXPORT bool NQHttpRequest_addHeader(NQHttpRequest*, const char* name, const char* value);
 
@@ -44,6 +54,18 @@ NQ_EXPORT NQHttpRequestHeaderIter* NQHttpRequest_responseHeaderFirst(NQHttpReque
 NQ_EXPORT NQHttpRequestHeaderIter* NQHttpRequest_responseHeaderNext(NQHttpRequest*, NQHttpRequestHeaderIter* iter);
 NQ_EXPORT const char* NQHttpRequestHeaderIter_name(NQHttpRequestHeaderIter* iter);
 NQ_EXPORT const char* NQHttpRequestHeaderIter_value(NQHttpRequestHeaderIter* iter);
+
+struct NQSendEmailParams {
+  const char* smtp;
+  const char* username;
+  const char* password;
+  const char* from;
+  const char* to;
+  const char* subject;
+  const char* content;
+};
+
+NQ_EXPORT int NQSendEmailSync(struct NQSendEmailParams* params);
 
 #ifdef __cplusplus
 }

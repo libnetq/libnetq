@@ -13,7 +13,7 @@
 #include "config.h"
 #include "libnetq/json/JSON.h"
 
-#ifdef NQCONFIG_USE_STUB_JSON
+#ifdef JSON_BACKEND_STUB
 
 const char* NQJSON_package(void)
 {

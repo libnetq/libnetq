@@ -59,6 +59,8 @@ const char* NQWasmValTypeToString(uint8_t type)
     return "v128";
   case NQ_WASM_TYPE_FUNCREF:
     return "funcref";
+  case NQ_WASM_TYPE_EXTERNREF:
+    return "externref";
   }
 
   return "unknown";
