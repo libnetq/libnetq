@@ -28,6 +28,7 @@ extern "C" {
 #define NQIsPrintable(c) (' ' <= (c) && (c) <= '~')
 #define NQToDigitValue(c) ((c) - '0')
 #define NQToHexValue(c) ((c) < 'A' ? (c) - '0' : ((c) - 'A' + 10) & 0xF)
+#define NQToLower(c) (NQIsUpper(c) ? ((c) | 0x20) : (c))
 
 #define NQIsFirstIdentifier(c) (NQIsAlpha(c) || c == '_')
 #define NQIsNextIdentifier(c) (NQIsDigit(c) || NQIsFirstIdentifier(c))

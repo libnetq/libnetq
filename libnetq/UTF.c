@@ -301,7 +301,7 @@ bool NQCalculateUTF8Info(const uint8_t* utf8Start, const uint8_t* utf8End, NQUni
     return false;
 
   if (utf8End == NULL)
-    utf8End = utf8Start + strlen((const char*)utf8Start);
+    utf8End = utf8Start + NQStrlen((const char*)utf8Start);
 
   NQUChar character;
   NQUChar orAllChars = 0;
@@ -341,7 +341,7 @@ bool NQConvertUTF8ToUTF16(const uint8_t* utf8Start, const uint8_t* utf8End, uint
     return false;
 
   if (utf8End == NULL)
-    utf8End = utf8Start + strlen((const char*)utf8Start);
+    utf8End = utf8Start + NQStrlen((const char*)utf8Start);
 
   if (utf16Start == NULL)
     return NQCalculateUTF8Info(utf8Start, utf8End, info);

@@ -30,21 +30,21 @@ typedef enum NQLogLevel {
 
 NQ_EXPORT char NQLogLevelToChar(NQLogLevel level);
 
-typedef int (*NQLogHandler) (void* userdata, NQLogLevel level, const char* tag, const char* format, va_list args);
+typedef int (*NQLogHandler) (void* userdata, NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, va_list args);
 NQ_EXPORT void NQLogSetHandler(NQLogHandler handler, void* userdata);
 
-NQ_EXPORT int NQLog_snprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* format, ...) NQ_ATTRIBUTE_PRINTF(5, 6);
-NQ_EXPORT int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* format, va_list args) NQ_ATTRIBUTE_PRINTF(5, 0);
+NQ_EXPORT int NQLog_snprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, ...) NQ_ATTRIBUTE_PRINTF(8, 9);
+NQ_EXPORT int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, va_list args) NQ_ATTRIBUTE_PRINTF(8, 0);
 
-NQ_EXPORT int NQLog_print(NQLogLevel level, const char* tag, const char* format, ...) NQ_ATTRIBUTE_PRINTF(3, 4);
-NQ_EXPORT int NQLog_vprint(NQLogLevel level, const char* tag, const char* format, va_list args) NQ_ATTRIBUTE_PRINTF(3, 0);
+NQ_EXPORT int NQLog_print(NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, ...) NQ_ATTRIBUTE_PRINTF(6, 7);
+NQ_EXPORT int NQLog_vprint(NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, va_list args) NQ_ATTRIBUTE_PRINTF(6, 0);
 
 NQ_EXPORT void NQLog_report(NQLogLevel level, const char* tag, const char* file, int line, const char* function);
-NQ_EXPORT NQ_NORETURN void NQLog_assert(const char* condition, const char* tag, const char* format, ...) NQ_ATTRIBUTE_PRINTF(3, 4);
+NQ_EXPORT NQ_NORETURN void NQLog_assert(const char* condition, const char* tag, const char* file, int line, const char* function, const char* format, ...) NQ_ATTRIBUTE_PRINTF(6, 7);
 
-#define NQ_ALWAYS_LOGI(...) NQLog_print(NQ_LOG_INFO,    NQ_LOG_TAG, __VA_ARGS__)
-#define NQ_ALWAYS_LOGW(...) NQLog_print(NQ_LOG_WARNING, NQ_LOG_TAG, __VA_ARGS__)
-#define NQ_ALWAYS_LOGE(...) NQLog_print(NQ_LOG_ERROR,   NQ_LOG_TAG, __VA_ARGS__)
+#define NQ_ALWAYS_LOGI(...) NQLog_print(NQ_LOG_INFO,    NQ_LOG_TAG, NQ_FILE, NQ_LINE, NQ_PRETTY_FUNCTION, __VA_ARGS__)
+#define NQ_ALWAYS_LOGW(...) NQLog_print(NQ_LOG_WARNING, NQ_LOG_TAG, NQ_FILE, NQ_LINE, NQ_PRETTY_FUNCTION, __VA_ARGS__)
+#define NQ_ALWAYS_LOGE(...) NQLog_print(NQ_LOG_ERROR,   NQ_LOG_TAG, NQ_FILE, NQ_LINE, NQ_PRETTY_FUNCTION, __VA_ARGS__)
 
 #if defined(NDEBUG) || !defined(NQ_LOG_TAG)
 #define NQ_LOGI(...) ((void)0)

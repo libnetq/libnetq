@@ -54,21 +54,32 @@
 #define NQ_CPU_LITTLE_ENDIAN 1
 #endif
 
+/* Soft float changes the calling convention (FP arguments in integer registers), so it is part of the ABI name.
+ * Hard float with IEEE 754-2008 NaNs (-mnan=2008) cannot be mixed with legacy-NaN code and has its own dynamic
+ * linker (ld-linux-mipsn8.so.1); it is only marked before Release 6, which always uses 2008 NaNs */
+#if defined(__mips_soft_float)
+# define NQ_CPU_MIPS_ABI_FLOAT " (soft-float)"
+#elif defined(__mips_nan2008) && !(defined(__mips_isa_rev) && __mips_isa_rev >= 6)
+# define NQ_CPU_MIPS_ABI_FLOAT " (nan2008)"
+#else
+# define NQ_CPU_MIPS_ABI_FLOAT ""
+#endif
+
 /* __mips64 means 64-bit registers, not 64-bit pointers: n32 has both __mips64 and 32-bit pointers */
 #if defined(_MIPS_SIM) && defined(_ABI64) && _MIPS_SIM == _ABI64
-#define NQ_CPU_ABI "mips64"
+#define NQ_CPU_ABI "mips64" NQ_CPU_MIPS_ABI_FLOAT
 #define NQ_CPU_64BIT 1
 #elif defined(_MIPS_SIM) && defined(_ABIN32) && _MIPS_SIM == _ABIN32
-#define NQ_CPU_ABI "mipsn32"
+#define NQ_CPU_ABI "mipsn32" NQ_CPU_MIPS_ABI_FLOAT
 #define NQ_CPU_32BIT 1
 #elif defined(_MIPS_SIM)
-#define NQ_CPU_ABI "mips"
+#define NQ_CPU_ABI "mips" NQ_CPU_MIPS_ABI_FLOAT
 #define NQ_CPU_32BIT 1
 #elif defined(__LP64__) || defined(__mips64)
-#define NQ_CPU_ABI "mips64"
+#define NQ_CPU_ABI "mips64" NQ_CPU_MIPS_ABI_FLOAT
 #define NQ_CPU_64BIT 1
 #else
-#define NQ_CPU_ABI "mips"
+#define NQ_CPU_ABI "mips" NQ_CPU_MIPS_ABI_FLOAT
 #define NQ_CPU_32BIT 1
 #endif
 

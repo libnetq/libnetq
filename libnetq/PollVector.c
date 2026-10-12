@@ -49,8 +49,8 @@ static bool NQPollVector_reserveCapacity(NQPollVector* thiz, size_t newCapacity)
 
   NQPlatformPollfd* newPollfd = (NQPlatformPollfd*)((char*)newData + newCapacity * (sizeof(struct NQPollData)));
   if (thiz->size != 0) {
-    memcpy(newData, thiz->data, thiz->size);
-    memcpy(newPollfd, thiz->pollfd, thiz->size);
+    NQMemcpy(newData, thiz->data, thiz->size);
+    NQMemcpy(newPollfd, thiz->pollfd, thiz->size);
     NQFree(thiz->data);
   }
 

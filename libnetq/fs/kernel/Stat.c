@@ -15,12 +15,12 @@
 #include <linux/namei.h>
 #include <linux/fs.h>
 
-int NQGetStat(const char* path, NQStat* st)
+int NQGetStat(const char* path, unsigned flags, NQStat* st)
 {
   struct path p;
   int err;
 
-  err = kern_path(path, LOOKUP_FOLLOW, &p);
+  err = kern_path(path, (flags & NQ_STAT_FOLLOW) ? LOOKUP_FOLLOW : 0, &p);
   if (err)
     return err;
 

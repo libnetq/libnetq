@@ -16,6 +16,9 @@
 /* Use MD5 implementation from the OpenSSL library */
 #cmakedefine NQCONFIG_USE_OPENSSL_MD5
 
+/* Use libnetq's own MD5 implementation */
+#cmakedefine NQCONFIG_USE_GENERIC_MD5
+
 /* Use SHA1 implementation from the OpenSSL library */
 #cmakedefine NQCONFIG_USE_OPENSSL_SHA1
 
@@ -60,9 +63,6 @@
 
 /* Use native cypto random implementation */
 #cmakedefine NQCONFIG_USE_PLATFORM_CRYPTORAND
-
-/* Use HttpRequestSync implementation from the libcurl library */
-#cmakedefine NQCONFIG_USE_CURL_HTTPREQUESTSYNC
 
 /* Use stub for CryptoHash */
 #cmakedefine NQCONFIG_USE_STUB_CRYPTOHASH

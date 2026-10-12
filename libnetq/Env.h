@@ -16,7 +16,10 @@
 extern "C" {
 #endif
 
-NQ_EXPORT int NQEnvGet(const char* name, char* value, size_t n);
+NQ_EXPORT const char* NQEnvCreate(const char* name);
+NQ_EXPORT void NQEnvFree(const char* value);
+
+NQ_EXPORT int NQEnvGet(const char* name, char* value, size_t n); // NQEnvRead
 NQ_EXPORT int NQEnvSet(const char* name, const char* value);
 NQ_EXPORT int NQEnvUnset(const char* name);
 

@@ -14,6 +14,7 @@
 
 #if defined(NQCONFIG_USE_OPENSSL_MD5)
 # include <openssl/md5.h>
+#elif defined(NQCONFIG_USE_GENERIC_MD5)
 #else
 # include <libnetq/crypto/CryptoHash.h>
 #endif
@@ -25,9 +26,18 @@ extern "C" {
 #define NQMD5_DIGEST_SIZE 16
 typedef uint8_t NQMD5Digest[NQMD5_DIGEST_SIZE];
 
-#if defined(NQCONFIG_USE_OPENSSL_MD5)
+#if defined(NQCONFIG_USE_OPENSSL_MD5) || defined(NQCONFIG_USE_GENERIC_MD5)
 
+#ifdef NQCONFIG_USE_OPENSSL_MD5
 #define NQMD5 MD5_CTX
+#else
+typedef struct NQMD5 NQMD5;
+struct NQMD5 {
+  uint32_t state[4];
+  uint64_t length;
+  uint8_t buffer[64];
+};
+#endif
 
 NQ_EXPORT bool NQMD5_init(NQMD5*);
 static inline void NQMD5_finalize(NQMD5* thiz)

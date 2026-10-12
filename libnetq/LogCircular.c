@@ -131,7 +131,7 @@ size_t NQLogCircular_vprint(NQLogCircular* log, NQLogLevel level, const char* fo
 #else
   va_list argsCopy;
   va_copy(argsCopy, args);
-  length = vsnprintf(NULL, 0, format, argsCopy);
+  length = NQVsnprintf(NULL, 0, format, argsCopy);
 #endif
 
   size = length + LOG_PREFIX_SIZE;
@@ -141,7 +141,7 @@ size_t NQLogCircular_vprint(NQLogCircular* log, NQLogLevel level, const char* fo
     return 0;
 
   characters = NQLogCircular_add_prefix(item->characters, level);
-  length = vsnprintf(characters, (size_t)length + 1, format, args);
+  length = NQVsnprintf(characters, (size_t)length + 1, format, args);
   item->length = (uint16_t)(LOG_PREFIX_SIZE + length);
 
   NQ_ASSERT(item->characters[size] == '\0');

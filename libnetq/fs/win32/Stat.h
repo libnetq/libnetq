@@ -23,6 +23,11 @@ extern "C" {
 #define NQ_STAT_IFDIR 0040000
 #define NQ_STAT_IFLNK 0120000
 
+/* NQGetStat flags */
+#define NQ_STAT_FOLLOW 0x1 /* follow symbolic links, as stat() does; without it, as lstat() */
+#define NQ_STAT_EXTRA  0x2 /* also real blocks, nlink, dev and ino: without it they
+                            * may be estimates on Windows (size / 512, 1, 0, 0) */
+
 typedef struct NQStat NQStat;
 struct NQStat {
   uint32_t mode;
@@ -30,9 +35,39 @@ struct NQStat {
   NQTimeMs accesseTimeMs;
   NQTimeMs modificationTimeMs;
   NQTimeMs creationTimeMs;
+  uint64_t blocks; /* 512-byte units allocated: less than the size for sparse and compressed files */
+  uint64_t nlink;  /* hard links */
+  uint64_t dev;    /* volume serial number */
+  uint64_t ino;    /* file index on the volume */
 };
 
-NQ_EXPORT int NQGetStat(const char* path, NQStat* st);
+/* Looks up `path`, following symbolic links and junctions when `flags`
+ * has NQ_STAT_FOLLOW. A reparse point not followed has NQ_STAT_IFLNK on
+ * top of the directory or file bits. One call does (two for a link
+ * followed); NQ_STAT_EXTRA takes a handle opened and up to three queries.
+ * Returns 0, or a negative error code. */
+NQ_EXPORT int NQGetStat(const char* path, unsigned flags, NQStat* st);
+
+/* Space allocated to the file, in 512-byte units on every platform */
+static inline uint64_t NQStat_blocks(const NQStat* thiz)
+{
+  return thiz->blocks;
+}
+
+static inline uint64_t NQStat_nlink(const NQStat* thiz)
+{
+  return thiz->nlink;
+}
+
+static inline uint64_t NQStat_dev(const NQStat* thiz)
+{
+  return thiz->dev;
+}
+
+static inline uint64_t NQStat_ino(const NQStat* thiz)
+{
+  return thiz->ino;
+}
 
 static inline bool NQStat_isFile(const NQStat* st)
 {
