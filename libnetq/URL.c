@@ -219,7 +219,7 @@ static bool NQURLDataParse(const char* characters, size_t length, struct NQURLDa
   unsigned lengths[6];
   char delimiters[6] = { 0, 0, ':', '/', '?', '#' };
 
-  const char* start = strstr(characters, NQ_URL_SCHEME_SEPARATOR);
+  const char* start = NQStrstr(characters, NQ_URL_SCHEME_SEPARATOR);
   if (start == NULL || start == characters) {
     NQ_LOGE("URL cannot be missing scheme");
     return false;
@@ -234,7 +234,7 @@ static bool NQURLDataParse(const char* characters, size_t length, struct NQURLDa
 
   size_t curr = HOST_INDEX;
   for (size_t i = curr + 1; i < 6; i++) {
-    const char* end = strchr(start, delimiters[i]);
+    const char* end = NQStrchr(start, delimiters[i]);
     if (end == NULL) {
       positions[i] = 0;
       lengths[i] = 0;
@@ -278,7 +278,7 @@ static bool NQURLDataParse(const char* characters, size_t length, struct NQURLDa
 
 NQURL* NQURL_create(const char* characters)
 {
-  size_t length = strlen(characters);
+  size_t length = NQStrlen(characters);
   if (length > NQ_UINT32_MAX) {
     NQ_LOGE("The URL string is too long");
     return NULL;
@@ -297,7 +297,7 @@ NQURL* NQURL_create(const char* characters)
 
   thiz->data = data;
   thiz->length = (unsigned)length;
-  memcpy(thiz->characters, characters, length + 1);
+  NQMemcpy(thiz->characters, characters, length + 1);
 
   return thiz;
 }
@@ -325,7 +325,7 @@ bool NQURL_isEmpty(const NQURL* thiz)
 static inline size_t getComponent(const NQURL* thiz, unsigned position, unsigned length, char* buf, size_t len)
 {
   size_t n = NQGetMin(length, len);
-  memcpy(buf, thiz->characters + position, n);
+  NQMemcpy(buf, thiz->characters + position, n);
   if (n < len)
     buf[n] = '\0';
   return length;

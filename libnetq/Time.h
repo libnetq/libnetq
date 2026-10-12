@@ -81,6 +81,7 @@ typedef double NQSeconds;
 // NQMonoTime
 
 NQ_EXPORT NQTimeMs NQGetTimeMs(void);
+NQ_EXPORT void NQGetTimeSpec(NQTimeSpec* ts);
 
 static inline int64_t NQGetTimeSec(void)
 {
@@ -95,9 +96,24 @@ static inline int64_t NQGetUnixTime(void)
 NQ_EXPORT NQTickMs NQGetCPUTickMs(void);
 
 NQ_EXPORT void NQGetLocaltime(const time_t* t, NQDataTime* tm);
-NQ_EXPORT void nq_gmtimems(NQTimeMs time, NQDataTime* ptm, int* pms);
+NQ_EXPORT void NQGmtimems(NQTimeMs time, NQDataTime* ptm, int* pms);
 NQ_EXPORT void NQGmtime(const time_t* t, NQDataTime* tm);
-NQ_EXPORT time_t nq_timegm(const NQDataTime* tm);
+NQ_EXPORT time_t NQTimegm(const NQDataTime* tm);
+
+/* Rereads the TZ environment variable for the local time functions, as
+ * tzset() does (localtime_r is not required to look at it again). */
+NQ_EXPORT void NQTzset(void);
+
+/* The local time zone in effect at `t`: its offset in seconds east of UTC
+ * and its abbreviation, such as "EET" or "EEST". Where the system gives
+ * no abbreviation (Windows), the name is the offset as tzdata writes it:
+ * "+03", "-0930". `offset` and `name` may be NULL. Returns 0, or a
+ * negative error code. */
+NQ_EXPORT int NQGetLocalTimeZone(const time_t* t, long* offset, char* name, size_t size);
+
+/* Sets the system clock, which needs privileges (root, CAP_SYS_TIME or
+ * SE_SYSTEMTIME_NAME). Returns 0, or a negative error code. */
+NQ_EXPORT int NQSetTimeSpec(const NQTimeSpec* ts);
 
 enum NQTimeFormat {
   NQ_DT_UNIXEPOCH,           // 1539993600

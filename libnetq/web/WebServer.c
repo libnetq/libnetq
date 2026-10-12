@@ -59,6 +59,10 @@ extern NQWebServerOperations kMHDServerOperations;
 extern NQWebServerOperations kCivetWebServerOperations;
 #endif
 
+#if defined(WITH_ONION)
+extern NQWebServerOperations kOnionServerOperations;
+#endif
+
 static NQWebServerOperations* g_builtinOpsList[] = {
 #if defined(WITH_MHD)
   &kMHDServerOperations,
@@ -66,6 +70,10 @@ static NQWebServerOperations* g_builtinOpsList[] = {
 
 #if defined(WITH_CIVETWEB)
   &kCivetWebServerOperations,
+#endif
+
+#if defined(WITH_ONION)
+  &kOnionServerOperations,
 #endif
 
   NULL
@@ -375,7 +383,7 @@ static int getPatternKind(const char* pattern)
     return kMatchAnyBefore;
   else if (!NQStrcmp(pattern, "*"))
     return kMatchAny;
-  else if (strchr(pattern, '*') != NULL)
+  else if (NQStrchr(pattern, '*') != NULL)
     return kMatchPattern;
   else if (NQIsUrlPathPattern(pattern))
     return kMatchSegments;
@@ -562,7 +570,7 @@ static int onBlobHandler(NQWebRequest* request, NQWebResponse* response)
   NQWebBlob* blob = (NQWebBlob*)request->userdata;
 
   if (blob->type) {
-    NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, blob->type);
+    NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, blob->type);
   }
 
   (void)NQWebResponse_write(response, blob->data, blob->size);
@@ -641,7 +649,7 @@ bool NQWebServer_registerWriter(NQWebServer* thiz, const char* contentType, cons
 
   entry->operations = operations;
   entry->userdata = userdata;
-  memcpy(entry->contentType, contentType, len + 1);
+  NQMemcpy(entry->contentType, contentType, len + 1);
   NQListHead_addBack(&thiz->writerExecutors, &entry->list);
 
   return true;
@@ -667,7 +675,7 @@ struct NQWebWriter* NQWebServer_createWriterChain(NQWebServer* thiz, const char*
   NQListHead* iter = thiz->writerExecutors.prev;
   while (iter != &thiz->writerExecutors) {
     struct WebWriterEntry* entry = NQ_CONTAINER_OF(iter, struct WebWriterEntry, list);
-    if (!strcmp(entry->contentType, contentType)) {
+    if (!NQStrcmp(entry->contentType, contentType)) {
       struct NQWebWriter* writer = (struct NQWebWriter*)NQMalloc(sizeof(*writer));
       if (writer == NULL) {
         break;
@@ -708,7 +716,7 @@ NQUint8Array* NQWebServer_loadAssetBytes(const NQWebServer* thiz, const char* fi
 
 const char* NQWebServer_getMimeType(const NQWebServer* thiz, const char* filename)
 {
-  const char* extension = strrchr(filename, '.');
+  const char* extension = NQGetExtname(filename);
   if (extension == NULL)
     return NQ_MEDIATYPE_APPLICATION_OCTETSTREAM;
 
@@ -766,48 +774,48 @@ struct NQWebCatalogEntry* NQWebCatalogEntryCreate(const NQWebCatalogParams* para
   char* ptr = (char*)entry + sizeof(*entry);
 
   entry->params.mainUrl = ptr;
-  memcpy(ptr, params->mainUrl, mainUrlLenz);
+  NQMemcpy(ptr, params->mainUrl, mainUrlLenz);
   ptr += mainUrlLenz;
 
   if (titleLenz) {
     entry->params.title = ptr;
-    memcpy(ptr, params->title, titleLenz);
+    NQMemcpy(ptr, params->title, titleLenz);
     ptr += titleLenz;
   }
 
   if (versionLenz) {
     entry->params.version = ptr;
-    memcpy(ptr, params->version, versionLenz);
+    NQMemcpy(ptr, params->version, versionLenz);
     ptr += versionLenz;
   }
 
   if (descriptionLenz) {
     entry->params.description = ptr;
-    memcpy(ptr, params->description, descriptionLenz);
+    NQMemcpy(ptr, params->description, descriptionLenz);
     ptr += descriptionLenz;
   }
 
   if (lightIconUrlLenz) {
     entry->params.lightIconUrl = ptr;
-    memcpy(ptr, params->lightIconUrl, lightIconUrlLenz);
+    NQMemcpy(ptr, params->lightIconUrl, lightIconUrlLenz);
     ptr += lightIconUrlLenz;
   }
 
   if (darkIconUrlLenz) {
     entry->params.darkIconUrl = ptr;
-    memcpy(ptr, params->darkIconUrl, darkIconUrlLenz);
+    NQMemcpy(ptr, params->darkIconUrl, darkIconUrlLenz);
     ptr += darkIconUrlLenz;
   }
 
   if (lightScreenshotUrlLenz) {
     entry->params.lightScreenshotUrl = ptr;
-    memcpy(ptr, params->lightScreenshotUrl, lightScreenshotUrlLenz);
+    NQMemcpy(ptr, params->lightScreenshotUrl, lightScreenshotUrlLenz);
     ptr += lightScreenshotUrlLenz;
   }
 
   if (darkScreenshotUrlLenz) {
     entry->params.darkScreenshotUrl = ptr;
-    memcpy(ptr, params->darkScreenshotUrl, darkScreenshotUrlLenz);
+    NQMemcpy(ptr, params->darkScreenshotUrl, darkScreenshotUrlLenz);
     ptr += darkScreenshotUrlLenz;
   }
 
@@ -871,6 +879,23 @@ int NQWebServer_run(NQWebServer* thiz)
   thiz->isLooperRunning = false;
 
   return ret;
+}
+
+static void quitAction(void* userdata)
+{
+  NQWebServer* thiz = (NQWebServer*)userdata;
+  thiz->isLooperRunning = false;
+}
+
+void NQWebServer_quit(NQWebServer* thiz)
+{
+  if (!NQNetworkLooper_dispatch(thiz->looper, quitAction, NULL, thiz)) {
+    NQ_LOGE("Unable to dispatch quit request");
+    return;
+  }
+
+  // The dispatch wakes the looper only while it waits for a timer.
+  NQNetworkLooper_wakeup(thiz->looper);
 }
 
 static int initExecutor(NQWebServer* thiz, size_t sizeInBytes, const struct NQWebExecutorOperations* operations, void* data, NQWebExecutor** result)

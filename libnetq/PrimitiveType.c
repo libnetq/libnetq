@@ -90,31 +90,31 @@ bool NQParsePrimitiveType(const char* str, NQPrimitiveType* result)
 {
   NQPrimitiveType type;
 
-  if (!strcmp(str, NQ_BOOL_STRING))
+  if (!NQStrcmp(str, NQ_BOOL_STRING))
     type = kNQBoolType;
-  else if (!strcmp(str, NQ_CHAR_STRING))
+  else if (!NQStrcmp(str, NQ_CHAR_STRING))
     type = kNQCharType;
-  else if (!strcmp(str, NQ_INT8_STRING))
+  else if (!NQStrcmp(str, NQ_INT8_STRING))
     type = kNQInt8Type;
-  else if (!strcmp(str, NQ_INT16_STRING))
+  else if (!NQStrcmp(str, NQ_INT16_STRING))
     type = kNQInt16Type;
-  else if (!strcmp(str, NQ_INT32_STRING))
+  else if (!NQStrcmp(str, NQ_INT32_STRING))
     type = kNQInt32Type;
-  else if (!strcmp(str, NQ_INT64_STRING))
+  else if (!NQStrcmp(str, NQ_INT64_STRING))
     type = kNQInt64Type;
-  else if (!strcmp(str, NQ_UINT8_STRING))
+  else if (!NQStrcmp(str, NQ_UINT8_STRING))
     type = kNQUint8Type;
-  else if (!strcmp(str, NQ_UINT16_STRING))
+  else if (!NQStrcmp(str, NQ_UINT16_STRING))
     type = kNQUint16Type;
-  else if (!strcmp(str, NQ_UINT32_STRING))
+  else if (!NQStrcmp(str, NQ_UINT32_STRING))
     type = kNQUint32Type;
-  else if (!strcmp(str, NQ_UINT64_STRING))
+  else if (!NQStrcmp(str, NQ_UINT64_STRING))
     type = kNQUint64Type;
-  else if (!strcmp(str, NQ_FLOAT_STRING))
+  else if (!NQStrcmp(str, NQ_FLOAT_STRING))
     type = kNQFloatType;
-  else if (!strcmp(str, NQ_DOUBLE_STRING))
+  else if (!NQStrcmp(str, NQ_DOUBLE_STRING))
     type = kNQDoubleType;
-  else if (!strcmp(str, NQ_STRING_STRING))
+  else if (!NQStrcmp(str, NQ_STRING_STRING))
     type = kNQStringType;
   else
     return false;

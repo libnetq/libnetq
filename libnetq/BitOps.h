@@ -31,7 +31,7 @@ static NQ_ALWAYS_INLINE unsigned NQGetClz32(uint32_t x)
 static NQ_ALWAYS_INLINE unsigned NQGetClz32(uint32_t x)
 {
   unsigned long ret = 0;
-  if (_BitScanForward(&ret, number))
+  if (_BitScanForward(&ret, x))
     return ret;
   return 32;
 }

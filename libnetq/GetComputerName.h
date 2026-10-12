@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-NQ_EXPORT size_t NQGetComputerName(char* buffer, size_t n);
+NQ_EXPORT int NQGetComputerName(char* buffer, size_t n);
 
 #ifdef __cplusplus
 }

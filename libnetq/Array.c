@@ -24,7 +24,7 @@ static NQUint8Array s_zeroArray = { 0, {0} };
 static void NQUint8Array_init(NQUint8Array* array, const uint8_t* data, uint32_t size)
 {
   array->size = size;
-  memcpy(array->data, data, size);
+  NQMemcpy(array->data, data, size);
 }
 
 NQUint8Array* NQUint8Array_alloc(size_t size)
@@ -49,7 +49,7 @@ NQUint8Array* NQUint8Array_create(const uint8_t* data, size_t size)
   if (array == NULL)
     return NULL;
 
-  memcpy(array->data, data, size);
+  NQMemcpy(array->data, data, size);
   return array;
 }
 

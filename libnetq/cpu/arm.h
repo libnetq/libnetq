@@ -75,20 +75,35 @@
 #define NQ_CPU_NAME "ARM"
 #define NQ_CPU_32BIT 1
 
+/* __ARMEB__ covers both BE32 (ARMv5 and older, e.g. XScale IXP4xx) and BE8 (ARMv6+); Windows on ARM is little-endian */
+#if defined(__ARMEB__) || defined(__ARM_BIG_ENDIAN)
+#define NQ_CPU_BIG_ENDIAN 1
+#else
+#define NQ_CPU_LITTLE_ENDIAN 1
+#endif
+
+/* ARMv8-A and later in AArch32 state: every 8.x revision keeps base 8A, so gcc defines __ARM_ARCH_8A__ for all */
+#if  defined(__ARM_ARCH_8A__) \
+  || (defined(__ARM_ARCH) && __ARM_ARCH >= 8 && defined(__ARM_ARCH_PROFILE) && __ARM_ARCH_PROFILE == 'A')
+# define NQ_CPU_ARM_ABI_ARCH "armeabi-v8a"
+#elif defined(__ARM_ARCH_7A__)
+# define NQ_CPU_ARM_ABI_ARCH "armeabi-v7a"
+#endif
+
 #if defined(__ARM_ARCH_6__)
 # define NQ_CPU_ABI "armeabi-v6"
-#elif defined(__ARM_ARCH_7A__)
+#elif defined(NQ_CPU_ARM_ABI_ARCH)
 # if defined(__ARM_NEON__)
-#  if defined(__ARM_PCS_VFP)
-#   define NQ_CPU_ABI "armeabi-v7a/NEON (hard-float)"
-#  else
-#   define NQ_CPU_ABI "armeabi-v7a/NEON"
-#  endif
-# elif defined(__ARM_PCS_VFP)
-#  define NQ_CPU_ABI "armeabi-v7a (hard-float)"
+#  define NQ_CPU_ARM_ABI_NEON "/NEON"
 # else
-#  define NQ_CPU_ABI "armeabi-v7a"
+#  define NQ_CPU_ARM_ABI_NEON ""
 # endif
+# if defined(__ARM_PCS_VFP)
+#  define NQ_CPU_ARM_ABI_FLOAT " (hard-float)"
+# else
+#  define NQ_CPU_ARM_ABI_FLOAT ""
+# endif
+# define NQ_CPU_ABI NQ_CPU_ARM_ABI_ARCH NQ_CPU_ARM_ABI_NEON NQ_CPU_ARM_ABI_FLOAT
 #else
 # define NQ_CPU_ABI "armeabi"
 #endif

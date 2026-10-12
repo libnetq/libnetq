@@ -37,7 +37,7 @@
 #  else
 #   error Unknown pointer size
 #  endif
- #endif
+# endif
 
 typedef _Bool bool;
 
@@ -50,12 +50,13 @@ typedef unsigned short uint16_t;
 typedef int int32_t;
 typedef unsigned uint32_t;
 
-#if __SIZEOF_LONG__ == 8
+# if __SIZEOF_LONG__ == 8
 typedef long int64_t;
 typedef unsigned long uint64_t;
-#else
+# else
 typedef long long int64_t;
 typedef unsigned long long uint64_t;
+# endif
 
 typedef __SSIZE_T__ ssize_t;
 typedef unsigned __SSIZE_T__ size_t;
@@ -69,8 +70,6 @@ enum {
   false	= 0,
   true	= 1
 };
-
-#endif
 
 #endif
 

@@ -279,7 +279,7 @@ static int signupPostRequest(NQWebRequest* request, NQWebResponse* response)
 {
   struct UserRequest* req = (struct UserRequest*)request->userdata;
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
   struct UserCredential credential;
   UserCredential_init(&credential);
@@ -312,7 +312,7 @@ static int loginPostRequest(NQWebRequest* request, NQWebResponse* response)
 {
   struct UserRequest* req = (struct UserRequest*)request->userdata;
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
   struct UserCredential credential;
   UserCredential_init(&credential);
@@ -339,7 +339,7 @@ static int updatePostRequest(NQWebRequest* request, NQWebResponse* response)
 {
   struct UserRequest* req = (struct UserRequest*)request->userdata;
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
   struct JWTClaims claims;
   if (!getJWTClaims(request, &claims)) {
@@ -396,7 +396,7 @@ static int deletePostRequest(NQWebRequest* request, NQWebResponse* response)
 {
   struct UserRequest* req = (struct UserRequest*)request->userdata;
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
   struct JWTClaims claims;
   if (!getJWTClaims(request, &claims)) {

@@ -54,8 +54,8 @@ static const char* skipKey(const char* arg, const char* key)
     return NULL;
   arg++;
 
-  size_t len = strlen(key);
-  if (memcmp(arg, key, len) != 0)
+  size_t len = NQStrlen(key);
+  if (NQMemcmp(arg, key, len) != 0)
     return NULL;
   arg += len;
 
@@ -344,7 +344,7 @@ NQArguments* NQArguments_create(int argc, const char* argv[])
 
   size_t charSize = 0;
   for (i = 0; i < argc; i++)
-    charSize +=  strlen(argv[i]) + 1;
+    charSize +=  NQStrlen(argv[i]) + 1;
 
   NQArguments* thiz = (NQArguments*)NQMalloc(classSize + argvSize + charSize);
   if (thiz == NULL)
@@ -485,7 +485,7 @@ static NQ_ALWAYS_INLINE size_t argumentsParase(NQArguments* thiz, const char* st
 
 NQArguments* NQArguments_parse(const char* s)
 {
-  return NQArguments_parse2(s, strlen(s));
+  return NQArguments_parse2(s, NQStrlen(s));
 }
 
 NQArguments* NQArguments_parse2(const char* str, size_t len)
@@ -558,7 +558,7 @@ const char* NQArguments_at(NQArguments* thiz, size_t index)
 bool NQArguments_has(NQArguments* thiz, const char* value)
 {
   for (int i = 0; i < thiz->argc; i++) {
-    if (!strcmp(thiz->argv[i], value))
+    if (!NQStrcmp(thiz->argv[i], value))
       return true;
   }
   return false;

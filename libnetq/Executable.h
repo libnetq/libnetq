@@ -18,6 +18,7 @@ extern "C" {
 
 NQ_EXPORT int NQGetCommandLine(char* buffer, size_t n);
 NQ_EXPORT int NQGetCurrentDirectory(char* buffer, size_t n);
+NQ_EXPORT int NQSetCurrentDirectory(const char* path);
 NQ_EXPORT int NQGetExecutablePath(char* buffer, size_t n);
 
 #ifdef __cplusplus

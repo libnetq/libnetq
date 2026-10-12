@@ -11,7 +11,7 @@
 #define NQ_LOG_TAG NQ_CLASS_NAME
 
 #include "config.h"
-#include "libnetq/KeyVal.h"
+#include "libnetq/string/KeyVal.h"
 
 #include <libnetq/String.h>
 #include <libnetq/Hash.h>
@@ -109,12 +109,12 @@ const char* NQKeyVal_get(NQKeyVal* thiz, const char* key)
 
 bool NQKeyVal_set(NQKeyVal* thiz, const char* key, const char* val)
 {
-  size_t klen = strlen(key);
+  size_t klen = NQStrlen(key);
   if (NQ_UINT32_MAX <= klen)
     return false;
 
   size_t klenz = klen + 1;
-  size_t vlenz = strlen(val) + 1;
+  size_t vlenz = NQStrlen(val) + 1;
 
   NQKeyValIter* iter;
   iter = (NQKeyValIter*)NQMalloc(sizeof(*iter) + klenz + vlenz);
@@ -124,8 +124,8 @@ bool NQKeyVal_set(NQKeyVal* thiz, const char* key, const char* val)
   iter->klenz = (uint32_t)klenz;
 
   char* payload = iter2key(iter);
-  memcpy(payload, key, klenz);
-  memcpy(payload + klenz, val, vlenz);
+  NQMemcpy(payload, key, klenz);
+  NQMemcpy(payload + klenz, val, vlenz);
 
   iter->hash = NQHashString(key, klen);
   uint32_t index = iter->hash & thiz->mask;
@@ -135,7 +135,7 @@ bool NQKeyVal_set(NQKeyVal* thiz, const char* key, const char* val)
   iter->next = next;
   thiz->data[index].next = prev;
   while (next != NULL && next->klenz != 0) {
-    if ((next->hash == iter->hash) && strcmp(iter2key(next), key) == 0) {
+    if ((next->hash == iter->hash) && NQStrcmp(iter2key(next), key) == 0) {
       prev->next = next->next;
       NQFree(next);
       return true;
