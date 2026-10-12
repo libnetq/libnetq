@@ -94,34 +94,37 @@
 /* Define if struct tm has a tm_gmtoff member */
 #cmakedefine HAVE_TM_GMTOFF 1
 
-/* Define to 1 if you have the `AAsset_getLength64' function. */
+/* Define to 1 if you have the AAsset_getLength64 function. */
 #cmakedefine HAVE_AASSET_GETLENGTH64 1
 
-/* Define to 1 if you have the `getlogin_r' function. */
+/* Define to 1 if you have the getlogin_r function. */
 #cmakedefine HAVE_GETLOGIN_R 1
 
-/* Define to 1 if you have the `localtime_s' function. */
+/* Define to 1 if you have the getpwuid_r function. */
+#cmakedefine HAVE_GETPWUID_R 1
+
+/* Define to 1 if you have the localtime_s function. */
 #cmakedefine HAVE_LOCALTIME_S 1
 
-/* Define to 1 if you have the `localtime_r' function. */
+/* Define to 1 if you have the localtime_r function. */
 #cmakedefine HAVE_LOCALTIME_R 1
 
-/* Define to 1 if you have the `pthread_yield' function. */
+/* Define to 1 if you have the pthread_yield function. */
 #cmakedefine HAVE_PTHREAD_YIELD 1
 
-/* Define to 1 if you have the `pthread_setname_np' function. */
+/* Define to 1 if you have the pthread_setname_np function. */
 #cmakedefine HAVE_PTHREAD_SETNAME_NP 1
 
-/* Define to 1 if you have the `pthread_getschedparam' function. */
+/* Define to 1 if you have the pthread_getschedparam function. */
 #cmakedefine HAVE_PTHREAD_GETSCHEDPARAM 1
 
-/* Define to 1 if you have the `pthread_setschedparam' function. */
+/* Define to 1 if you have the pthread_setschedparam function. */
 #cmakedefine HAVE_PTHREAD_SETSCHEDPARAM 1
 
-/* Define to 1 if you have the `pthread_condattr_setclock' function. */
+/* Define to 1 if you have the pthread_condattr_setclock function. */
 #cmakedefine HAVE_PTHREAD_CONDATTR_SETCLOCK 1
 
-/* Define to 1 if you have the `pthread_attr_set_qos_class_np' function. */
+/* Define to 1 if you have the pthread_attr_set_qos_class_np function. */
 #cmakedefine HAVE_PTHREAD_ATTR_SET_QOS_CLASS_NP 1
 
 /* Define if pthread_setname_np() has 1 arg */
@@ -135,6 +138,9 @@
 
 /* Define if you have MHD */
 #cmakedefine WITH_MHD 1
+
+/* Define if you have Onion */
+#cmakedefine WITH_ONION 1
 
 /* Define if you have OLE32 */
 #cmakedefine WITH_OLE32 1

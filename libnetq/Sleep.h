@@ -11,12 +11,14 @@
 #define _LIBNETQ_SLEEP_H
 
 #include <libnetq/Basic.h>
+#include <libnetq/Time.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 NQ_EXPORT void NQSleep(int64_t ms);
+NQ_EXPORT void NQSleepTimeSpec(const NQTimeSpec* duration);
 
 #ifdef __cplusplus
 }

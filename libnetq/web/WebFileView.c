@@ -82,7 +82,7 @@ static const char* getRelativePath(const char* baseUrl, const char* url)
   size_t baseUrlLength = NQStrlen(baseUrl);
   size_t urlLength = NQStrlen(url);
 
-  if (urlLength < baseUrlLength || memcmp(url, baseUrl, baseUrlLength) != 0)
+  if (urlLength < baseUrlLength || NQMemcmp(url, baseUrl, baseUrlLength) != 0)
     return NULL;
 
   return url + baseUrlLength;
@@ -97,7 +97,7 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
   const char* url = NQWebRequest_url(request);
   const char* relativePath = getRelativePath(fileApi->baseUrl, url);
 
-  if (relativePath == NULL || strstr(url, "//") != NULL || strstr(url, "/../") != NULL) {
+  if (relativePath == NULL || NQStrstr(url, "//") != NULL || NQStrstr(url, "/../") != NULL) {
     NQWebResponse_setHeader(response, NQHTTP_HEADER_LOCATION, fileApi->baseUrl);
     return NQ_HTTP_MOVED_PERMANENTLY;
   }

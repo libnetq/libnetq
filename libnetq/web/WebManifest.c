@@ -169,9 +169,9 @@ int NQWebManifestListenersInit(NQWebExecutor* executor, struct NQWebManifestList
           if (!NQStrcmp(NQHTTP_HEADER_CONTENT_TYPE, name))
             hasContentType = true;
           NQListHead_init(&hdrEntry->list);
-          memcpy(hdrEntry->value, NQJSON_asString(value), NQJSON_stringLength(value) + 1);
+          NQMemcpy(hdrEntry->value, NQJSON_asString(value), NQJSON_stringLength(value) + 1);
           char* ptr = (char*)hdrEntry + sizeof(*hdrEntry) + NQJSON_stringLength(value);
-          memcpy(ptr, name, nameLenz);
+          NQMemcpy(ptr, name, nameLenz);
           hdrEntry->name = ptr;
           NQListHead_addBack(&fileEntry->headers, &hdrEntry->list);
         }

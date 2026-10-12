@@ -79,7 +79,8 @@ typedef int NQFileHandle;
 
 typedef enum NQFileOpenMode {
   NQ_FOPEN_READ = 0,
-  NQ_FOPEN_WRITE
+  NQ_FOPEN_WRITE,
+  NQ_FOPEN_CREATE /* write, creating a missing file, never truncating */
 } NQFileOpenMode;
 
 typedef enum NQFileSeekOrigin {

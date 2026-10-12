@@ -42,7 +42,7 @@ static bool NQByteBuffer_reserveCapacity(NQByteBuffer* thiz, size_t newCapacity)
     return false;
 
   if (oldData != NULL) {
-    memcpy(newData, oldData, thiz->size);
+    NQMemcpy(newData, oldData, thiz->size);
     NQFree(oldData);
   }
 
@@ -96,14 +96,14 @@ bool NQByteBuffer_insert(NQByteBuffer* thiz, size_t position, const uint8_t* dat
       size_t capacity = NQByteBuffer_nextCapacity(thiz, newSize);
       uint8_t* newData = (uint8_t*)NQMalloc(capacity);
 
-      memcpy(newData, thiz->data, thiz->size);
+      NQMemcpy(newData, thiz->data, thiz->size);
 
       NQFree(thiz->data);
 
       thiz->data = newData;
       thiz->capacity = (uint32_t)capacity;
     }
-    memset(thiz->data + thiz->size, 0, position - thiz->size);
+    NQMemset(thiz->data + thiz->size, 0, position - thiz->size);
   }
   else {
     newSize = thiz->size + size;
@@ -112,18 +112,18 @@ bool NQByteBuffer_insert(NQByteBuffer* thiz, size_t position, const uint8_t* dat
 
     if (newSize <= thiz->capacity) {
       if (position != thiz->size)
-        memmove(thiz->data + position + size, thiz->data + position, thiz->size - position);
+        NQMemmove(thiz->data + position + size, thiz->data + position, thiz->size - position);
     }
     else {
       size_t capacity = NQByteBuffer_nextCapacity(thiz, newSize);
       uint8_t* newData = (uint8_t*)NQMalloc(capacity);
 
       if (position != 0)
-        memcpy(newData, thiz->data, position);
+        NQMemcpy(newData, thiz->data, position);
 
       size_t remainder = thiz->size - position;
       if (remainder != 0)
-        memcpy(newData + position + size, thiz->data + position, remainder);
+        NQMemcpy(newData + position + size, thiz->data + position, remainder);
 
       NQFree(thiz->data);
 
@@ -132,7 +132,7 @@ bool NQByteBuffer_insert(NQByteBuffer* thiz, size_t position, const uint8_t* dat
     }
   }
 
-  memcpy(thiz->data + position, data, size);
+  NQMemcpy(thiz->data + position, data, size);
   thiz->size = (uint32_t)newSize;
 
   return true;
@@ -152,7 +152,7 @@ bool NQByteBuffer_append(NQByteBuffer* thiz, const uint8_t* data, size_t size)
       return false;
   }
 
-  memcpy(thiz->data + thiz->size, data, size);
+  NQMemcpy(thiz->data + thiz->size, data, size);
   thiz->size = newSize;
   return true;
 }
@@ -180,6 +180,6 @@ void NQByteBuffer_removeAt(NQByteBuffer* thiz, size_t position, size_t size)
   NQ_ASSERT((position + size) <= thiz->size);
   uint8_t* dst = thiz->data + position;
   const uint8_t* src = dst + size;
-  (void)memmove(dst, src, thiz->data + thiz->size - src);
+  (void)NQMemmove(dst, src, thiz->data + thiz->size - src);
   thiz->size -= size;
 }

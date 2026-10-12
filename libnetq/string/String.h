@@ -25,7 +25,9 @@
 #define NQ_HAVE_ARCH_MEMCHR 1
 #define NQ_HAVE_ARCH_MEMMOVE 1
 #define NQ_HAVE_ARCH_STRLEN 1
+#define NQ_HAVE_ARCH_STRCHR 1
 #define NQ_HAVE_ARCH_STRRCHR 1
+#define NQ_HAVE_ARCH_STRSTR 1
 #define NQ_HAVE_ARCH_STRCMP 1
 #define NQ_HAVE_ARCH_STRNCMP 1
 #endif
@@ -82,10 +84,22 @@ NQ_EXPORT size_t NQStrlen(const char* s);
 #define NQStrlen strlen
 #endif
 
+#ifndef NQ_HAVE_ARCH_STRCHR
+NQ_EXPORT char* NQStrchr(const char* s, int c);
+#else
+#define NQStrchr strchr
+#endif
+
 #ifndef NQ_HAVE_ARCH_STRRCHR
 NQ_EXPORT char* NQStrrchr(const char* s, int c);
 #else
 #define NQStrrchr strrchr
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRSTR
+NQ_EXPORT char* NQStrstr(const char* haystack, const char* needle);
+#else
+#define NQStrstr strstr
 #endif
 
 #ifndef NQ_HAVE_ARCH_STRCMP

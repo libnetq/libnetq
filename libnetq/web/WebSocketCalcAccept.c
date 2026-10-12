@@ -10,7 +10,8 @@
 #include "config.h"
 #include "libnetq/web/WebSocketCalcAccept.h"
 
-#include <libnetq/String.h>
+#include <libnetq/string/String.h>
+#include <libnetq/string/StringUtil.h>
 #include <libnetq/Base64.h>
 #include <libnetq/crypto/SHA1.h>
 #include <libnetq/web/WebSocketTypes.h>
@@ -23,7 +24,7 @@ int NQWebSocketCalcAccept(const char* key, char* buf, size_t len)
   if (!NQSHA1_init(&sha1))
     return -1;
 
-  if (!NQSHA1_update(&sha1, (const uint8_t*)key, strlen(key)))
+  if (!NQSHA1_update(&sha1, (const uint8_t*)key, NQStrlen(key)))
     return -1;
 
   if (!NQSHA1_update(&sha1, (const uint8_t*)NQ_WEBSOCKET_SEC_MAGIC, NQ_CSTR_LENGTH(NQ_WEBSOCKET_SEC_MAGIC)))

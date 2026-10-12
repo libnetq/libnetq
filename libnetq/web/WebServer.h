@@ -56,7 +56,7 @@ struct NQWebExecutorOperations {
   const char* name;
   int  (*init)    (NQWebExecutor*, void* data);
   void (*release) (NQWebExecutor*);
-  const size_t size;
+  size_t size;
 };
 
 NQ_EXPORT struct NQWebExecutorOperations* NQWebExecutorFind(const char* name);
@@ -175,6 +175,7 @@ NQ_EXPORT void NQWebServer_finalize(NQWebServer*);
 NQ_EXPORT int NQWebServer_start(NQWebServer*);
 NQ_EXPORT int NQWebServer_stop(NQWebServer*);
 NQ_EXPORT int NQWebServer_run(NQWebServer*);
+NQ_EXPORT void NQWebServer_quit(NQWebServer*);
 
 static inline const char* NQWebServer_workDir(const NQWebServer* thiz)
 {

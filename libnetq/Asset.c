@@ -76,9 +76,9 @@ void NQAssetInitialize(const void* binary, const char* dirname, NQAssetHandle ha
   uint32_t size = 0;
   const uint8_t* data = NULL;
 
-  if (binary != NULL && !memcmp(binary, "AST", 3)) {
+  if (binary != NULL && !NQMemcmp(binary, "AST", 3)) {
     data = (uint8_t*)binary + 4;
-    memcpy(&size, data, sizeof(size));
+    NQMemcpy(&size, data, sizeof(size));
     data += sizeof(size);
     if (data && size) {
       asset = NQBinaryAssetCreate(data, size);

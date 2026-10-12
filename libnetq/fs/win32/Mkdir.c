@@ -29,7 +29,7 @@ int NQMkdir(const char* path, mode_t mode)
   if (!NQWinPathInit(&winpath, path))
     return -NQ_ENOMEM;
 
-  WINBOOL success = CreateDirectoryW(winpath.characters, NULL);
+  BOOL success = CreateDirectoryW(winpath.characters, NULL);
   NQWinPathFinalize(&winpath);
   return success ? 0 : -NQGetLastError();
 }

@@ -14,6 +14,7 @@
 #include <libnetq/string/Sprintf.h>
 #include <libnetq/ConstExpr.h>
 #include <libnetq/Assert.h>
+#include <libnetq/ErrorCode.h>
 
 #ifdef NQ_OS_KERNEL
 #include <linux/timekeeping.h>
@@ -115,6 +116,19 @@ NQTimeMs NQGetTimeMs()
 #endif
 }
 
+void NQGetTimeSpec(NQTimeSpec* ts)
+{
+#if defined(NQ_OS_KERNEL)
+  ktime_get_real_ts64(ts);
+#elif defined(NQ_OS_WINDOWS)
+  FILETIME fileTime;
+  GetSystemTimeAsFileTime(&fileTime);
+  winFileTimeToTimeSpec(fileTime.dwHighDateTime, fileTime.dwLowDateTime, ts);
+#else
+  clock_gettime(CLOCK_REALTIME, ts);
+#endif
+}
+
 NQTickMs NQGetCPUTickMs()
 {
 #if defined(NQ_OS_KERNEL)
@@ -205,6 +219,118 @@ time_t nq_timegm(const struct tm* tm)
 #endif
 }
 
+void NQTzset(void)
+{
+#if defined(NQ_OS_WINDOWS)
+  _tzset();
+#elif defined(NQ_OS_UNIX)
+  tzset();
+#endif
+}
+
+int NQGetLocalTimeZone(const time_t* t, long* offset, char* name, size_t size)
+{
+  NQDataTime local;
+  long off;
+
+  if (t == NULL)
+    return -NQ_EINVAL;
+
+  NQGetLocaltime(t, &local);
+#if defined(HAVE_TM_GMTOFF)
+  off = (long)local.tm_gmtoff;
+#else
+  {
+    NQDataTime copy = local;
+    off = (long)(nq_timegm(&copy) - *t);
+  }
+#endif
+
+  if (offset != NULL)
+    *offset = off;
+
+  if (name != NULL && size > 0) {
+    size_t n = 0;
+#if defined(NQ_OS_UNIX)
+    n = strftime(name, size, "%Z", &local);
+#endif
+    if (n == 0) {
+      long a = off < 0 ? -off : off;
+      int hours = (int)(a / NQ_SECS_PER_HOUR);
+      int minutes = (int)(a / NQ_SECS_PER_MIN % NQ_MINS_PER_HOUR);
+      char sign = off < 0 ? '-' : '+';
+      if (minutes != 0)
+        snprintf(name, size, "%c%02d%02d", sign, hours, minutes);
+      else
+        snprintf(name, size, "%c%02d", sign, hours);
+    }
+  }
+  return 0;
+}
+
+#ifdef NQ_OS_WINDOWS
+/* SetSystemTime needs SE_SYSTEMTIME_NAME, which is disabled by default
+ * even in an elevated token */
+static int enableSystemTimePrivilege(void)
+{
+  HANDLE token;
+  TOKEN_PRIVILEGES tp;
+  int result = 0;
+
+  if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &token))
+    return -NQGetLastError();
+
+  tp.PrivilegeCount = 1;
+  tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+  if (!LookupPrivilegeValueW(NULL, L"SeSystemtimePrivilege", &tp.Privileges[0].Luid) ||
+      !AdjustTokenPrivileges(token, FALSE, &tp, 0, NULL, NULL))
+    result = -NQGetLastError();
+  else if (GetLastError() == ERROR_NOT_ALL_ASSIGNED)
+    result = -ERROR_PRIVILEGE_NOT_HELD;
+
+  CloseHandle(token);
+  return result;
+}
+#endif
+
+int NQSetTimeSpec(const NQTimeSpec* ts)
+{
+  if (ts == NULL || ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000L)
+    return -NQ_EINVAL;
+
+#if defined(NQ_OS_WINDOWS)
+  FILETIME ft;
+  SYSTEMTIME st;
+  uint64_t t;
+  int result;
+
+  /* FILETIME counts 100 ns from 1601-01-01 */
+  if (ts->tv_sec < -(time_t)(WINFTIME_AS_EPOCH_100NS / 10000000))
+    return -NQ_EINVAL;
+  t = (uint64_t)((int64_t)ts->tv_sec * 10000000 + ts->tv_nsec / 100 + (int64_t)WINFTIME_AS_EPOCH_100NS);
+  ft.dwLowDateTime = (DWORD)(t & 0xFFFFFFFF);
+  ft.dwHighDateTime = (DWORD)(t >> 32);
+  if (!FileTimeToSystemTime(&ft, &st))
+    return -NQGetLastError();
+
+  result = enableSystemTimePrivilege();
+  if (result != 0)
+    return result;
+  if (!SetSystemTime(&st))
+    return -NQGetLastError();
+  return 0;
+#elif defined(NQ_OS_UNIX)
+  struct timespec t;
+  t.tv_sec = ts->tv_sec;
+  t.tv_nsec = ts->tv_nsec;
+  if (clock_settime(CLOCK_REALTIME, &t) != 0)
+    return -NQGetLastError();
+  return 0;
+#else
+  return -NQ_ENOTSUPP;
+#endif
+}
+
 #define _MS_PER_SEC    (1000LL)
 #define _MS_PER_MIN    (60LL  * _MS_PER_SEC)
 #define _MS_PER_HOUR   (60LL  * _MS_PER_MIN)
@@ -216,13 +342,13 @@ void nq_gmtimems(NQTimeMs time, struct tm* ptm, int* pms)
 {
   static const int s_lpdays[] = { -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365 };
   static const int s_days[] = { -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364 };
-  
+
   const int* mdays;
 
   NQTimeMs ctimer = time;
   NQTimeMs tmptimer;
   bool isleapyear = false;
-  
+
   if (pms != NULL)
     *pms = (int)(time % _MS_PER_SEC);
 
@@ -346,7 +472,7 @@ int NQTimeMsFormat(NQTimeMs time, int format, char* buffer, size_t size)
     NQ_ASSERT_NOT_REACHED();
     return 0;
   }
-  
+
   return n;
 }
 

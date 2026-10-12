@@ -32,6 +32,10 @@ int NQFileOpen(const char* path, NQFileOpenMode mode, NQFileHandle* result)
     flags |= (O_WRONLY | O_CREAT | O_TRUNC);
     break;
 
+  case NQ_FOPEN_CREATE:
+    flags |= (O_WRONLY | O_CREAT);
+    break;
+
   default:
     NQ_ASSERT_NOT_REACHED();
     return -NQ_EINVAL;

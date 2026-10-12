@@ -102,7 +102,7 @@ int NQLink(const char* existingPath, const char* newPath)
     return -NQ_ENOMEM;
   }
 
-  WINBOOL success = CreateHardLinkW(winnew.characters, winexisting.characters, NULL);
+  BOOL success = CreateHardLinkW(winnew.characters, winexisting.characters, NULL);
   NQWinPathFinalize(&winnew);
   NQWinPathFinalize(&winexisting);
   return success ? 0 : -NQGetLastError();

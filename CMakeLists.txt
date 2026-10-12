@@ -171,6 +171,7 @@ LNQ_ADD_LIBRARY(SQLite3)
 LNQ_ADD_LIBRARY(CJOSE)
 LNQ_ADD_LIBRARY(LibJWT)
 LNQ_ADD_LIBRARY(MHD)
+LNQ_ADD_LIBRARY(Onion)
 LNQ_ADD_LIBRARY(CURL)
 
 if (LibJWT_FOUND AND LibJWT_VERSION VERSION_GREATER_EQUAL "3.0.0")
@@ -205,6 +206,7 @@ check_function_exists(pthread_condattr_setclock HAVE_PTHREAD_CONDATTR_SETCLOCK)
 check_function_exists(pthread_attr_set_qos_class_np HAVE_PTHREAD_ATTR_SET_QOS_CLASS_NP)
 check_function_exists(AAsset_getLength64 HAVE_AASSET_GETLENGTH64)
 check_function_exists(getlogin_r HAVE_GETLOGIN_R)
+check_function_exists(getpwuid_r HAVE_GETPWUID_R)
 
 check_c_source_compiles("
 #define __EXTENSIONS__ 1
@@ -386,13 +388,18 @@ set(libnetq_HEADERS
   libnetq/cpu/amd64.h
   libnetq/cpu/arm.h
   libnetq/cpu/arm64.h
+  libnetq/cpu/arc.h
   libnetq/cpu/blackfin.h
   libnetq/cpu/convex.h
+  libnetq/cpu/csky.h
   libnetq/cpu/epiphany.h
   libnetq/cpu/hppa.h
   libnetq/cpu/ia64.h
+  libnetq/cpu/loongarch.h
   libnetq/cpu/m68k.h
+  libnetq/cpu/microblaze.h
   libnetq/cpu/mips.h
+  libnetq/cpu/openrisc.h
   libnetq/cpu/ppc.h
   libnetq/cpu/pyramid.h
   libnetq/cpu/riscv.h
@@ -405,7 +412,7 @@ set(libnetq_HEADERS
   libnetq/cpu/tms470.h
   libnetq/cpu/wasm.h
   libnetq/cpu/x86.h
-  libnetq/cpu/z.h
+  libnetq/cpu/zarch.h
 
   libnetq/crypto/advapi32/CryptoHash.h
   libnetq/crypto/kernel/CryptoHash.h
@@ -456,8 +463,10 @@ set(libnetq_HEADERS
   libnetq/fs/Path.h
   libnetq/fs/Stat.h
 
+  libnetq/gfx/Color.h
   libnetq/gfx/ColorSpace.h
   libnetq/gfx/ColorUtils.h
+  libnetq/gfx/GfxType.h
   libnetq/gfx/Image.h
   libnetq/gfx/ImageBuilder.h
   libnetq/gfx/Rect.h
@@ -806,6 +815,7 @@ set(libnetq_SOURCES
 
   libnetq/web/civetweb/WebServerOperations.c
   libnetq/web/mhd/WebServerOperations.c
+  libnetq/web/onion/WebServerOperations.c
   libnetq/web/JsonRpcResponse.c
   libnetq/web/UrlHost.c
   libnetq/web/WebDirAccess.c
@@ -938,14 +948,18 @@ set(libnetq_CMAKEFILES
   cmake/FindLZ4.cmake
   cmake/FindLZO.cmake
   cmake/FindMHD.cmake
+  cmake/FindNanoVG.cmake
   cmake/FindNanoSVG.cmake
+  cmake/FindOnion.cmake
   cmake/FindOpenJP2.cmake
   cmake/FindPCRE2.cmake
   cmake/FindPixman.cmake
+  cmake/FindPlutoVG.cmake
   cmake/FindQuickJS.cmake
   cmake/FindSDL3.cmake
   cmake/FindSDL3_ttf.cmake
   cmake/FindSecp256k1.cmake
+  cmake/FindSkia.cmake
   cmake/FindSodium.cmake
   cmake/FindSQLite3.cmake
   cmake/FindTidy.cmake
@@ -1254,6 +1268,10 @@ if (WITH_MHD)
   list(APPEND libnetq_LIBRARIES MHD::MHD)
 endif ()
 
+if (WITH_ONION)
+  list(APPEND libnetq_LIBRARIES Onion::Onion)
+endif ()
+
 if (WITH_CURL)
   list(APPEND libnetq_LIBRARIES CURL::libcurl)
 endif ()
@@ -1322,5 +1340,6 @@ message(STATUS "SQLite3  . . . . . . . . . . . . . . . . . . ${WITH_SQLITE3} (HA
 message(STATUS "CJOSE  . . . . . . . . . . . . . . . . . . . ${WITH_CJOSE} (HAVE ${HAVE_CJOSE})")
 message(STATUS "LibJWT . . . . . . . . . . . . . . . . . . . ${WITH_LIBJWT} (HAVE ${HAVE_LIBJWT})")
 message(STATUS "MHD  . . . . . . . . . . . . . . . . . . . . ${WITH_MHD} (HAVE ${HAVE_MHD})")
+message(STATUS "Onion  . . . . . . . . . . . . . . . . . . . ${WITH_ONION} (HAVE ${HAVE_ONION})")
 message(STATUS "CURL . . . . . . . . . . . . . . . . . . . . ${WITH_CURL} (HAVE ${HAVE_CURL})")
 message(STATUS "Psapi  . . . . . . . . . . . . . . . . . . . ${WITH_PSAPI} (HAVE ${HAVE_PSAPI})")

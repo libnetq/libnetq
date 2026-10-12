@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2020-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -37,7 +37,8 @@
   macro(mc68060)     \
   macro(__mc68060)   \
   macro(__mc68060__) \
-  macro(__MC68060__)
+  macro(__MC68060__) \
+  macro(__mcoldfire__)
 
 #if  defined (__m68k__)    \
   || defined (M68000)      \
@@ -65,11 +66,23 @@
   || defined (mc68060)     \
   || defined (__mc68060)   \
   || defined (__mc68060__) \
-  || defined (__MC68060__)
+  || defined (__MC68060__) \
+  || defined (__mcoldfire__)
 
 #define NQ_CPU_M68K 1
 #define NQ_CPU_NAME "Motorola 68k"
-#define NQ_CPU_ABI "m68k"
+/* ColdFire FPU (__mcffpu__) and 68881/68882 (__HAVE_68881__) are not interchangeable */
+#if defined(__mcoldfire__)
+# if defined(__mcffpu__)
+#  define NQ_CPU_ABI "coldfire"
+# else
+#  define NQ_CPU_ABI "coldfire (soft-float)"
+# endif
+#elif defined(__HAVE_68881__) || !defined(__GNUC__)
+# define NQ_CPU_ABI "m68k"
+#else
+# define NQ_CPU_ABI "m68k (soft-float)"
+#endif
 #define NQ_CPU_BIG_ENDIAN 1
 #define NQ_CPU_32BIT 1
 

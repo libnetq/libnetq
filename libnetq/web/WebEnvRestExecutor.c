@@ -57,7 +57,7 @@ static int allEnvRequest(NQWebRequest* request, NQWebResponse* response)
       }
 
       char* key = (char*)NQByteBuffer_data(&buf);
-      char* val = strchr(key, '=');
+      char* val = NQStrchr(key, '=');
       if (val) {
         *val++ = '\0';
         NQJSONWriter_writeKeyString(&writer, key, val);

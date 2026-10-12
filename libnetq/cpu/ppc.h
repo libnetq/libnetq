@@ -62,14 +62,35 @@
 #define NQ_CPU_PPC 1
 #define NQ_CPU_NAME "PowerPC"
 
+/* Windows NT on PowerPC is little-endian, Xbox 360 (_M_PPCBE) is big-endian */
+#if  defined(__LITTLE_ENDIAN__) \
+  || (defined(_M_PPC) && !defined(_M_PPCBE) && !defined(_XENON))
+#define NQ_CPU_LITTLE_ENDIAN 1
+#else
+#define NQ_CPU_BIG_ENDIAN 1
+#endif
+
+/* _ARCH_PPC64 means 64-bit instructions, not 64-bit pointers: -m32 -mcpu=970/e5500 defines it with 32-bit pointers */
 #if  defined(__powerpc64__) \
   || defined(__ppc64__)     \
   || defined(__PPC64__)     \
-  || defined(_ARCH_PPC64)
-#define NQ_CPU_ABI "ppc64"
+  || defined(__64BIT__)
+# if defined(NQ_CPU_LITTLE_ENDIAN)
+#  define NQ_CPU_ABI "ppc64le"
+# elif defined(_CALL_ELF) && _CALL_ELF == 2
+#  define NQ_CPU_ABI "ppc64-elfv2"
+# else
+#  define NQ_CPU_ABI "ppc64"
+# endif
 #define NQ_CPU_64BIT 1
 #else
-#define NQ_CPU_ABI "ppc"
+# if defined(NQ_CPU_LITTLE_ENDIAN)
+#  define NQ_CPU_ABI "ppcle"
+# elif defined(_SOFT_FLOAT) || defined(__NO_FPRS__)
+#  define NQ_CPU_ABI "ppc (soft-float)"
+# else
+#  define NQ_CPU_ABI "ppc"
+# endif
 #define NQ_CPU_32BIT 1
 #endif
 

@@ -73,6 +73,29 @@ int NQGetCurrentDirectory(char* buffer, size_t n)
   return 0;
 }
 
+int NQSetCurrentDirectory(const char* path)
+{
+#if defined(NQ_OS_WINDOWS)
+  NQWinPath winpath;
+  if (!NQWinPathInit(&winpath, path))
+    return -NQ_ENOENT;
+  BOOL ok = SetCurrentDirectoryW((LPCWSTR)winpath.characters);
+  NQWinPathFinalize(&winpath);
+  if (!ok)
+    return -NQGetLastError();
+  return 0;
+
+#elif defined(NQ_OS_UNIX)
+  if (chdir(path) != 0)
+    return -NQGetLastError();
+  return 0;
+
+#else
+  return -NQ_ENOTSUPP;
+
+#endif
+}
+
 int NQGetExecutablePath(char* buffer, size_t n)
 {
 #if defined(NQ_OS_WINDOWS)
