@@ -68,6 +68,7 @@ static inline NQFileHandle NQGetStdHandle(int fileno)
 typedef int NQFileHandle;
 #define NQIsFileValid(handle) 0
 #define NQIsFileInvalid(handle) 1
+#define NQGetStdHandle(fileno) (-1)
 #endif
 
 #if defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX)
@@ -79,7 +80,10 @@ typedef int NQFileHandle;
 
 typedef enum NQFileOpenMode {
   NQ_FOPEN_READ = 0,
-  NQ_FOPEN_WRITE
+  NQ_FOPEN_WRITE,
+  NQ_FOPEN_CREATE,
+  NQ_FOPEN_APPEND,
+  NQ_FOPEN_UPDATE, /* an existing file for writing, with its content kept */
 } NQFileOpenMode;
 
 typedef enum NQFileSeekOrigin {
@@ -94,6 +98,14 @@ NQ_EXPORT int NQFileRead(NQFileHandle handle, void* data, size_t size);
 NQ_EXPORT int NQFileWrite(NQFileHandle handle, const void* data, size_t size);
 NQ_EXPORT long long NQFileSeek(NQFileHandle handle, long long offset, NQFileSeekOrigin origin);
 NQ_EXPORT long long NQFileGetSize(NQFileHandle handle);
+
+/* Sets the size of a file open for writing to `size` bytes, cutting off
+ * what lies past it or extending it with zero bytes, as ftruncate(2) does.
+ * The file position stays where it is. Returns 0, or a negative NQ error
+ * code. */
+NQ_EXPORT int NQFileTruncate(NQFileHandle handle, long long size);
+/* Flushes what was written to the disk: 0, or the negated error code */
+NQ_EXPORT int NQFileSync(NQFileHandle handle);
 
 NQ_EXPORT int64_t NQFileReadn(NQFileHandle handle, uint8_t* data, int64_t size);
 NQ_EXPORT int64_t NQFileWriten(NQFileHandle handle, const uint8_t* data, int64_t size);

@@ -82,17 +82,52 @@ size_t NQStrlen(const char* s)
 }
 #endif
 
+#ifndef NQ_HAVE_ARCH_STRCHR
+char* NQStrchr(const char* s, int c)
+{
+  const char* p = s;
+  for (;;) {
+    if (*p == (char)c)
+      return (char*)p;
+    if (*p == '\0')
+      return NULL;
+    p++;
+  }
+}
+#endif
+
 #ifndef NQ_HAVE_ARCH_STRRCHR
 char* NQStrrchr(const char* s, int c)
 {
   const char* res = NULL;
   const char* p = s;
-  while (*p) {
-    if (*p++ == c) {
+  for (;;) {
+    if (*p == (char)c)
       res = p;
-    }
+    if (*p == '\0')
+      break;
+    p++;
   }
   return (char*)res;
+}
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRSTR
+char* NQStrstr(const char* haystack, const char* needle)
+{
+  if (*needle == '\0')
+    return (char*)haystack;
+  for (; *haystack; haystack++) {
+    const char* h = haystack;
+    const char* n = needle;
+    while (*n && *h == *n) {
+      h++;
+      n++;
+    }
+    if (*n == '\0')
+      return (char*)haystack;
+  }
+  return NULL;
 }
 #endif
 
@@ -108,6 +143,27 @@ int NQStrcmp(const char* s1, const char* s2)
 
 #ifndef NQ_HAVE_ARCH_STRNCMP
 int NQStrncmp(const char* s1, const char* s2, size_t count)
+{
+  NQ_UNUSED_PARAM(s1);
+  NQ_UNUSED_PARAM(s2);
+  NQ_UNUSED_PARAM(count);
+  NQ_ASSERT_NOT_REACHED();
+  return -1;
+}
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRCASECMP
+int NQStrcasecmp(const char* s1, const char* s2)
+{
+  NQ_UNUSED_PARAM(s1);
+  NQ_UNUSED_PARAM(s2);
+  NQ_ASSERT_NOT_REACHED();
+  return -1;
+}
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRNCASECMP
+int NQStrncasecmp(const char* s1, const char* s2, size_t count)
 {
   NQ_UNUSED_PARAM(s1);
   NQ_UNUSED_PARAM(s2);

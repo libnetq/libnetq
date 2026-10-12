@@ -51,6 +51,7 @@ extern "C" {
 #define NQHTTP_HEADER_SEC_WEBSOCKET_PROTOCOL       "Sec-WebSocket-Protocol"
 #define NQHTTP_HEADER_SEC_WEBSOCKET_VERSION        "Sec-WebSocket-Version"
 #define NQHTTP_HEADER_SERVER                       "Server"
+#define NQHTTP_HEADER_SET_COOKIE                   "Set-Cookie"
 #define NQHTTP_HEADER_UPGRADE                      "Upgrade"
 #define NQHTTP_HEADER_UPGRADE_INSECURE_REQUESTS    "Upgrade-Insecure-Requests"
 #define NQHTTP_HEADER_USER_AGENT                   "User-Agent"

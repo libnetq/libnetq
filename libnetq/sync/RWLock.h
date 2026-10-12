@@ -12,22 +12,20 @@
 
 #include <libnetq/Basic.h>
 
-#ifdef NQ_OS_KERNEL
+#if defined(NQ_OS_KERNEL)
 #include <linux/rwsem.h>
 typedef struct rw_semaphore NQRWLock;
-#endif
-
-#ifdef NQ_OS_WINDOWS
+#elif defined(NQ_OS_UNIX)
+#include <pthread.h>
+typedef pthread_rwlock_t NQRWLock;
+#elif defined(NQ_OS_WINDOWS)
 #include <windows.h>
 typedef struct NQRWLock {
   SRWLOCK native;
   BYTE mode;
 } NQRWLock;
-#endif
-
-#ifdef NQ_OS_UNIX
-#include <pthread.h>
-typedef pthread_rwlock_t NQRWLock;
+#else
+typedef void NQRWLock;
 #endif
 
 #ifdef __cplusplus

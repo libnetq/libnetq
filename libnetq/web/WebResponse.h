@@ -13,6 +13,7 @@
 #include <libnetq/VA.h>
 #include <libnetq/List.h>
 #include <libnetq/string/StringPrint.h>
+#include <libnetq/web/WebCookie.h>
 #include <libnetq/web/WebWriter.h>
 
 #ifdef __cplusplus
@@ -24,7 +25,7 @@ typedef struct NQWebRequest NQWebRequest;
 typedef struct NQWebResponse NQWebResponse;
 
 struct NQWebResponseOperations {
-  bool (*setHeader) (NQWebResponse*, const char* header, const char* value);
+  bool (*addHeader) (NQWebResponse*, const char* header, const char* value);
   int (*write) (NQWebResponse*, const void* data, size_t size);
   int (*flush) (NQWebResponse*);
 };
@@ -45,11 +46,16 @@ static inline NQWebServer* NQWebResponse_server(const NQWebResponse* thiz)
 
 NQ_EXPORT void NQWebResponse_init(NQWebResponse*, const struct NQWebResponseOperations* operations, NQWebRequest* request);
 NQ_EXPORT void NQWebResponse_finalize(NQWebResponse*);
-NQ_EXPORT bool NQWebResponse_setHeader(NQWebResponse*, const char* header, const char* value);
+
 NQ_EXPORT int NQWebResponse_printf(NQWebResponse*, const char* fmt, ...) NQ_ATTRIBUTE_PRINTF(2, 3);
 NQ_EXPORT int NQWebResponse_vprintf(NQWebResponse*, const char* fmt, va_list args) NQ_ATTRIBUTE_PRINTF(2, 0);
 NQ_EXPORT int NQWebResponse_write(NQWebResponse*, const void* data, size_t size);
 NQ_EXPORT int NQWebResponse_flush(NQWebResponse*);
+
+NQ_EXPORT bool NQWebResponse_setHeader(NQWebResponse*, const char* header, const char* value);
+NQ_EXPORT bool NQWebResponse_addHeader(NQWebResponse*, const char* header, const char* value);
+NQ_EXPORT bool NQWebResponse_addCookie(NQWebResponse*, const NQWebCookie* cookie);
+NQ_EXPORT bool NQWebResponse_deleteCookie(NQWebResponse*, const char* name, const char* path, const char* domain);
 
 #ifdef __cplusplus
 }

@@ -29,6 +29,7 @@ static inline void NQCURLHeaders_init(NQCURLHeaders* thiz)
 
 NQ_EXPORT void NQCURLHeaders_finalize(NQCURLHeaders*);
 NQ_EXPORT bool NQCURLHeaders_add(NQCURLHeaders*, const char* name, const char* value);
+NQ_EXPORT bool NQCURLHeaders_addLine(NQCURLHeaders*, const char* line);
 
 #ifdef __cplusplus
 }

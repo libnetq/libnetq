@@ -37,17 +37,17 @@ static size_t sprintLine(char* start, char** end, uint32_t offset, const void* d
   size_t i;
   char text[16];
   size_t result = 0;
-  start += sprintf(start, " 0x%08X: ", offset);
+  start += NQSprintf(start, " 0x%08X: ", offset);
   for (i = 0; i < 16; i++) {
     uint8_t b;
     if (i < size) {
       result++;
       b = ((const uint8_t*)data)[i];
-      start += sprintf(start, "%02X ", b);
+      start += NQSprintf(start, "%02X ", b);
     }
     else {
       b = ' ';
-      start += sprintf(start, "   ");
+      start += NQSprintf(start, "   ");
     }
 
     if (b < ' ' || '~' < b)
@@ -55,9 +55,9 @@ static size_t sprintLine(char* start, char** end, uint32_t offset, const void* d
     text[i] = (char)b;
 
     if (i == 7)
-      start += sprintf(start, " ");
+      start += NQSprintf(start, " ");
   }
-  start += sprintf(start, " %*.s\n", (int)sizeof(text), text);
+  start += NQSprintf(start, " %*.s\n", (int)sizeof(text), text);
 
   *end = start;
   return result;
@@ -107,16 +107,16 @@ void NQHexViewer_addData(NQHexViewer* viewer, const void* data, size_t size)
   for (i = 0; i < size; i++) {
     char* p = viewer->buffer + viewer->size;
     if ((viewer->flags & NQ_HEXVIEWER_HAS_OFFSET) && (viewer->position & 0x0F) == 0)
-      p += sprintf(p, "%08llX: ", (unsigned long long)(viewer->offset + viewer->position));
+      p += NQSprintf(p, "%08llX: ", (unsigned long long)(viewer->offset + viewer->position));
 
-    p += sprintf(p, "%02X", ((const uint8_t*)data)[i]);
+    p += NQSprintf(p, "%02X", ((const uint8_t*)data)[i]);
 
     if ((viewer->position & 0x0F) == 0x0F)
-      p += sprintf(p, "\n");
+      p += NQSprintf(p, "\n");
     else if ((viewer->position & 0x07) == 0x07)
-      p += sprintf(p, "  ");
+      p += NQSprintf(p, "  ");
     else
-      p += sprintf(p, " ");
+      p += NQSprintf(p, " ");
 
     viewer->size = (uint32_t)(p - viewer->buffer);
     NQ_ASSERT(viewer->size < sizeof(viewer->buffer));

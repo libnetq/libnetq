@@ -12,6 +12,7 @@
 
 #include <libnetq/String.h>
 #include <libnetq/MinMax.h>
+#include <libnetq/CType.h>
 #include <libnetq/Assert.h>
 
 #if defined(WITH_OLE32)
@@ -47,12 +48,12 @@ void NQUUID_init(NQUUID* uuid, const uint8_t* data, size_t size)
   size_t startSize = NQGetMin(sizeof(uuid->data), size);
 
   if (startSize != 0)
-    memcpy(uuid->data, data, startSize);
+    NQMemcpy(uuid->data, data, startSize);
 
   size_t lastSize = sizeof(uuid->data) - startSize;
 
   if (lastSize != 0)
-    memset(uuid->data + startSize, 0, lastSize);
+    NQMemset(uuid->data + startSize, 0, lastSize);
 }
 
 void NQUUID_initAsCanonical(NQUUID* uuid)
@@ -104,29 +105,17 @@ void NQUUID_initAsCanonical(NQUUID* uuid)
 
 void NQUUID_initAsNil(NQUUID* uuid)
 {
-  memcpy(uuid->data, kNilUUID.data, sizeof(kNilUUID.data));
+  NQMemcpy(uuid->data, kNilUUID.data, sizeof(kNilUUID.data));
 }
 
 void NQUUID_initAsOmni(NQUUID* uuid)
 {
-  memcpy(uuid->data, kOmniUUID.data, sizeof(kOmniUUID.data));
-}
-
-static inline bool isASCIIHexDigit(char character)
-{
-  if ('0' <= character && character <= '9')
-    return true;
-  if ('a' <= character && character <= 'f')
-    return true;
-  if ('A' <= character && character <= 'F')
-    return true;
-
-  return false;
+  NQMemcpy(uuid->data, kOmniUUID.data, sizeof(kOmniUUID.data));
 }
 
 static inline uint8_t toASCIIHexValue1(char character)
 {
-  NQ_ASSERT(isASCIIHexDigit(character));
+  NQ_ASSERT(NQIsHexDigit(character));
   return character < 'A' ? character - '0' : (character - 'A' + 10) & 0xF;
 }
 
@@ -146,7 +135,7 @@ static inline bool NQUUID_parseImpl(NQUUID* uuid, const char* s)
         return false;
     }
     else {
-      if (!isASCIIHexDigit(character))
+      if (!NQIsHexDigit(character))
         return false;
     }
   }
@@ -191,17 +180,17 @@ bool NQUUID_parse2(NQUUID* uuid, const char* str, size_t len)
 
 bool NQUUID_isNil(const NQUUID* uuid)
 {
-  return (memcmp(uuid, kNilUUID.data, sizeof(kNilUUID.data)) == 0) ? true : false;
+  return (NQMemcmp(uuid, kNilUUID.data, sizeof(kNilUUID.data)) == 0) ? true : false;
 }
 
 bool NQUUID_isOmni(const NQUUID* uuid)
 {
-  return (memcmp(uuid, kOmniUUID.data, sizeof(kOmniUUID.data)) == 0) ? true : false;
+  return (NQMemcmp(uuid, kOmniUUID.data, sizeof(kOmniUUID.data)) == 0) ? true : false;
 }
 
 bool NQUUID_isEqual(const NQUUID* a, const NQUUID* b)
 {
-  return (memcmp(a, b, sizeof(*b)) == 0) ? true : false;
+  return (NQMemcmp(a, b, sizeof(*b)) == 0) ? true : false;
 }
 
 static int NQUUID_sprintf(const NQUUID* uuid, bool isUpper, char* buffer, size_t size)
@@ -261,10 +250,10 @@ int NQUUID_sprintfURN(const NQUUID* uuid, char* buffer, size_t size)
 
   if (size < prefixLength) {
     if (size != 0)
-      memcpy(buffer, prefix, size);
+      NQMemcpy(buffer, prefix, size);
   }
   else {
-    memcpy(buffer, prefix, prefixLength);
+    NQMemcpy(buffer, prefix, prefixLength);
     buffer += prefixLength;
     size -= prefixLength;
 

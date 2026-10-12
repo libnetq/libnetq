@@ -41,6 +41,6 @@ const char* NQGetBuildABI(void)
 int NQPutBuildUserAgent(const char* product, const char* version, char* buf, size_t len)
 {
   if (version && *version != '\0')
-    return snprintf(buf, len, "%s/%s (%s) %s", product, version, USERAGENT_PLATFORM, NQ_CPU_NAME);
-  return snprintf(buf, len, "%s (%s) %s", product, USERAGENT_PLATFORM, NQ_CPU_NAME);
+    return NQSnprintf(buf, len, "%s/%s (%s) %s", product, version, USERAGENT_PLATFORM, NQ_CPU_NAME);
+  return NQSnprintf(buf, len, "%s (%s) %s", product, USERAGENT_PLATFORM, NQ_CPU_NAME);
 }

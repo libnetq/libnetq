@@ -27,7 +27,7 @@ int NQGetStat(const char* path, NQStat* st)
   if (!NQWinPathInit(&winpath, path))
     return -NQ_ENOMEM;
 
-  WINBOOL success;
+  BOOL success;
   WIN32_FILE_ATTRIBUTE_DATA data;
   success = GetFileAttributesExW(winpath.characters, GetFileExInfoStandard, &data);
   NQWinPathFinalize(&winpath);

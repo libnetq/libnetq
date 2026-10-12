@@ -1,14 +1,14 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2021-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
  */
 
-#ifndef _NETQ_MOTIONEVENT_H
-#define _NETQ_MOTIONEVENT_H
+#ifndef _NETQ_INPUT_MOTIONEVENT_H
+#define _NETQ_INPUT_MOTIONEVENT_H
 
 #include <libnetq/Event.h>
 
@@ -27,4 +27,4 @@ typedef struct NQMotionEvent {
   NQTouchPoint* points;
 } NQMotionEvent;
 
-#endif /* _NETQ_MOTIONEVENT_H */
+#endif /* _NETQ_INPUT_MOTIONEVENT_H */

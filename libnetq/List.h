@@ -136,6 +136,18 @@ static inline void NQSList_init(NQSList* thiz)
 
 #define NQSList_next(thiz) (thiz)->next
 
+typedef struct NQSListHead NQSListHead;
+struct NQSListHead {
+  NQSList* first;
+  NQSList* last;
+};
+
+static inline void NQSListHead_init(NQSListHead* thiz)
+{
+  thiz->first = NULL;
+  thiz->last = NULL;
+}
+
 #ifdef __cplusplus
 }
 #endif

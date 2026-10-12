@@ -12,7 +12,7 @@
 
 #include <libnetq/net/PlatformSocket.h>
 #include <libnetq/net/Socket.h>
-#include <libnetq/string/String.h> // for memset
+#include <libnetq/string/String.h>
 #include <libnetq/Endian.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Assert.h>
@@ -25,23 +25,10 @@
 
 #ifdef NQ_OS_WINDOWS
 
-#include <libnetq/sync/Once.h>
+#include <libnetq/backend/win32/Socket.h>
 
 NQ_STATIC_ASSERT(sizeof(NQSocketHandle) == sizeof(NQPlatformSocket), "Socket size did not match in Windows");
-
-static WSADATA s_wsadata;
-static NQOnce s_once = NQ_ONCE_INIT;
-
-static void WSAStartupInit(void)
-{
-  int status = WSAStartup(MAKEWORD(2, 2), &s_wsadata);
-  NQ_ASSERT_UNUSED(status, !status);
-}
-
-static inline void socketInit(void)
-{
-  NQOnce_call(&s_once, &WSAStartupInit);
-}
+#define socketInit NQWinSocketInitialize
 
 static int normalizeSockFamily(int family)
 {
@@ -124,10 +111,6 @@ static int normalizeOptName(int opt)
 }
 #else
 
-static inline void socketInit(void)
-{
-}
-
 static inline int normalizeSockFamily(int family)
 {
   return family;
@@ -158,6 +141,10 @@ static inline int normalizeOptName(int opt)
   return opt;
 }
 
+#endif
+
+#ifndef socketInit
+# define socketInit() ((void)0)
 #endif
 
 static void NQIPv4EndPoint_initWithInet4(NQIPv4EndPoint* thiz, const NQSockAddrIn* addr)
