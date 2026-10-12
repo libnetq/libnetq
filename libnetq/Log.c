@@ -99,9 +99,9 @@ static int printLogPrefix(char* buffer, size_t size, NQLogLevel level, const cha
     *ptr = ' ';
   ptr++;
 
-  len = strlen(tag);
+  len = NQStrlen(tag);
   if (ptr < end)
-    memcpy(ptr, tag, NQGetMin((size_t)(end - ptr), len));
+    NQMemcpy(ptr, tag, NQGetMin((size_t)(end - ptr), len));
   ptr += len;
 
   if (ptr < end)
@@ -137,7 +137,7 @@ int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag,
   ptr += n;
 
   len = ptr < end ? end - ptr : 0;
-  n = vsnprintf(ptr, len, format, args);
+  n = NQVsnprintf(ptr, len, format, args);
   if (n < 0)
     return n;
   ptr += n;
@@ -252,11 +252,13 @@ int NQLog_vprint(NQLogLevel level, const char* tag, const char* format, va_list 
     }
     s_init = true;
   }
+
 #else
 # define kLogFileHandle DEFAULT_FILEHANDLE
 #endif
 
   return NQFileWrite(kLogFileHandle, buffer, len);
+
 #endif
 
 #endif

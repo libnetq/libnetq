@@ -196,7 +196,7 @@ static inline bool NQWinPathInit(NQWinPath* thiz, const char* path)
   size_t length = NQWinPathFrom(thiz->characters, NQ_ARRAY_LENGTH(thiz->characters), path);
   if (length == 0 || length >= NQ_ARRAY_LENGTH(thiz->characters))
     return false;
-  thiz->length = length;
+  thiz->length = (uint16_t)length;
   return true;
 }
 

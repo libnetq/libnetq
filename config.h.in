@@ -16,9 +16,6 @@
 /* Fail the build if any CPU property is undetected instead of using defaults */
 #cmakedefine NQ_CPU_STRICT_MODE 1
 
-/* Enable JSON */
-#cmakedefine ENABLE_JSON
-
 /* Use JSON implementation from the Jansson library */
 #cmakedefine JSON_BACKEND_JANSSON
 
@@ -27,6 +24,15 @@
 
 /* Use stub for JSON */
 #cmakedefine JSON_BACKEND_STUB
+
+/* Enable HttpRequest */
+#cmakedefine ENABLE_HTTPREQUEST
+
+/* Use HttpRequest implementation from the CURL library */
+#cmakedefine HTTPREQUEST_BACKEND_CURL
+
+/* Use stub for HttpRequest */
+#cmakedefine HTTPREQUEST_BACKEND_STUB
 
 /* Use CryptoAead implementation from the OpenSSL library */
 #cmakedefine CRYPTOAEAD_BACKEND_OPENSSL
@@ -39,6 +45,27 @@
 
 /* Use stub for CryptoAead */
 #cmakedefine CRYPTOAEAD_BACKEND_STUB
+
+/* Enable Canvas */
+#cmakedefine ENABLE_CANVAS
+
+/* Use Canvase implementation from the NanoVG library */
+#cmakedefine CANVAS_BACKEND_NANOVG
+
+/* Use Canvase implementation from the PlutoVG library */
+#cmakedefine CANVAS_BACKEND_PLUTOVG
+
+/* Use Canvase implementation from the Quartz library */
+#cmakedefine CANVAS_BACKEND_QUARTZ
+
+/* Use Canvase implementation from the Skia library */
+#cmakedefine CANVAS_BACKEND_SKIA
+
+/* Use Canvase implementation from the Cairo library */
+#cmakedefine CANVAS_BACKEND_CAIRO
+
+/* Use stub for Canvase */
+#cmakedefine CANVAS_BACKEND_STUB
 
 /* Define to 1 if you have the <errno.h> header file. */
 #cmakedefine HAVE_ERRNO_H 1
@@ -76,6 +103,9 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #cmakedefine HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the <sys/eventfd.h> header file. */
+#cmakedefine HAVE_SYS_EVENTFD_H 1
+
 /* Define to 1 if you have the <sys/types.h> header file. */
 #cmakedefine HAVE_SYS_TYPES_H 1
 
@@ -91,37 +121,49 @@
 /* Define to 1 if you have the <psapi.h> header file. */
 #cmakedefine HAVE_PSAPI_H 1
 
+/* Define if you have libcurl */
+#cmakedefine WITH_CURL 1
+
 /* Define if struct tm has a tm_gmtoff member */
 #cmakedefine HAVE_TM_GMTOFF 1
 
-/* Define to 1 if you have the `AAsset_getLength64' function. */
+/* Define to 1 if you have the AAsset_getLength64 function. */
 #cmakedefine HAVE_AASSET_GETLENGTH64 1
 
-/* Define to 1 if you have the `getlogin_r' function. */
+/* Define to 1 if you have the getlogin_r function. */
 #cmakedefine HAVE_GETLOGIN_R 1
 
-/* Define to 1 if you have the `localtime_s' function. */
+/* Define to 1 if you have the getpwuid_r function. */
+#cmakedefine HAVE_GETPWUID_R 1
+
+/* Define to 1 if you have the sigqueue function. */
+#cmakedefine HAVE_SIGQUEUE 1
+
+/* Define to 1 if you have the mkostemp function. */
+#cmakedefine HAVE_MKOSTEMP 1
+
+/* Define to 1 if you have the localtime_s function. */
 #cmakedefine HAVE_LOCALTIME_S 1
 
-/* Define to 1 if you have the `localtime_r' function. */
+/* Define to 1 if you have the localtime_r function. */
 #cmakedefine HAVE_LOCALTIME_R 1
 
-/* Define to 1 if you have the `pthread_yield' function. */
+/* Define to 1 if you have the pthread_yield function. */
 #cmakedefine HAVE_PTHREAD_YIELD 1
 
-/* Define to 1 if you have the `pthread_setname_np' function. */
+/* Define to 1 if you have the pthread_setname_np function. */
 #cmakedefine HAVE_PTHREAD_SETNAME_NP 1
 
-/* Define to 1 if you have the `pthread_getschedparam' function. */
+/* Define to 1 if you have the pthread_getschedparam function. */
 #cmakedefine HAVE_PTHREAD_GETSCHEDPARAM 1
 
-/* Define to 1 if you have the `pthread_setschedparam' function. */
+/* Define to 1 if you have the pthread_setschedparam function. */
 #cmakedefine HAVE_PTHREAD_SETSCHEDPARAM 1
 
-/* Define to 1 if you have the `pthread_condattr_setclock' function. */
+/* Define to 1 if you have the pthread_condattr_setclock function. */
 #cmakedefine HAVE_PTHREAD_CONDATTR_SETCLOCK 1
 
-/* Define to 1 if you have the `pthread_attr_set_qos_class_np' function. */
+/* Define to 1 if you have the pthread_attr_set_qos_class_np function. */
 #cmakedefine HAVE_PTHREAD_ATTR_SET_QOS_CLASS_NP 1
 
 /* Define if pthread_setname_np() has 1 arg */
@@ -136,14 +178,14 @@
 /* Define if you have MHD */
 #cmakedefine WITH_MHD 1
 
+/* Define if you have Onion */
+#cmakedefine WITH_ONION 1
+
 /* Define if you have OLE32 */
 #cmakedefine WITH_OLE32 1
 
 /* Define if you have PSAPI */
 #cmakedefine WITH_PSAPI 1
-
-/* Define if you have libcurl */
-#cmakedefine WITH_CURL 1
 
 /* Define to 2 if the system does not provide POSIX.1 features except with
 this defined. */

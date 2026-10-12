@@ -273,7 +273,9 @@ NQNetworkLooper* NQNetworkLooper_create(uint32_t timerLimit, uint32_t socketLimi
     NQListHead_addBack(&thiz->freeDispatchList, &entry->base.list);
   }
 
+#if defined(HAVE_SYS_EVENTFD_H) || defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX)
   NQNetworkLooper_addSocket(thiz, NQEventWakeup_handle(&thiz->wakeup), wakeupAction, NULL, thiz);
+#endif
 
   return thiz;
 }

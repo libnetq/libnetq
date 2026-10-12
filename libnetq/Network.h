@@ -12,5 +12,6 @@
 
 #include <libnetq/net/Socket.h>
 #include <libnetq/net/EndPoint.h>
+#include <libnetq/net/GetAddrInfo.h>
 
 #endif /* _LIBNETQ_NETWORK_H */

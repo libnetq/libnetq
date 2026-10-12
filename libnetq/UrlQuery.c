@@ -197,7 +197,7 @@ const char* NQUrlQuery_value(const NQUrlQuery* thiz, const char* name)
 {
   const struct ParamEntry* entry = thiz->paramEntries;
   while (entry->value) {
-    if (entry->name && strcmp(entry->name, name) == 0)
+    if (entry->name && NQStrcmp(entry->name, name) == 0)
       return entry->value;
     entry++;
   }

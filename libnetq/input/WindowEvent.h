@@ -1,14 +1,14 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2021-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
  */
 
-#ifndef _LIBNETQ_WINDOWEVENT_H
-#define _LIBNETQ_WINDOWEVENT_H
+#ifndef _LIBNETQ_INPUT_WINDOWEVENT_H
+#define _LIBNETQ_INPUT_WINDOWEVENT_H
 
 #include <libnetq/Event.h>
 #include <libnetq/gfx/Rect.h>
@@ -39,4 +39,4 @@ typedef struct NQWindowDrawEvent {
   void* gc;
 } NQWindowDrawEvent;
 
-#endif /* _LIBNETQ_WINDOWEVENT_H */
+#endif /* _LIBNETQ_INPUT_WINDOWEVENT_H */

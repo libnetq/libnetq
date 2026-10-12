@@ -1,14 +1,14 @@
 /*
  * MIT License
  *
- * Copyright (c) 2021-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2021-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
  */
 
-#ifndef _LIBNETQ_MOUSEEVENT_H
-#define _LIBNETQ_MOUSEEVENT_H
+#ifndef _LIBNETQ_INPUT_MOUSEEVENT_H
+#define _LIBNETQ_INPUT_MOUSEEVENT_H
 
 #include <libnetq/Event.h>
 
@@ -31,4 +31,4 @@ typedef struct NQMouseEvent {
   uint8_t reserve;
 } NQMouseEvent;
 
-#endif /* _LIBNETQ_MOUSEEVENT_H */
+#endif /* _LIBNETQ_INPUT_MOUSEEVENT_H */

@@ -68,6 +68,7 @@ static inline NQFileHandle NQGetStdHandle(int fileno)
 typedef int NQFileHandle;
 #define NQIsFileValid(handle) 0
 #define NQIsFileInvalid(handle) 1
+#define NQGetStdHandle(fileno) (-1)
 #endif
 
 #if defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX)
@@ -79,7 +80,9 @@ typedef int NQFileHandle;
 
 typedef enum NQFileOpenMode {
   NQ_FOPEN_READ = 0,
-  NQ_FOPEN_WRITE
+  NQ_FOPEN_WRITE,
+  NQ_FOPEN_CREATE,
+  NQ_FOPEN_APPEND,
 } NQFileOpenMode;
 
 typedef enum NQFileSeekOrigin {

@@ -16,6 +16,7 @@
 
 #include <libnetq/Malloc.h>
 #include <libnetq/string/String.h>
+#include <libnetq/string/NameValue.h>
 #include <libnetq/http/HttpHeader.h>
 #include <libnetq/Base64.h>
 #include <libnetq/net/SocketHandle.h>
@@ -64,7 +65,7 @@ struct MHDWebRequest {
 struct MHDWebResponse {
   NQWebResponse base;
 
-  NQKeyVal* headers;
+  NQNameValue headers;
   NQStringPrint buffer;
 };
 
@@ -159,10 +160,10 @@ static void requestRelease(struct MHDWebRequest* request)
   NQWebRequest_finalize(&request->base);
 }
 
-static bool responseSetHeader(NQWebResponse* res, const char* header, const char* value)
+static bool responseAddHeader(NQWebResponse* res, const char* header, const char* value)
 {
   struct MHDWebResponse* response = NQ_CONTAINER_OF(res, struct MHDWebResponse, base);
-  return NQKeyVal_set(response->headers, header, value);
+  return NQNameValue_add(&response->headers, header, value);
 }
 
 static int responseWrite(NQWebResponse* res, const void* data, size_t size)
@@ -177,7 +178,7 @@ static int responseFlush(NQWebResponse* response)
 }
 
 static const struct NQWebResponseOperations kResponseOperations = {
-  .setHeader = responseSetHeader,
+  .addHeader = responseAddHeader,
   .write = responseWrite,
   .flush = responseFlush,
 };
@@ -186,14 +187,14 @@ static int responseInit(struct MHDWebResponse* response, NQWebRequest* request)
 {
   NQWebResponse_init(&response->base, &kResponseOperations, request);
 
-  response->headers = NQKeyVal_create();
+  NQNameValue_init(&response->headers);
   NQStringPrint_init(&response->buffer);
   return 0;
 }
 
 static void responseRelease(struct MHDWebResponse* response)
 {
-  NQKeyVal_destroy(response->headers);
+  NQNameValue_finalize(&response->headers);
   NQStringPrint_finalize(&response->buffer);
 
   NQWebResponse_finalize(&response->base);
@@ -418,7 +419,7 @@ static int websocketUpgradeHandler(NQWebRequest* request, NQWebResponse* respons
 
   const char* secWsVersionHeader = NQWebRequest_getHeader(request, NQHTTP_HEADER_SEC_WEBSOCKET_VERSION);
   if (secWsVersionHeader == NULL || NQStrcmp(secWsVersionHeader, WS_VERSION) != 0) {
-    NQWebResponse_setHeader(response, NQHTTP_HEADER_SEC_WEBSOCKET_VERSION, WS_VERSION);
+    NQWebResponse_addHeader(response, NQHTTP_HEADER_SEC_WEBSOCKET_VERSION, WS_VERSION);
     return NQ_HTTP_UPGRADE_REQUIRED;
   }
 
@@ -449,10 +450,10 @@ static int websocketUpgradeHandler(NQWebRequest* request, NQWebResponse* respons
   char hashedKey[32];
   NQWebSocketCalcAccept(secWsKeyHeader, hashedKey, sizeof(hashedKey));
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_UPGRADE, "websocket");
-  // NQWebResponse_setHeader(response, NQHTTP_HEADER_CONNECTION, "Upgrade");
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_SEC_WEBSOCKET_ACCEPT, hashedKey);
-  // NQWebResponse_setHeader(response, NQHTTP_HEADER_SEC_WEBSOCKET_PROTOCOL, secWsProtocolHeader);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_UPGRADE, "websocket");
+  // NQWebResponse_addHeader(response, NQHTTP_HEADER_CONNECTION, "Upgrade");
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_SEC_WEBSOCKET_ACCEPT, hashedKey);
+  // NQWebResponse_addHeader(response, NQHTTP_HEADER_SEC_WEBSOCKET_PROTOCOL, secWsProtocolHeader);
 
   return NQ_HTTP_SWITCHING_PROTOCOLS;
 }
@@ -587,12 +588,12 @@ static MHDWebResult serverAccessHandler(void* cls, struct MHD_Connection* connec
     response = MHD_create_response_from_buffer(size, data, MHD_RESPMEM_PERSISTENT);
   }
 
-  NQKeyValIter* iter = NQKeyVal_begin(context->response.headers);
+  NQNameValueEntry* iter = NQNameValue_first(&context->response.headers);
   while (iter != NULL) {
-    const char* key = NQKeyValIter_key(iter);
-    const char* val = NQKeyValIter_val(iter);
-    MHD_add_response_header(response, key, val);
-    iter = NQKeyValIter_next(iter);
+    const char* name = NQNameValueEntryName(iter);
+    const char* value = NQNameValueEntryValue(iter);
+    MHD_add_response_header(response, name, value);
+    iter = NQNameValue_next(&context->response.headers, iter);
   }
 
   int ret = MHD_queue_response(context->connection, statusCode, response);

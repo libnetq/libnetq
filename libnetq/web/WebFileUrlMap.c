@@ -50,7 +50,7 @@ static int fileUrlMapRequest(NQWebRequest* request, NQWebResponse* response)
   }
 
   const char* contentType = NQWebServer_getMimeType(NQWebRequest_server(request), NQPath_characters(filename));
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
   NQWebResponse_write(response, (char*)NQUint8Array_data(arraybuffer), NQUint8Array_size(arraybuffer));
   NQUint8Array_destroy(arraybuffer);
   return NQ_HTTP_OK;

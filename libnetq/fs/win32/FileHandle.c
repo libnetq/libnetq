@@ -30,13 +30,28 @@ int NQFileOpen(const char* path, NQFileOpenMode mode, NQFileHandle* result)
   case NQ_FOPEN_READ:
     desiredAccess = GENERIC_READ;
     creationDisposition = OPEN_EXISTING;
-    shareMode = FILE_SHARE_READ;
+    /* like open(O_RDONLY) on POSIX: readable while others write, rename or delete it */
+    shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     break;
 
   case NQ_FOPEN_WRITE:
     desiredAccess = GENERIC_WRITE;
     creationDisposition = CREATE_ALWAYS;
     shareMode = 0;
+    break;
+
+  case NQ_FOPEN_CREATE:
+    desiredAccess = GENERIC_WRITE;
+    creationDisposition = OPEN_ALWAYS;
+    shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    break;
+
+  case NQ_FOPEN_APPEND:
+    /* append data without write data: Windows puts every write at the
+     * end of the file, atomically as O_APPEND does */
+    desiredAccess = FILE_APPEND_DATA | SYNCHRONIZE;
+    creationDisposition = OPEN_ALWAYS;
+    shareMode = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     break;
 
   default:

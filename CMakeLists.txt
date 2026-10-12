@@ -68,9 +68,13 @@ LNQ_OPTION_DEFINE(LIBRARY_TYPE "Choose the library type: SHARED, STATIC, OBJECT"
 LNQ_OPTION_DEFINE(CHECK_LEVEL "Runtime check in debug mode only" NUMBER 0)
 LNQ_OPTION_DEFINE(ENV_LOGFD "File descriptor name used for logging output" STRING "")
 LNQ_OPTION_DEFINE(USE_LOGHANDLER "External handler used for logging output" BOOLEAN FALSE)
-LNQ_OPTION_DEFINE(JSON_BACKEND "Choose the JSON backend" ENUM STUB OFF ON JANSSON CJSON)
+LNQ_OPTION_DEFINE(JSON_BACKEND "Choose the JSON backend" ENUM OFF ON JANSSON CJSON)
+LNQ_OPTION_DEFINE(HTTPREQUEST_BACKEND "Choose the JSON backend" ENUM OFF ON CURL)
+LNQ_OPTION_DEFINE(CANVAS_BACKEND "Choose the JSON backend" ENUM OFF ON STUB NANOVG PLUTOVG QUARTZ SKIA CAIRO)
 LNQ_OPTION_DEFINE(CPU_STRICT_MODE "Fail the build if any CPU property is undetected instead of using defaults" BOOLEAN FALSE)
 LNQ_FEATURE_DEFINE(USE_EXPORT "Enable symbol export as a shared library")
+
+set(WITH_CURL OFF)
 
 if (NOT LNQ_USE_EXPORT STREQUAL AUTO)
   set(NQ_USE_EXPORT ${LNQ_USE_EXPORT})
@@ -171,7 +175,7 @@ LNQ_ADD_LIBRARY(SQLite3)
 LNQ_ADD_LIBRARY(CJOSE)
 LNQ_ADD_LIBRARY(LibJWT)
 LNQ_ADD_LIBRARY(MHD)
-LNQ_ADD_LIBRARY(CURL)
+LNQ_ADD_LIBRARY(Onion)
 
 if (LibJWT_FOUND AND LibJWT_VERSION VERSION_GREATER_EQUAL "3.0.0")
   if (LNQ_WITH_LIBJWT STREQUAL "AUTO")
@@ -194,6 +198,7 @@ check_include_file(ifaddrs.h HAVE_IFADDRS_H)
 check_include_file(inttypes.h HAVE_INTTYPES_H)
 check_include_file(time.h HAVE_TIME_H)
 check_include_file(unistd.h HAVE_UNISTD_H)
+check_include_file(sys/eventfd.h HAVE_SYS_EVENTFD_H)
 check_include_file(sys/types.h HAVE_SYS_TYPES_H)
 check_include_file(sys/stat.h HAVE_SYS_STAT_H)
 
@@ -205,6 +210,9 @@ check_function_exists(pthread_condattr_setclock HAVE_PTHREAD_CONDATTR_SETCLOCK)
 check_function_exists(pthread_attr_set_qos_class_np HAVE_PTHREAD_ATTR_SET_QOS_CLASS_NP)
 check_function_exists(AAsset_getLength64 HAVE_AASSET_GETLENGTH64)
 check_function_exists(getlogin_r HAVE_GETLOGIN_R)
+check_function_exists(getpwuid_r HAVE_GETPWUID_R)
+check_function_exists(sigqueue HAVE_SIGQUEUE)
+check_function_exists(mkostemp HAVE_MKOSTEMP)
 
 check_c_source_compiles("
 #define __EXTENSIONS__ 1
@@ -380,19 +388,26 @@ set(libnetq_HEADERS
   libnetq/asset/FileSystemAsset.h
   libnetq/asset/PlatformAsset.h
 
+  libnetq/backend/win32/Socket.h
+
   libnetq/checksum/CRC32.h
 
   libnetq/cpu/alpha.h
   libnetq/cpu/amd64.h
   libnetq/cpu/arm.h
   libnetq/cpu/arm64.h
+  libnetq/cpu/arc.h
   libnetq/cpu/blackfin.h
   libnetq/cpu/convex.h
+  libnetq/cpu/csky.h
   libnetq/cpu/epiphany.h
   libnetq/cpu/hppa.h
   libnetq/cpu/ia64.h
+  libnetq/cpu/loongarch.h
   libnetq/cpu/m68k.h
+  libnetq/cpu/microblaze.h
   libnetq/cpu/mips.h
+  libnetq/cpu/openrisc.h
   libnetq/cpu/ppc.h
   libnetq/cpu/pyramid.h
   libnetq/cpu/riscv.h
@@ -405,7 +420,7 @@ set(libnetq_HEADERS
   libnetq/cpu/tms470.h
   libnetq/cpu/wasm.h
   libnetq/cpu/x86.h
-  libnetq/cpu/z.h
+  libnetq/cpu/zarch.h
 
   libnetq/crypto/advapi32/CryptoHash.h
   libnetq/crypto/kernel/CryptoHash.h
@@ -456,8 +471,18 @@ set(libnetq_HEADERS
   libnetq/fs/Path.h
   libnetq/fs/Stat.h
 
+  libnetq/gfx/cairo/Canvas.h
+  libnetq/gfx/nanovg/Canvas.h
+  libnetq/gfx/plutovg/Canvas.h
+  libnetq/gfx/quartz/Canvas.h
+  libnetq/gfx/skia/Canvas.h
+  libnetq/gfx/stub/Canvas.h
+  libnetq/gfx/Canvas.h
+  libnetq/gfx/Canvas.h
+  libnetq/gfx/Color.h
   libnetq/gfx/ColorSpace.h
   libnetq/gfx/ColorUtils.h
+  libnetq/gfx/GfxType.h
   libnetq/gfx/Image.h
   libnetq/gfx/ImageBuilder.h
   libnetq/gfx/Rect.h
@@ -476,6 +501,11 @@ set(libnetq_HEADERS
   libnetq/http/HttpVersion.h
   libnetq/http/MediaType.h
   libnetq/http/MimeTypes.def
+
+  libnetq/input/KeyboardEvent.h
+  libnetq/input/MotionEvent.h
+  libnetq/input/MouseEvent.h
+  libnetq/input/WindowEvent.h
 
   libnetq/io/kernel/UIO.h
   libnetq/io/unix/UIO.h
@@ -497,6 +527,8 @@ set(libnetq_HEADERS
 
   libnetq/net/ChunkBuffer.h
   libnetq/net/EndPoint.h
+  libnetq/net/GetAddrInfo.h
+  libnetq/net/Icmp.h
   libnetq/net/NetBufferQueue.h
   libnetq/net/Netinet.h
   libnetq/net/PlatformSocket.h
@@ -508,6 +540,8 @@ set(libnetq_HEADERS
   libnetq/net/SpyServer.h
   libnetq/net/WakeOnLan.h
 
+  libnetq/process/Process.h
+
   libnetq/random/CryptoRandom.h
   libnetq/random/UnlimitedRandom.h
 
@@ -518,6 +552,8 @@ set(libnetq_HEADERS
   libnetq/sql/UserDataStore.h
 
   libnetq/string/CStrToNum.h
+  libnetq/string/KeyVal.h
+  libnetq/string/NameValue.h
   libnetq/string/Sprintf.h
   libnetq/string/String.h
   libnetq/string/StringArray.h
@@ -554,6 +590,7 @@ set(libnetq_HEADERS
   libnetq/web/JsonRpcResponse.h
   libnetq/web/JsonRpcTypes.h
   libnetq/web/UrlHost.h
+  libnetq/web/WebCookie.h
   libnetq/web/WebDirAccess.h
   libnetq/web/WebEnvRestExecutor.h
   libnetq/web/WebEnvView.h
@@ -626,8 +663,6 @@ set(libnetq_HEADERS
   libnetq/Hash.h
   libnetq/HexViewer.h
   libnetq/JSON.h
-  libnetq/KeyboardEvent.h
-  libnetq/KeyVal.h
   libnetq/Library.h
   libnetq/Limits.h
   libnetq/List.h
@@ -641,8 +676,6 @@ set(libnetq_HEADERS
   libnetq/Math.h
   libnetq/MinMax.h
   libnetq/Module.h
-  libnetq/MotionEvent.h
-  libnetq/MouseEvent.h
   libnetq/Mutex.h
   libnetq/Network.h
   libnetq/NetworkLooper.h
@@ -652,6 +685,7 @@ set(libnetq_HEADERS
   libnetq/PlatformPoll.h
   libnetq/Poll.h
   libnetq/PollVector.h
+  libnetq/Power.h
   libnetq/PrimitiveStorage.h
   libnetq/PrimitiveType.h
   libnetq/Random.h
@@ -676,7 +710,6 @@ set(libnetq_HEADERS
   libnetq/VA.h
   libnetq/Version.h
   libnetq/Window.h
-  libnetq/WindowEvent.h
   libnetq/WindowManager.h
   libnetq/Zip.h
   )
@@ -685,6 +718,8 @@ set(libnetq_SOURCES
   libnetq/asset/BinaryAsset.c
   libnetq/asset/FileSystemAsset.c
   libnetq/asset/PlatformAsset.c
+
+  libnetq/backend/win32/Socket.c
 
   libnetq/checksum/kernel/CRC32.c
   libnetq/checksum/stub/CRC32.c
@@ -745,7 +780,15 @@ set(libnetq_SOURCES
   libnetq/fs/FileSystem.c
   libnetq/fs/Path.c
 
+  libnetq/gfx/cairo/Canvas.c
+  libnetq/gfx/nanovg/Canvas.c
+  libnetq/gfx/plutovg/Canvas.c
+  libnetq/gfx/quartz/Canvas.c
+  libnetq/gfx/skia/Canvas.cpp
+  libnetq/gfx/stub/Canvas.c
+  libnetq/gfx/Canvas.c
   libnetq/gfx/ColorUtils.c
+  libnetq/gfx/GfxType.c
   libnetq/gfx/Image.c
   libnetq/gfx/ImageBuilder.c
 
@@ -766,11 +809,16 @@ set(libnetq_SOURCES
 
   libnetq/net/ChunkBuffer.c
   libnetq/net/EndPoint.c
+  libnetq/net/GetAddrInfo.c
+  libnetq/net/Icmp.c
   libnetq/net/NetBufferQueue.c
   libnetq/net/SocketHandle.c
   libnetq/net/SpyModuleList.c
   libnetq/net/SpyServer.c
   libnetq/net/WakeOnLan.c
+
+  libnetq/process/Process.c
+  libnetq/process/ProcessList.c
 
   libnetq/random/CryptoRandomOpenSSL.c
   libnetq/random/CryptoRandomPlatform.c
@@ -785,6 +833,8 @@ set(libnetq_SOURCES
   libnetq/sql/UserDataStore.c
 
   libnetq/string/CStrToNum.c
+  libnetq/string/KeyVal.c
+  libnetq/string/NameValue.c
   libnetq/string/String.c
   libnetq/string/StringArray.c
   libnetq/string/StringData.c
@@ -806,6 +856,7 @@ set(libnetq_SOURCES
 
   libnetq/web/civetweb/WebServerOperations.c
   libnetq/web/mhd/WebServerOperations.c
+  libnetq/web/onion/WebServerOperations.c
   libnetq/web/JsonRpcResponse.c
   libnetq/web/UrlHost.c
   libnetq/web/WebDirAccess.c
@@ -854,7 +905,6 @@ set(libnetq_SOURCES
   libnetq/GetUserName.c
   libnetq/Hash.c
   libnetq/HexViewer.c
-  libnetq/KeyVal.c
   libnetq/Leb128.c
   libnetq/Library.c
   libnetq/Log.c
@@ -874,6 +924,7 @@ set(libnetq_SOURCES
   libnetq/PlatformPoll.c
   libnetq/Poll.c
   libnetq/PollVector.c
+  libnetq/Power.c
   libnetq/PrimitiveStorage.c
   libnetq/PrimitiveType.c
   libnetq/RefCount.c
@@ -938,14 +989,18 @@ set(libnetq_CMAKEFILES
   cmake/FindLZ4.cmake
   cmake/FindLZO.cmake
   cmake/FindMHD.cmake
+  cmake/FindNanoVG.cmake
   cmake/FindNanoSVG.cmake
+  cmake/FindOnion.cmake
   cmake/FindOpenJP2.cmake
   cmake/FindPCRE2.cmake
   cmake/FindPixman.cmake
+  cmake/FindPlutoVG.cmake
   cmake/FindQuickJS.cmake
   cmake/FindSDL3.cmake
   cmake/FindSDL3_ttf.cmake
   cmake/FindSecp256k1.cmake
+  cmake/FindSkia.cmake
   cmake/FindSodium.cmake
   cmake/FindSQLite3.cmake
   cmake/FindTidy.cmake
@@ -1054,10 +1109,9 @@ else ()
   set(NQ_USE_STUB_BINARYASSET 1)
 endif ()
 
-set (ENABLE_JSON ON)
 if (LNQ_JSON_BACKEND MATCHES "OFF|FALSE|0")
   message("! JSON has no implementation")
-  set (ENABLE_JSON OFF)
+  set(JSON_BACKEND_STUB 1)
 elseif (LNQ_JSON_BACKEND MATCHES "ON|TRUE|1")
   find_package(Jansson)
   find_package(CJSON)
@@ -1078,10 +1132,102 @@ elseif (LNQ_JSON_BACKEND STREQUAL "CJSON")
   find_package(CJSON REQUIRED)
   set(JSON_BACKEND_CJSON 1)
   list(APPEND libnetq_LIBRARIES CJSON::CJSON)
-elseif (LNQ_JSON_BACKEND STREQUAL "STUB")
-  set(JSON_BACKEND_STUB 1)
 else ()
   message(FATAL_ERROR "Unknown JSON backend ${LNQ_JSON_BACKEND}")
+endif ()
+
+if (LNQ_HTTPREQUEST_BACKEND MATCHES "OFF|FALSE|0")
+  message("! HttpRequest has no implementation")
+  set(HTTPREQUEST_BACKEND_STUB 1)
+elseif (LNQ_HTTPREQUEST_BACKEND MATCHES "ON|TRUE|1" OR LNQ_HTTPREQUEST_BACKEND STREQUAL "CURL")
+  find_package(CURL REQUIRED)
+  set(WITH_CURL ON)
+  list(APPEND libnetq_LIBRARIES CURL::libcurl)
+  set(HTTPREQUEST_BACKEND_CURL 1)
+else ()
+  message(FATAL_ERROR "Unknown HttpRequest backend ${LNQ_HTTPREQUEST_BACKEND}")
+endif ()
+
+set(ENABLE_CANVAS TRUE)
+if (LNQ_CANVAS_BACKEND MATCHES "OFF|FALSE|0")
+  message("! Canvas is disabled")
+  set(ENABLE_CANVAS FALSE)
+elseif (LNQ_CANVAS_BACKEND MATCHES "ON|TRUE|1")
+  find_package(NanoVG)
+  if (NanoVG_FOUND)
+    set(CANVAS_BACKEND_NANOVG 1)
+    list(APPEND libnetq_LIBRARIES NanoVG::NanoVG)
+  else ()
+    find_package(PlutoVG 1.3)
+    if (PlutoVG_FOUND)
+      set(CANVAS_BACKEND_PLUTOVG 1)
+      list(APPEND libnetq_LIBRARIES PlutoVG::PlutoVG)
+    else ()
+      find_package(Skia 155)
+      if (Skia_FOUND)
+        set(CANVAS_BACKEND_SKIA 1)
+        list(APPEND libnetq_LIBRARIES Skia::Skia)
+      else ()
+        if (APPLE)
+          find_package(Cairo COMPONENTS quartz)
+        elseif (WIN32)
+          find_package(Cairo COMPONENTS win32)
+        else ()
+          find_package(Cairo COMPONENTS xlib)
+        endif ()
+        if (Cairo_FOUND)
+          set(CANVAS_BACKEND_CAIRO 1)
+          list(APPEND libnetq_LIBRARIES Cairo::Cairo)
+        elseif (APPLE)
+          set(CANVAS_BACKEND_QUARTZ 1)
+          list(APPEND libnetq_LIBRARIES "-framework CoreGraphics" "-framework CoreText")
+        else ()
+          message(FATAL_ERROR "No NanoVG, PlutoVG, Skia or Cairo library available")
+        endif ()
+      endif ()
+    endif ()
+  endif ()
+elseif (LNQ_CANVAS_BACKEND STREQUAL "NANOVG")
+  find_package(NanoVG REQUIRED)
+  set(CANVAS_BACKEND_NANOVG 1)
+  list(APPEND libnetq_LIBRARIES NanoVG::NanoVG)
+elseif (LNQ_CANVAS_BACKEND STREQUAL "PLUTOVG")
+  find_package(PlutoVG 1.3 REQUIRED)
+  set(CANVAS_BACKEND_PLUTOVG 1)
+  list(APPEND libnetq_LIBRARIES PlutoVG::PlutoVG)
+elseif (LNQ_CANVAS_BACKEND STREQUAL "QUARTZ")
+  if (NOT APPLE)
+    message(FATAL_ERROR "The Quartz Canvas backend (CoreGraphics, CoreText) is only available on Apple platforms")
+  endif ()
+  set(CANVAS_BACKEND_QUARTZ 1)
+  list(APPEND libnetq_LIBRARIES "-framework CoreGraphics" "-framework CoreText")
+elseif (LNQ_CANVAS_BACKEND STREQUAL "SKIA")
+  find_package(Skia 155 REQUIRED)
+  set(CANVAS_BACKEND_SKIA 1)
+  list(APPEND libnetq_LIBRARIES Skia::Skia)
+elseif (LNQ_CANVAS_BACKEND STREQUAL "CAIRO")
+  if (APPLE)
+    find_package(Cairo REQUIRED COMPONENTS quartz)
+  elseif (WIN32)
+    find_package(Cairo REQUIRED COMPONENTS win32)
+  else ()
+    find_package(Cairo REQUIRED COMPONENTS xlib)
+  endif ()
+  set(CANVAS_BACKEND_CAIRO 1)
+  list(APPEND libnetq_LIBRARIES Cairo::Cairo)
+elseif (LNQ_CANVAS_BACKEND STREQUAL "STUB")
+  message("! Canvas has no implementation")
+  set(CANVAS_BACKEND_STUB 1)
+else ()
+  message(FATAL_ERROR "Unknown Canvas backend ${LNQ_CANVAS_BACKEND}")
+endif ()
+
+if (ENABLE_CANVAS)
+  enable_language(CXX)
+endif ()
+
+if (CANVAS_BACKEND_SKIA)
+  set_source_files_properties(libnetq/gfx/Canvas.c PROPERTIES LANGUAGE CXX)
 endif ()
 
 if (WITH_PCRE2)
@@ -1119,24 +1265,17 @@ else ()
   set(NQCONFIG_USE_STUB_SQLITE 1)
 endif ()
 
-if (WITH_CJOSE AND ENABLE_JSON)
+if (WITH_CJOSE AND NOT JSON_BACKEND_STUB)
   set(NQCONFIG_USE_CJOSE_JWT 1)
 elseif (WITH_LIBJWT)
   set(NQCONFIG_USE_LIBJWT_JWT 1)
-elseif (WITH_OPENSSL AND ENABLE_JSON)
+elseif (WITH_OPENSSL AND NOT JSON_BACKEND_STUB)
   set(NQCONFIG_USE_OPENSSL_JWT 1)
-elseif (WITH_SODIUM AND ENABLE_JSON)
+elseif (WITH_SODIUM AND NOT JSON_BACKEND_STUB)
   set(NQCONFIG_USE_SODIUM_JWT 1)
 else ()
   message("! JWT has no implementation")
   set(NQCONFIG_USE_STUB_JWT 1)
-endif ()
-
-if (WITH_CURL)
-  set(NQCONFIG_USE_CURL_HTTPREQUESTSYNC 1)
-else ()
-  message("! HttpRequestSync has no implementation")
-  set(NQCONFIG_USE_STUB_HTTPREQUESTSYNC 1)
 endif ()
 
 if (WITH_CIVETWEB)
@@ -1149,6 +1288,7 @@ endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
   list(APPEND libnetq_LIBRARIES "-framework Foundation")
+  list(APPEND libnetq_LIBRARIES "-framework CoreServices") # For Power.c
 endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
@@ -1159,6 +1299,7 @@ endif ()
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
   list(APPEND libnetq_DEFINITIONS _WIN32_WINNT=0x0600)
   list(APPEND libnetq_LIBRARIES ws2_32 wsock32)
+  list(APPEND libnetq_LIBRARIES iphlpapi) # For Icmp.c
 endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Generic")
@@ -1254,8 +1395,8 @@ if (WITH_MHD)
   list(APPEND libnetq_LIBRARIES MHD::MHD)
 endif ()
 
-if (WITH_CURL)
-  list(APPEND libnetq_LIBRARIES CURL::libcurl)
+if (WITH_ONION)
+  list(APPEND libnetq_LIBRARIES Onion::Onion)
 endif ()
 
 configure_file(config.h.in "${CMAKE_CURRENT_BINARY_DIR}/config.h" @ONLY)
@@ -1322,5 +1463,6 @@ message(STATUS "SQLite3  . . . . . . . . . . . . . . . . . . ${WITH_SQLITE3} (HA
 message(STATUS "CJOSE  . . . . . . . . . . . . . . . . . . . ${WITH_CJOSE} (HAVE ${HAVE_CJOSE})")
 message(STATUS "LibJWT . . . . . . . . . . . . . . . . . . . ${WITH_LIBJWT} (HAVE ${HAVE_LIBJWT})")
 message(STATUS "MHD  . . . . . . . . . . . . . . . . . . . . ${WITH_MHD} (HAVE ${HAVE_MHD})")
-message(STATUS "CURL . . . . . . . . . . . . . . . . . . . . ${WITH_CURL} (HAVE ${HAVE_CURL})")
+message(STATUS "CURL . . . . . . . . . . . . . . . . . . . . ${WITH_CURL}")
+message(STATUS "Onion  . . . . . . . . . . . . . . . . . . . ${WITH_ONION} (HAVE ${HAVE_ONION})")
 message(STATUS "Psapi  . . . . . . . . . . . . . . . . . . . ${WITH_PSAPI} (HAVE ${HAVE_PSAPI})")

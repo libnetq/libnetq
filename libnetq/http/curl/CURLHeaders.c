@@ -26,6 +26,18 @@ void NQCURLHeaders_finalize(NQCURLHeaders* thiz)
   }
 }
 
+static void append(NQCURLHeaders* thiz, struct curl_slist* entry)
+{
+  if (thiz->impl == NULL)
+    thiz->impl = entry;
+  else {
+    struct curl_slist* last = thiz->impl;
+    while (last->next != NULL)
+      last = last->next;
+    last->next = entry;
+  }
+}
+
 bool NQCURLHeaders_add(NQCURLHeaders* thiz, const char* name, const char* value)
 {
   size_t klen = NQStrlen(name);
@@ -40,21 +52,27 @@ bool NQCURLHeaders_add(NQCURLHeaders* thiz, const char* name, const char* value)
   entry->data = ptr;
   entry->next = NULL;
 
-  memcpy(ptr, name, klen);
+  NQMemcpy(ptr, name, klen);
   ptr += klen;
-  memcpy(ptr, ": ", 2);
+  NQMemcpy(ptr, ": ", 2);
   ptr += 2;
-  memcpy(ptr, value, vlen + 1);
+  NQMemcpy(ptr, value, vlen + 1);
 
-  if (thiz->impl == NULL)
-    thiz->impl = entry;
-  else {
-    struct curl_slist* last = thiz->impl;
-    while (last->next != NULL)
-      last = last->next;
-    last->next = entry;
-  }
+  append(thiz, entry);
+  return true;
+}
 
+bool NQCURLHeaders_addLine(NQCURLHeaders* thiz, const char* line)
+{
+  size_t len = NQStrlen(line);
+  struct curl_slist* entry = (struct curl_slist*)NQMalloc(sizeof(*entry) + len + 1);
+  if (!entry)
+    return false;
+
+  entry->data = (char*)entry + sizeof(*entry);
+  entry->next = NULL;
+  NQMemcpy(entry->data, line, len + 1);
+  append(thiz, entry);
   return true;
 }
 

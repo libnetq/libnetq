@@ -16,7 +16,7 @@
 #include <libnetq/web/civetweb/CivetWebAdapter.h>
 
 #include <libnetq/UrlQuery.h>
-#include <libnetq/KeyVal.h>
+#include <libnetq/string/NameValue.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Log.h>
 #include <libnetq/http/HttpHeader.h>
@@ -39,7 +39,7 @@ struct CivetWeRequest {
 
 struct CivetWeResponse {
   NQWebResponse base;
-  NQKeyVal* headers;
+  NQNameValue headers;
   NQStringPrint buffer;
 };
 
@@ -145,11 +145,10 @@ static void requestRelease(struct CivetWeRequest* request)
   NQWebRequest_finalize(&request->base);
 }
 
-static bool responseSetHeader(NQWebResponse* res, const char* header, const char* value)
+static bool responseAddHeader(NQWebResponse* res, const char* header, const char* value)
 {
   struct CivetWeResponse* response = NQ_CONTAINER_OF(res, struct CivetWeResponse, base);
-  NQKeyVal_set(response->headers, header, value);
-  return true;
+  return NQNameValue_add(&response->headers, header, value);
 }
 
 static int responseWrite(NQWebResponse* res, const void* data, size_t size)
@@ -165,7 +164,7 @@ static int responseFlush(NQWebResponse* res)
 }
 
 static const struct NQWebResponseOperations kResponseOperations = {
-  .setHeader = responseSetHeader,
+  .addHeader = responseAddHeader,
   .write = responseWrite,
   .flush = responseFlush,
 };
@@ -174,13 +173,13 @@ static void responseInit(struct CivetWeResponse* response, struct CivetWeRequest
 {
   NQWebResponse_init(&response->base, &kResponseOperations, &request->base);
 
-  response->headers = NQKeyVal_create();
+  NQNameValue_init(&response->headers);
   NQStringPrint_init(&response->buffer);
 }
 
 static void responseRelease(struct CivetWeResponse* response)
 {
-  NQKeyVal_destroy(response->headers);
+  NQNameValue_finalize(&response->headers);
   NQStringPrint_finalize(&response->buffer);
 
   NQWebResponse_finalize(&response->base);
@@ -367,12 +366,12 @@ static int requestHandler(struct mg_connection* conn, void* userdata)
   }
 
   mg_response_header_start(conn, statusCode);
-  NQKeyValIter* iter = NQKeyVal_begin(context.response.headers);
+  NQNameValueEntry* iter = NQNameValue_first(&context.response.headers);
   while (iter != NULL) {
-    const char* key = NQKeyValIter_key(iter);
-    const char* val = NQKeyValIter_val(iter);
-    mg_response_header_add(conn, key, val, -1);
-    iter = NQKeyValIter_next(iter);
+    const char* name = NQNameValueEntryName(iter);
+    const char* value = NQNameValueEntryValue(iter);
+    mg_response_header_add(conn, name, value, -1);
+    iter = NQNameValue_next(&context.response.headers, iter);
   }
   mg_response_header_send(conn);
 

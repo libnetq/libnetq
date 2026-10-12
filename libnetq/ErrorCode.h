@@ -38,6 +38,11 @@ typedef int NQErrorCode;
 # define NQ_EACCES           EACCES
 # define NQ_EISDIR           EISDIR
 # define NQ_EEXIST           EEXIST
+# define NQ_EXDEV            EXDEV
+# define NQ_ENOTEMPTY        ENOTEMPTY
+# define NQ_ENOTDIR          ENOTDIR
+# define NQ_EPERM            EPERM
+# define NQ_ESRCH            ESRCH
 
 #if defined(NQ_OS_KERNEL)
 # define NQ_ENOTSUPP         ENOTSUPP
@@ -67,6 +72,11 @@ typedef int NQErrorCode;
 # define NQ_EACCES           ERROR_ACCESS_DENIED
 # define NQ_EISDIR           ERROR_ACCESS_DENIED
 # define NQ_EEXIST           ERROR_ALREADY_EXISTS
+# define NQ_EXDEV            ERROR_NOT_SAME_DEVICE
+# define NQ_ENOTEMPTY        ERROR_DIR_NOT_EMPTY
+# define NQ_ENOTDIR          ERROR_DIRECTORY
+# define NQ_EPERM            ERROR_PRIVILEGE_NOT_HELD
+# define NQ_ESRCH            ERROR_NOT_FOUND
 
 #else
 # define NQ_ENOENT           2
@@ -86,6 +96,11 @@ typedef int NQErrorCode;
 # define NQ_EACCES           13
 # define NQ_EISDIR           21
 # define NQ_EEXIST           17
+# define NQ_EXDEV            18
+# define NQ_ENOTEMPTY        39
+# define NQ_ENOTDIR          20
+# define NQ_EPERM            1
+# define NQ_ESRCH            3
 
 #endif
 

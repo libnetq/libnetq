@@ -82,7 +82,7 @@ static const char* getRelativePath(const char* baseUrl, const char* url)
   size_t baseUrlLength = NQStrlen(baseUrl);
   size_t urlLength = NQStrlen(url);
 
-  if (urlLength < baseUrlLength || memcmp(url, baseUrl, baseUrlLength) != 0)
+  if (urlLength < baseUrlLength || NQMemcmp(url, baseUrl, baseUrlLength) != 0)
     return NULL;
 
   return url + baseUrlLength;
@@ -97,8 +97,8 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
   const char* url = NQWebRequest_url(request);
   const char* relativePath = getRelativePath(fileApi->baseUrl, url);
 
-  if (relativePath == NULL || strstr(url, "//") != NULL || strstr(url, "/../") != NULL) {
-    NQWebResponse_setHeader(response, NQHTTP_HEADER_LOCATION, fileApi->baseUrl);
+  if (relativePath == NULL || NQStrstr(url, "//") != NULL || NQStrstr(url, "/../") != NULL) {
+    NQWebResponse_addHeader(response, NQHTTP_HEADER_LOCATION, fileApi->baseUrl);
     return NQ_HTTP_MOVED_PERMANENTLY;
   }
 
@@ -130,7 +130,7 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
         return NQ_HTTP_INTERNAL_SERVER_ERROR;
       }
 
-      NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
+      NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
 
       uint8_t buffer[1024];
       for (;;) {
@@ -160,7 +160,7 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
     }
 
     const char* location = NQPathBuilder_characters(&pathBuf);
-    NQWebResponse_setHeader(response, NQHTTP_HEADER_LOCATION, location);
+    NQWebResponse_addHeader(response, NQHTTP_HEADER_LOCATION, location);
     NQStringPrint_finalize(&pathBuf);
     return NQ_HTTP_MOVED_PERMANENTLY;
   }
@@ -172,7 +172,7 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
     return NQ_HTTP_NOT_FOUND;
   }
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
   NQWebResponse_printf(response, "<!DOCTYPE html>");
   NQWebResponse_printf(response, "<html>");
   NQWebResponse_printf(response, "<head>");

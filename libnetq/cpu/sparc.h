@@ -30,8 +30,17 @@
 
 #define NQ_CPU_SPARC 1
 #define NQ_CPU_NAME "SPARC"
-#define NQ_CPU_ABI "sparc"
 #define NQ_CPU_BIG_ENDIAN 1
+
+/* __sparc_v9__ only means the V9 instruction set (32-bit V8+ code defines it too); the 64-bit ABI is __arch64__
+   (gcc) or __sparcv9 (Sun cc) */
+#if defined(__arch64__) || defined(__sparcv9) || defined(__LP64__) || defined(_LP64)
+#define NQ_CPU_ABI "sparc64"
+#define NQ_CPU_64BIT 1
+#else
+#define NQ_CPU_ABI "sparc"
+#define NQ_CPU_32BIT 1
+#endif
 
 #endif
 

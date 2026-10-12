@@ -102,7 +102,7 @@ size_t urlPathInit(NQUrlPath* thiz, const char* path, const char* pattern, struc
           entry->value[valueLength] = '\0';
           NQURLDecode(entry->value, valueLength, entry->value, valueLength);
           if (pattern && nameLength) {
-            memcpy(entry->name, pattern - nameLength - 2, nameLength);
+            NQMemcpy(entry->name, pattern - nameLength - 2, nameLength);
             entry->name[nameLength] = '\0';
           }
           else
@@ -129,7 +129,7 @@ size_t urlPathInit(NQUrlPath* thiz, const char* path, const char* pattern, struc
         else if (valueLength != 0 || *pattern != '{')
           pattern = NULL;
         else {
-          char* nameEnd = strchr(pattern + 1, '}');
+          char* nameEnd = NQStrchr(pattern + 1, '}');
           if (!nameEnd)
             pattern = NULL;
           else {
@@ -228,7 +228,7 @@ const char* NQUrlPath_segment(const NQUrlPath* thiz, const char* name)
 {
   const struct SegmentEntry* entry = thiz->segmentEntries;
   while (entry->value) {
-    if (entry->name && strcmp(entry->name, name) == 0)
+    if (entry->name && NQStrcmp(entry->name, name) == 0)
       return entry->value;
     entry++;
   }

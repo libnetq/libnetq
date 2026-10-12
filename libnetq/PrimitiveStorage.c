@@ -44,7 +44,7 @@ static struct NQBaseValue* NQPrimitiveStorage_addNewValue(NQPrimitiveStorage* th
   struct NQBaseValue* objVal = (struct NQBaseValue*)NQMalloc(sizeInBytes + nlenz);
   if (objVal != NULL) {
     char* ptr = (char*)objVal + sizeInBytes;
-    (void)memcpy(ptr, name, nlenz);
+    (void)NQMemcpy(ptr, name, nlenz);
     objVal->name = ptr;
     objVal->type = type;
     NQListHead_init(&objVal->list);
@@ -164,6 +164,6 @@ bool NQPrimitiveStorage_setString(NQPrimitiveStorage* thiz, const char* name, co
   if (objVal == NULL)
     return false;
 
-  memcpy(objVal->value, value, length + 1);
+  NQMemcpy(objVal->value, value, length + 1);
   return true;
 }

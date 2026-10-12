@@ -143,7 +143,7 @@ static NQWasmUnknownSection* wasmUnknownSectionCreate(uint8_t sectionId, const u
   thiz->base.sectionId = sectionId;
   NQListHead_init(&thiz->base.list);
   thiz->size = size;
-  memcpy(thiz->data, data, size);
+  NQMemcpy(thiz->data, data, size);
   return thiz;
 }
 
@@ -186,14 +186,14 @@ static NQWasmCustomSection* createCustomSection(const char* name, size_t nameLen
   NQListHead_init(&thiz->base.list);
 
   char* ptr = (char*)thiz + sizeof(*thiz);
-  memcpy(ptr, name, nameLength);
+  NQMemcpy(ptr, name, nameLength);
   ptr[nameLength] = '\0';
   thiz->name = ptr;
   thiz->nameLength = (uint32_t)nameLength;
   ptr += nameLength + 1;
 
   if (size != 0)
-    memcpy(ptr, data, size);
+    NQMemcpy(ptr, data, size);
   thiz->data = (const uint8_t*)ptr;
   thiz->size = (uint32_t)size;
 
@@ -293,13 +293,13 @@ static struct NQWasmFuncType* createFuncType(const uint8_t* params, uint32_t par
   thiz->paramCount = paramCount;
   thiz->params = ptr;
   if (paramCount != 0)
-    memcpy(ptr, params, paramCount);
+    NQMemcpy(ptr, params, paramCount);
   ptr += paramCount;
 
   thiz->resultCount = resultCount;
   thiz->results = ptr;
   if (resultCount != 0)
-    memcpy(ptr, results, resultCount);
+    NQMemcpy(ptr, results, resultCount);
 
   return thiz;
 }
@@ -1176,7 +1176,7 @@ static struct NQWasmGlobal* createGlobal(uint8_t valtype, uint8_t mut, const voi
   thiz->mut = mut;
 
   uint8_t* ptr = (uint8_t*)thiz + sizeof(*thiz);
-  memcpy(ptr, expr, exprSize);
+  NQMemcpy(ptr, expr, exprSize);
   thiz->expr = ptr;
   thiz->exprSize = exprSize;
 
@@ -1507,19 +1507,19 @@ static struct NQWasmElement* createElement(const NQWasmElement* src)
 
   thiz->funcIndices = hasExprs ? NULL : (const uint32_t*)ptr;
   if (funcIndicesSize != 0)
-    memcpy(ptr, src->funcIndices, funcIndicesSize);
+    NQMemcpy(ptr, src->funcIndices, funcIndicesSize);
   ptr += funcIndicesSize;
 
   thiz->offsetSize = src->offsetSize;
   thiz->offset = src->offsetSize != 0 ? ptr : NULL;
   if (src->offsetSize != 0)
-    memcpy(ptr, src->offset, src->offsetSize);
+    NQMemcpy(ptr, src->offset, src->offsetSize);
   ptr += src->offsetSize;
 
   thiz->exprsSize = (uint32_t)exprsSize;
   thiz->exprs = hasExprs ? ptr : NULL;
   if (exprsSize != 0)
-    memcpy(ptr, src->exprs, exprsSize);
+    NQMemcpy(ptr, src->exprs, exprsSize);
 
   return thiz;
 }
@@ -1527,7 +1527,7 @@ static struct NQWasmElement* createElement(const NQWasmElement* src)
 static struct NQWasmElement* readElement(NQDataReader* reader)
 {
   NQWasmElement element;
-  memset(&element, 0, sizeof(element));
+  NQMemset(&element, 0, sizeof(element));
   element.reftype = NQ_WASM_TYPE_FUNCREF;
 
   uint32_t flags;
@@ -1811,8 +1811,8 @@ static bool initCode(NQWasmCode* thiz, const NQWasmLocal* locals, uint32_t local
   }
 
   if (localsSize != 0)
-    memcpy(data, locals, localsSize);
-  memcpy(data + localsSize, expr, exprSize);
+    NQMemcpy(data, locals, localsSize);
+  NQMemcpy(data + localsSize, expr, exprSize);
 
   thiz->data = data;
   thiz->locals = (const NQWasmLocal*)data;
@@ -2106,13 +2106,13 @@ static struct NQWasmData* createData(const NQWasmData* src)
   thiz->offsetSize = src->offsetSize;
   thiz->offset = src->offsetSize != 0 ? ptr : NULL;
   if (src->offsetSize != 0)
-    memcpy(ptr, src->offset, src->offsetSize);
+    NQMemcpy(ptr, src->offset, src->offsetSize);
   ptr += src->offsetSize;
 
   thiz->size = src->size;
   thiz->bytes = ptr;
   if (src->size != 0)
-    memcpy(ptr, src->bytes, src->size);
+    NQMemcpy(ptr, src->bytes, src->size);
 
   return thiz;
 }
@@ -2120,7 +2120,7 @@ static struct NQWasmData* createData(const NQWasmData* src)
 static struct NQWasmData* readData(NQDataReader* reader)
 {
   NQWasmData data;
-  memset(&data, 0, sizeof(data));
+  NQMemset(&data, 0, sizeof(data));
 
   uint32_t flags;
   if (!readLeb128Uint32(reader, &flags) || flags > NQ_WASM_DATA_FLAGS_MAX) {
@@ -2383,12 +2383,12 @@ static struct NQWasmImportItem* createImportItem(uint8_t importId, const NQStrin
 
   char* ptr = (char*)thiz + sizeof(*thiz);
   thiz->module = ptr;
-  memcpy(ptr, moduleName->characters, moduleName->length);
+  NQMemcpy(ptr, moduleName->characters, moduleName->length);
   ptr += moduleName->length;
   *ptr++ = '\0';
 
   thiz->name = ptr;
-  memcpy(ptr, itemName->characters, itemName->length);
+  NQMemcpy(ptr, itemName->characters, itemName->length);
   ptr[itemName->length] = '\0';
 
   return thiz;
@@ -2558,7 +2558,7 @@ NQWasmImportSection* NQWasmImportSection_fromMemory(const void* data, size_t siz
   uint32_t itemCount;
   if (!readLeb128Uint32(&reader, &itemCount)) {
     NQ_LOGE("Import vector count format is wrong");
-    return false;
+    return NULL;
   }
 
   NQListHead itemList;
@@ -2775,7 +2775,7 @@ static struct NQWasmExportItem* createExportItem(uint8_t exportId, const NQStrin
 
   char* ptr = (char*)thiz + sizeof(*thiz);
   thiz->name = ptr;
-  memcpy(ptr, itemName->characters, itemName->length);
+  NQMemcpy(ptr, itemName->characters, itemName->length);
   ptr[itemName->length] = '\0';
 
   return thiz;
@@ -2954,7 +2954,7 @@ NQWasmExportItem* NQWasmExportSection_findItem(const NQWasmExportSection* thiz, 
 {
   NQWasmExportItem* item = NQWasmExportSection_firstItem(thiz);
   while (item != NULL) {
-    if (strcmp(item->name, name) == 0)
+    if (NQStrcmp(item->name, name) == 0)
       return item;
     item = NQWasmExportSection_nextItem(thiz, item);
   }
@@ -3128,7 +3128,7 @@ NQWasmCustomSection* NQWasmModule_findCustomSection(const NQWasmModule* thiz, co
 {
   NQWasmSection* iter = NQWasmModule_firstSection(thiz);
   while (iter != NULL) {
-    if (iter->sectionId == NQ_WASM_SECTION_CUSTOM_ID && strcmp(((NQWasmCustomSection*)iter)->name, name) == 0)
+    if (iter->sectionId == NQ_WASM_SECTION_CUSTOM_ID && NQStrcmp(((NQWasmCustomSection*)iter)->name, name) == 0)
       return (NQWasmCustomSection*)iter;
     iter = NQWasmModule_nextSection(thiz, iter);
   }

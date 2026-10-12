@@ -10,7 +10,7 @@
 #include "config.h"
 #include "libnetq/Signal.h"
 
-#ifndef NQ_OS_KERNEL
+#if !defined(NQ_OS_KERNEL) && !defined(NQ_OS_UNKNOWN)
 
 #include <libnetq/sync/Once.h>
 #include <libnetq/Mutex.h>
