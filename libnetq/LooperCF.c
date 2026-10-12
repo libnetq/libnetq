@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2020-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -16,7 +16,7 @@
 
 #include <libnetq/Malloc.h>
 #include <libnetq/Assert.h>
-#include <libnetq/AutoReleaseCF.h>
+#include <libnetq/backend/cf/AutoRelease.h>
 
 struct Looper {
   CFRunLoopRef nativeLooper;

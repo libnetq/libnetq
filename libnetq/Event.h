@@ -12,10 +12,6 @@
 
 #include <libnetq/Time.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum {
   // Looper
   NQ_EVENT_FD,
@@ -53,6 +49,10 @@ enum {
   NQ_EVENT_MOTION_MOVE,
   NQ_EVENT_MOTION_END,
   NQ_EVENT_MOTION_CANCEL,
+  NQ_EVENT_MOUSE_LEAVE,
+  NQ_EVENT_WINDOW_FOCUS_IN,
+  NQ_EVENT_WINDOW_FOCUS_OUT,
+  NQ_EVENT_WINDOW_CLOSE,
 };
 
 typedef struct NQEvent {
@@ -60,9 +60,5 @@ typedef struct NQEvent {
 } NQEvent;
 
 typedef bool (NQEventCallback) (void*, const NQEvent*);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* _LIBNETQ_EVENT_H */

@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2020-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -25,7 +25,7 @@ extern "C" {
 
 #define NQ_ASSERT(condition) do { \
   if (!(condition)) { \
-    NQLog_print(NQ_LOG_ERROR, NQ_LOG_TAG, "Assertion failed: %s", #condition); \
+    NQ_ALWAYS_LOGE("Assertion failed: %s", #condition); \
     NQLog_report(NQ_LOG_ERROR, NQ_LOG_TAG, NQ_FILE, NQ_LINE, NQ_PRETTY_FUNCTION); \
     NQAbort(); \
   } \
@@ -33,15 +33,15 @@ extern "C" {
 
 #define NQ_ASSERT_WITH_MESSAGE(condition, ...) do { \
   if (!(condition)) { \
-    NQLog_print(NQ_LOG_ERROR, NQ_LOG_TAG, "Assertion failed: %s", #condition); \
-    NQLog_print(NQ_LOG_ERROR, NQ_LOG_TAG, __VA_ARGS__); \
+    NQ_ALWAYS_LOGE("Assertion failed: %s", #condition); \
+    NQ_ALWAYS_LOGE(__VA_ARGS__); \
     NQLog_report(NQ_LOG_ERROR, NQ_LOG_TAG, NQ_FILE, NQ_LINE, NQ_PRETTY_FUNCTION); \
     NQAbort(); \
   } \
 } while (0)
 
 #define NQ_ASSERT_NOT_REACHED() do { \
-  NQLog_print(NQ_LOG_ERROR, NQ_LOG_TAG, "Should not be reached"); \
+  NQ_ALWAYS_LOGE("Should not be reached"); \
   NQLog_report(NQ_LOG_ERROR, NQ_LOG_TAG, NQ_FILE, NQ_LINE, NQ_PRETTY_FUNCTION); \
   NQAbort(); \
 } while (0)

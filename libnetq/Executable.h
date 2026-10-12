@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2020-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -18,6 +18,7 @@ extern "C" {
 
 NQ_EXPORT int NQGetCommandLine(char* buffer, size_t n);
 NQ_EXPORT int NQGetCurrentDirectory(char* buffer, size_t n);
+NQ_EXPORT int NQSetCurrentDirectory(const char* path);
 NQ_EXPORT int NQGetExecutablePath(char* buffer, size_t n);
 
 #ifdef __cplusplus

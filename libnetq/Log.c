@@ -42,7 +42,7 @@
 #define DEFAULT_FILEHANDLE NQGetStdHandle(NQ_STDERR_FILENO)
 
 #ifdef NQ_USE_LOGHANDLER
-static int logNoop(void* userdata, NQLogLevel level, const char* tag, const char* format, va_list args)
+static int logNoop(void* userdata, NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, va_list args)
 {
   return -NQ_ENOENT;
 }
@@ -74,7 +74,7 @@ char NQLogLevelToChar(NQLogLevel level)
   };
 }
 
-static int printLogPrefix(char* buffer, size_t size, NQLogLevel level, const char* tag)
+static int printLogPrefix(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* file, int line, const char* function)
 {
   int n;
   char* ptr;
@@ -99,9 +99,9 @@ static int printLogPrefix(char* buffer, size_t size, NQLogLevel level, const cha
     *ptr = ' ';
   ptr++;
 
-  len = strlen(tag);
+  len = NQStrlen(tag);
   if (ptr < end)
-    memcpy(ptr, tag, NQGetMin((size_t)(end - ptr), len));
+    NQMemcpy(ptr, tag, NQGetMin((size_t)(end - ptr), len));
   ptr += len;
 
   if (ptr < end)
@@ -111,17 +111,17 @@ static int printLogPrefix(char* buffer, size_t size, NQLogLevel level, const cha
   return (int)(ptr - buffer);
 }
 
-int NQLog_snprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* format, ...)
+int NQLog_snprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, ...)
 {
   int result;
   va_list args;
   va_start(args, format);
-  result = NQLog_vsnprint(buffer, size, level, tag, format, args);
+  result = NQLog_vsnprint(buffer, size, level, tag, file, line, function, format, args);
   va_end(args);
   return result;
 }
 
-int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* format, va_list args)
+int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, va_list args)
 {
   int n;
   char* ptr;
@@ -131,13 +131,13 @@ int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag,
   ptr = buffer;
   end = ptr + size;
 
-  n = printLogPrefix(buffer, size, level, tag);
+  n = printLogPrefix(buffer, size, level, tag, file, line, function);
   if (n < 0)
     return n;
   ptr += n;
 
   len = ptr < end ? end - ptr : 0;
-  n = vsnprintf(ptr, len, format, args);
+  n = NQVsnprintf(ptr, len, format, args);
   if (n < 0)
     return n;
   ptr += n;
@@ -145,22 +145,22 @@ int NQLog_vsnprint(char* buffer, size_t size, NQLogLevel level, const char* tag,
   return (int)(ptr - buffer);
 }
 
-int NQLog_print(NQLogLevel level, const char* tag, const char* format, ...)
+int NQLog_print(NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, ...)
 {
   int result;
   va_list args;
   va_start(args, format);
-  result = NQLog_vprint(level, tag, format, args);
+  result = NQLog_vprint(level, tag, file, line, function, format, args);
   va_end(args);
   return result;
 }
 
-int NQLog_vprint(NQLogLevel level, const char* tag, const char* format, va_list args)
+int NQLog_vprint(NQLogLevel level, const char* tag, const char* file, int line, const char* function, const char* format, va_list args)
 {
 #if defined(NQ_USE_LOGHANDLER)
   va_list vargs;
   va_copy(vargs, args);
-  int ret = s_handler(s_userdata, level, tag, format, vargs);
+  int ret = s_handler(s_userdata, level, tag, file, line, function, format, vargs);
   va_end(vargs);
   return ret;
 
@@ -212,7 +212,7 @@ int NQLog_vprint(NQLogLevel level, const char* tag, const char* format, va_list 
 
 #else
   char buffer[BUFFER_SIZE];
-  int len = NQLog_vsnprint(buffer, sizeof(buffer), level, tag, format, args);
+  int len = NQLog_vsnprint(buffer, sizeof(buffer), level, tag, file, line, function, format, args);
 
   char* ptr;
   if (len + 2 > sizeof(buffer))
@@ -252,11 +252,13 @@ int NQLog_vprint(NQLogLevel level, const char* tag, const char* format, va_list 
     }
     s_init = true;
   }
+
 #else
 # define kLogFileHandle DEFAULT_FILEHANDLE
 #endif
 
   return NQFileWrite(kLogFileHandle, buffer, len);
+
 #endif
 
 #endif
@@ -277,21 +279,21 @@ void NQLog_report(NQLogLevel level, const char* tag, const char* file, int line,
     break;
   };
 #else
-  NQLog_print(level, tag, "%s(%d) : %s", file, line, function);
+  NQLog_print(level, tag, file, line, function, "%s %s(%d) : %s", tag, file, line, function);
 #endif
 }
 
-void NQLog_assert(const char* condition, const char* tag, const char* format, ...)
+void NQLog_assert(const char* condition, const char* tag, const char* file, int line, const char* function, const char* format, ...)
 {
   if (condition)
-    NQLog_print(NQ_LOG_ERROR, tag, "Assertion failed: %s", condition);
+    NQLog_print(NQ_LOG_ERROR, tag, file, line, function, "Assertion failed: %s", condition);
   else
-    NQLog_print(NQ_LOG_ERROR, tag, "Should not be reached");
+    NQLog_print(NQ_LOG_ERROR, tag, file, line, function, "Should not be reached");
 
   if (format) {
     va_list args;
     va_start(args, format);
-    NQLog_vprint(NQ_LOG_ERROR, tag, format, args);
+    NQLog_vprint(NQ_LOG_ERROR, tag, file, line, function, format, args);
     va_end(args);
   }
 

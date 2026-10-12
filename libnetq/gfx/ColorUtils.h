@@ -146,6 +146,7 @@ static inline uint32_t NQGetPixelBitDepth(NQColorSpace colorspace)
 NQ_EXPORT uint32_t NQCalcColorLineSize(NQColorSpace colorspace, uint32_t width);
 
 NQ_EXPORT void NQRgbToGrayLine(uint32_t width, const uint8_t* in, uint8_t* out);
+NQ_EXPORT void NQRgbaToPremultipliedArgbLine(uint32_t width, const uint8_t* in, uint32_t* out);
 NQ_EXPORT void NQRgbaToGrayLine(uint32_t width, const uint8_t* in, uint8_t* out);
 NQ_EXPORT void NQBgraToGrayLine(uint32_t width, const uint8_t* in, uint8_t* out);
 NQ_EXPORT void NQBgrxToGrayLine(uint32_t width, const uint8_t* in, uint8_t* out);

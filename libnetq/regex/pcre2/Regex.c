@@ -44,15 +44,21 @@ NQRegex* NQRegex_create2(const char* pattern, size_t length, int flags)
   char errorBuffer[128];
 
   int options = 0;
-  if (options & NQ_REGEX_CASELESS)
+  if (flags & NQ_REGEX_CASELESS)
     options |= PCRE2_CASELESS;
-  if (options & NQ_REGEX_MULTILINE)
+  if (flags & NQ_REGEX_MULTILINE)
     options |= PCRE2_MULTILINE;
+  if (flags & NQ_REGEX_UTF) {
+    options |= PCRE2_UTF;
+#ifdef PCRE2_MATCH_INVALID_UTF
+    options |= PCRE2_MATCH_INVALID_UTF;
+#endif
+  }
 
   NQRegex* thiz = (NQRegex*)pcre2_compile(pattern, length, options, &errorCode, &errorOffset, NULL);
   if (thiz == NULL) {
     pcre2_get_error_message(errorCode, errorBuffer, sizeof(errorBuffer));
-    NQ_LOGE("pcre2_compile failed at offset %ull: %s", (unsigned long long)errorOffset, errorBuffer);
+    NQ_LOGE("pcre2_compile failed at offset %llu: %s", (unsigned long long)errorOffset, errorBuffer);
   }
 
   return thiz;
@@ -122,12 +128,8 @@ bool NQRegex_exec2(NQRegex* thiz, const char* str, size_t len, NQRegexMatch* mat
 
   int ret = pcre2_match(code, str, len, 0, 0, data, NULL);
   if (ret < 0) {
-    if (ret == PCRE2_ERROR_NOMATCH) {
-      NQ_LOGI("pcre2_match has no matches");
-    }
-    else {
+    if (ret != PCRE2_ERROR_NOMATCH)
       NQ_LOGE("pcre2_match failed %i", ret);
-    }
     return false;
   }
 

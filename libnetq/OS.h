@@ -29,6 +29,14 @@
 
 # if defined(__APPLE__) || defined(__MACH__)
 #  define NQ_OS_DARWIN 1
+#  if defined(__APPLE__)
+#   include <TargetConditionals.h>
+#   if TARGET_OS_OSX
+#    define NQ_OS_MACOSX 1
+#   elif TARGET_OS_IPHONE
+#    define NQ_OS_IOS 1
+#   endif
+#  endif
 #  endif
 
 # if defined(NQ_OS_DARWIN) || defined(NQ_OS_LINUX) \

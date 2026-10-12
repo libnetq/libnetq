@@ -59,7 +59,7 @@ int NQBase16Decode(const char* inStart, const char* inEnd, uint8_t* outStart, ui
     return -NQ_EINVAL;
 
   if (inEnd == NULL)
-    inEnd = inStart + strlen((const char*)inStart);
+    inEnd = inStart + NQStrlen((const char*)inStart);
 
   int result = (inEnd - inStart);
   if (result & 1)

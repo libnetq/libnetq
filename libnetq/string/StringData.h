@@ -21,11 +21,16 @@ typedef struct NQStringRange NQStringData;
 NQ_EXPORT void NQStringData_init(NQStringData*);
 NQ_EXPORT void NQStringData_finalize(NQStringData*);
 
+NQ_EXPORT bool NQStringData_alloc(NQStringData*, size_t length);
+
 NQ_EXPORT bool NQStringData_set(NQStringData*, const char* characters);
 NQ_EXPORT bool NQStringData_set2(NQStringData*, const char* characters, size_t length);
 
 NQ_EXPORT bool NQStringData_printf(NQStringData*, const char* format, ...) NQ_ATTRIBUTE_PRINTF(2, 3);
 NQ_EXPORT bool NQStringData_vprintf(NQStringData*, const char* format, va_list args);
+
+NQ_EXPORT bool NQStringData_setw(NQStringData*, const NQWChar* characters);
+NQ_EXPORT bool NQStringData_setw2(NQStringData*, const NQWChar* characters, size_t length);
 
 #define NQStringData_characters(thiz) (thiz)->characters
 

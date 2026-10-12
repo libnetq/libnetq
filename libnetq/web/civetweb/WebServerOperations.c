@@ -13,15 +13,16 @@
 
 #ifdef WITH_CIVETWEB
 
-#include <libnetq/web/civetweb/CivetWebAdapter.h>
+#include <libnetq/backend/civetweb/Adapter.h>
 
 #include <libnetq/UrlQuery.h>
-#include <libnetq/KeyVal.h>
+#include <libnetq/string/NameValue.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Log.h>
 #include <libnetq/http/HttpHeader.h>
 #include <libnetq/http/HttpStatus.h>
 #include <libnetq/string/Sprintf.h>
+#include <libnetq/string/StringUtil.h>
 #include <libnetq/Assert.h>
 #include <libnetq/ErrorCode.h>
 #include <libnetq/Mutex.h>
@@ -39,8 +40,11 @@ struct CivetWeRequest {
 
 struct CivetWeResponse {
   NQWebResponse base;
-  NQKeyVal* headers;
+  struct mg_connection* conn;
+  NQNameValue headers;
   NQStringPrint buffer;
+  bool headersSent;
+
 };
 
 struct CivetWebSocket {
@@ -130,8 +134,9 @@ static int requestInit(struct CivetWeRequest* request, NQWebServer* server, stru
   request->base.server = server;
   request->base.userdata = NULL;
   request->conn = conn;
-  const char* query = strchr(rinfo->local_uri, '?');
-  request->urlQuery = NQUrlQuery_create(query ? query : "?");
+
+  // civetweb strips the query from local_uri.
+  request->urlQuery = NQUrlQuery_create(NQCStrEnsure(rinfo->query_string));
 
   return 0;
 }
@@ -145,11 +150,12 @@ static void requestRelease(struct CivetWeRequest* request)
   NQWebRequest_finalize(&request->base);
 }
 
-static bool responseSetHeader(NQWebResponse* res, const char* header, const char* value)
+static bool responseAddHeader(NQWebResponse* res, const char* header, const char* value)
 {
   struct CivetWeResponse* response = NQ_CONTAINER_OF(res, struct CivetWeResponse, base);
-  NQKeyVal_set(response->headers, header, value);
-  return true;
+  if (response->headersSent)
+    return false;
+  return NQNameValue_add(&response->headers, header, value);
 }
 
 static int responseWrite(NQWebResponse* res, const void* data, size_t size)
@@ -161,11 +167,32 @@ static int responseWrite(NQWebResponse* res, const void* data, size_t size)
 static int responseFlush(NQWebResponse* res)
 {
   struct CivetWeResponse* response = NQ_CONTAINER_OF(res, struct CivetWeResponse, base);
-  return 0;
+
+  if (!response->headersSent) {
+    uint16_t statusCode = res->hasStatusCode ? res->statusCode : NQ_HTTP_OK;
+    mg_response_header_start(response->conn, statusCode);
+    NQNameValueEntry* iter = NQNameValue_first(&response->headers);
+    while (iter != NULL) {
+      const char* name = NQNameValueEntryName(iter);
+      const char* value = NQNameValueEntryValue(iter);
+      mg_response_header_add(response->conn, name, value, -1);
+      iter = NQNameValue_next(&response->headers, iter);
+    }
+    mg_response_header_send(response->conn);
+    response->headersSent = true;
+  }
+
+  char* data = NQStringPrint_characters(&response->buffer);
+  size_t size = NQStringPrint_length(&response->buffer);
+  int ret = mg_write(response->conn, data, size);
+  NQStringPrint_reset(&response->buffer);
+
+  // mg_write sends less than asked when the server is stopping.
+  return ret == (int)size ? 0 : -NQ_EIO;
 }
 
 static const struct NQWebResponseOperations kResponseOperations = {
-  .setHeader = responseSetHeader,
+  .addHeader = responseAddHeader,
   .write = responseWrite,
   .flush = responseFlush,
 };
@@ -174,13 +201,16 @@ static void responseInit(struct CivetWeResponse* response, struct CivetWeRequest
 {
   NQWebResponse_init(&response->base, &kResponseOperations, &request->base);
 
-  response->headers = NQKeyVal_create();
+  response->conn = request->conn;
+  response->headersSent = false;
+
+  NQNameValue_init(&response->headers);
   NQStringPrint_init(&response->buffer);
 }
 
 static void responseRelease(struct CivetWeResponse* response)
 {
-  NQKeyVal_destroy(response->headers);
+  NQNameValue_finalize(&response->headers);
   NQStringPrint_finalize(&response->buffer);
 
   NQWebResponse_finalize(&response->base);
@@ -237,7 +267,7 @@ static struct CivetWebSocket* websocketCreate(NQWebServer* server)
 {
   struct CivetWebSocket* thiz = (struct CivetWebSocket*)NQMalloc(sizeof(struct CivetWebSocket));
   if (thiz == NULL)
-	return NULL;
+  return NULL;
 
   thiz->base.clazz = &kCivetWebWebSocketClass;
   thiz->base.looper = NQWebServer_looper(server);
@@ -362,23 +392,15 @@ static int requestHandler(struct mg_connection* conn, void* userdata)
 
   int statusCode = NQ_HTTP_OK;
   if (request->operations && request->operations->handler) {
-    statusCode = request->operations->handler(request, response);
-    NQWebResponse_flush(response);
+    int ret = request->operations->handler(request, response);
+    if (response->hasStatusCode)
+      statusCode = response->statusCode;
+    else {
+      statusCode = NQWebStatusCodeFromErrorCode(ret);
+      NQWebResponse_setStatus(response, statusCode, NULL);
+    }
   }
-
-  mg_response_header_start(conn, statusCode);
-  NQKeyValIter* iter = NQKeyVal_begin(context.response.headers);
-  while (iter != NULL) {
-    const char* key = NQKeyValIter_key(iter);
-    const char* val = NQKeyValIter_val(iter);
-    mg_response_header_add(conn, key, val, -1);
-    iter = NQKeyValIter_next(iter);
-  }
-  mg_response_header_send(conn);
-
-  char* data = NQStringPrint_characters(&context.response.buffer);
-  size_t size = NQStringPrint_length(&context.response.buffer);
-  mg_write(conn, data, size);
+  NQWebResponse_flush(response);
 
   contextFinalize(&context);
   return statusCode;

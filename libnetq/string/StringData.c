@@ -13,6 +13,7 @@
 #include <libnetq/string/StringUtil.h>
 #include <libnetq/Limits.h>
 #include <libnetq/Malloc.h>
+#include <libnetq/UTF.h>
 #include <libnetq/Log.h>
 
 void NQStringData_init(NQStringData* thiz)
@@ -25,6 +26,22 @@ void NQStringData_finalize(NQStringData* thiz)
 {
   if (NQCStrEmpty() != thiz->characters)
     NQFree((void*)thiz->characters);
+}
+
+bool NQStringData_alloc(NQStringData* thiz, size_t length)
+{
+  char* newCharacters = NQMalloc(length + 1);
+  if (newCharacters == NULL)
+    return false;
+
+  newCharacters[length] = '\0';
+
+  NQStringData_finalize(thiz);
+
+  thiz->characters = newCharacters;
+  thiz->length = length;
+
+  return true;
 }
 
 bool NQStringData_set(NQStringData* thiz, const char* characters)
@@ -50,18 +67,8 @@ bool NQStringData_set2(NQStringData* thiz, const char* characters, size_t length
     return true;
   }
 
-  char* newCharacters = NQMalloc(length + 1);
-  if (newCharacters == NULL) {
-    return false;
-  }
-
-  NQMemcpy(newCharacters, characters, length);
-  newCharacters[length] = '\0';
-
-  NQStringData_finalize(thiz);
-
-  thiz->characters = newCharacters;
-  thiz->length = length;
+  NQStringData_alloc(thiz, length);
+  NQMemcpy((char*)thiz->characters, characters, length);
 
   return true;
 }
@@ -90,5 +97,27 @@ bool NQStringData_vprintf(NQStringData* thiz, const char* format, va_list args)
   thiz->characters = newCharacters;
   thiz->length = NQStrlen(newCharacters); // FIXME
 
+  return true;
+}
+
+bool NQStringData_setw(NQStringData* thiz, const NQWChar* characters)
+{
+  NQUnicodeInfo info;
+  if (!NQConvertUTF16ToUTF8((const uint16_t*)characters, NULL, NULL, NULL, &info))
+    return false;
+
+  NQStringData_alloc(thiz, info.utf8Size);
+  NQConvertUTF16ToUTF8((const uint16_t*)characters, (const uint16_t*)characters + info.utf16Size, (uint8_t*)thiz->characters, (uint8_t*)thiz->characters + info.utf8Size, NULL);
+  return true;
+}
+
+bool NQStringData_setw2(NQStringData* thiz, const NQWChar* characters, size_t length)
+{
+  NQUnicodeInfo info;
+  if (!NQConvertUTF16ToUTF8((const uint16_t*)characters, (const uint16_t*)characters + length, NULL, NULL, &info))
+    return false;
+
+  NQStringData_alloc(thiz, info.utf8Size);
+  NQConvertUTF16ToUTF8((const uint16_t*)characters, (const uint16_t*)characters + info.utf16Size, (uint8_t*)thiz->characters, (uint8_t*)thiz->characters + info.utf8Size, NULL);
   return true;
 }

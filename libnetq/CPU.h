@@ -14,15 +14,20 @@
 
 #include <libnetq/cpu/alpha.h>
 #include <libnetq/cpu/amd64.h>
+#include <libnetq/cpu/arc.h>
 #include <libnetq/cpu/arm.h>
 #include <libnetq/cpu/arm64.h>
 #include <libnetq/cpu/blackfin.h>
 #include <libnetq/cpu/convex.h>
+#include <libnetq/cpu/csky.h>
 #include <libnetq/cpu/epiphany.h>
 #include <libnetq/cpu/hppa.h>
 #include <libnetq/cpu/ia64.h>
+#include <libnetq/cpu/loongarch.h>
 #include <libnetq/cpu/m68k.h>
+#include <libnetq/cpu/microblaze.h>
 #include <libnetq/cpu/mips.h>
+#include <libnetq/cpu/openrisc.h>
 #include <libnetq/cpu/ppc.h>
 #include <libnetq/cpu/pyramid.h>
 #include <libnetq/cpu/riscv.h>
@@ -35,7 +40,7 @@
 #include <libnetq/cpu/tms470.h>
 #include <libnetq/cpu/wasm.h>
 #include <libnetq/cpu/x86.h>
-#include <libnetq/cpu/z.h>
+#include <libnetq/cpu/zarch.h>
 
 #if defined(__BYTE_ORDER__)
 # if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__

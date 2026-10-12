@@ -55,7 +55,7 @@ struct NQLooperOperations {
   bool (*getMessage)   (NQLooper* looper, NQMessage* message);
 };
 
-// Rename onto NQLooperSystem
+// Rename onto NQSystemLooper
 struct NQLooper {
   NQMutex mutex;
   NQTID tid;

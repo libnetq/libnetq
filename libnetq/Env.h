@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2020-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -16,7 +16,10 @@
 extern "C" {
 #endif
 
-NQ_EXPORT int NQEnvGet(const char* name, char* value, size_t n);
+NQ_EXPORT const char* NQEnvCreate(const char* name);
+NQ_EXPORT void NQEnvFree(const char* value);
+
+NQ_EXPORT int NQEnvGet(const char* name, char* value, size_t n); // NQEnvRead
 NQ_EXPORT int NQEnvSet(const char* name, const char* value);
 NQ_EXPORT int NQEnvUnset(const char* name);
 

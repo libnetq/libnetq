@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2020-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -14,14 +14,14 @@
 
 #include <windows.h>
 
-#include <libnetq/Thread.h>
+#include <libnetq/string/String.h>
 #include <libnetq/Assert.h>
   
 #define WM_USER_DISPATCH (WM_USER + 1)
 
 void NQPlatformLooper_init(NQPlatformLooper* thiz)
 {
-  memset(thiz->eventHandle, 0, sizeof(thiz->eventHandle));
+  NQMemset(thiz->eventHandle, 0, sizeof(thiz->eventHandle));
   thiz->eventTotal = 0;
   thiz->tid = NQThreadId();
 }

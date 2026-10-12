@@ -88,7 +88,7 @@ static inline int NQDataReader_read(NQDataReader* thiz, void* data, size_t size)
 {
   size = NQGetMin(size, NQGetMin(NQDataReader_availableSize(thiz), NQ_INT32_MAX));
   if (data != NULL)
-    memcpy(data, thiz->ptr, size);
+    NQMemcpy(data, thiz->ptr, size);
   thiz->ptr += size;
   return (int)size;
 }
@@ -98,7 +98,7 @@ static inline bool NQDataReader_readAll(NQDataReader* thiz, void* data, size_t s
   if (size > NQDataReader_availableSize(thiz))
     return false;
   if (data != NULL)
-    memcpy(data, thiz->ptr, size);
+    NQMemcpy(data, thiz->ptr, size);
   thiz->ptr += size;
   return true;
 }

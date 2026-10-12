@@ -37,6 +37,18 @@ void NQRgbToGrayLine(uint32_t width, const uint8_t* in, uint8_t* out)
   }
 }
 
+void NQRgbaToPremultipliedArgbLine(uint32_t width, const uint8_t* in, uint32_t* out)
+{
+  for (uint32_t n = 0; n < width; n++) {
+    const uint32_t a = in[3];
+    const uint32_t r = (in[0] * a + 127) / 255;
+    const uint32_t g = (in[1] * a + 127) / 255;
+    const uint32_t b = (in[2] * a + 127) / 255;
+    out[n] = (a << 24) | (r << 16) | (g << 8) | b;
+    in += 4;
+  }
+}
+
 void NQRgbaToGrayLine(uint32_t width, const uint8_t* in, uint8_t* out)
 {
   for (uint32_t n = 0; n < width; n++) {

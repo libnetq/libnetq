@@ -32,7 +32,7 @@ find_path(PCRE2_INCLUDE_DIR
 
 find_library(PCRE2_LIBRARY
   NAMES
-    pcre2-8 pcre2-8-staticd
+    pcre2-8 pcre2-8-static pcre2-8-staticd
   PATHS
     ${PC_PCRE2_LIBDIR}
     ${PC_PCRE2_LIBRARIES_DIRS}

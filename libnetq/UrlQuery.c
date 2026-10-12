@@ -148,10 +148,14 @@ size_t urlQueryInit(NQUrlQuery* thiz, const char* query, struct QueryInitInfo* p
 
 NQUrlQuery* NQUrlQuery_create(const char* query)
 {
-  if (query == NULL || *query != '?')
+  if (query == NULL)
     return NULL;
 
-  if (*(++query) == '\0')
+  if (*query == '?') {
+    query++;
+  }
+
+  if (*query == '\0')
     return &s_emptyQuery;
 
   struct QueryInitInfo info;
@@ -197,7 +201,7 @@ const char* NQUrlQuery_value(const NQUrlQuery* thiz, const char* name)
 {
   const struct ParamEntry* entry = thiz->paramEntries;
   while (entry->value) {
-    if (entry->name && strcmp(entry->name, name) == 0)
+    if (entry->name && NQStrcmp(entry->name, name) == 0)
       return entry->value;
     entry++;
   }

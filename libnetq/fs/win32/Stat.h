@@ -23,16 +23,46 @@ extern "C" {
 #define NQ_STAT_IFDIR 0040000
 #define NQ_STAT_IFLNK 0120000
 
+/* NQGetStat flags */
+#define NQ_STAT_FOLLOW 0x1 /* follow symbolic links, as stat() does; without it, as lstat() */
+#define NQ_STAT_EXTRA  0x2 /* also real blocks, nlink, dev and ino: without it they
+                            * may be estimates on Windows (size / 512, 1, 0, 0) */
+
 typedef struct NQStat NQStat;
 struct NQStat {
   uint32_t mode;
   uint64_t size;
-  NQTimeMs accesseTimeMs;
-  NQTimeMs modificationTimeMs;
-  NQTimeMs creationTimeMs;
+  NQTimeSpec atime;
+  NQTimeSpec mtime;
+  NQTimeSpec ctime;
+  uint64_t blocks; /* 512-byte units allocated: less than the size for sparse and compressed files */
+  uint64_t nlink;  /* hard links */
+  uint64_t dev;    /* volume serial number */
+  uint64_t ino;    /* file index on the volume */
 };
 
-NQ_EXPORT int NQGetStat(const char* path, NQStat* st);
+NQ_EXPORT int NQGetStat(const char* path, unsigned flags, NQStat* st);
+
+/* Space allocated to the file, in 512-byte units on every platform */
+static inline uint64_t NQStat_blocks(const NQStat* thiz)
+{
+  return thiz->blocks;
+}
+
+static inline uint64_t NQStat_nlink(const NQStat* thiz)
+{
+  return thiz->nlink;
+}
+
+static inline uint64_t NQStat_dev(const NQStat* thiz)
+{
+  return thiz->dev;
+}
+
+static inline uint64_t NQStat_ino(const NQStat* thiz)
+{
+  return thiz->ino;
+}
 
 static inline bool NQStat_isFile(const NQStat* st)
 {
@@ -52,15 +82,15 @@ static inline uint64_t NQStat_size(const NQStat* st)
 }
 static inline NQTimeMs NQStat_accesseTimeMs(const NQStat* st)
 {
-  return st->accesseTimeMs;
+  return NQTimeSpecToTimeMs(&st->atime);
 }
 static inline NQTimeMs NQStat_modificationTimeMs(const NQStat* st)
 {
-  return st->modificationTimeMs;
+  return NQTimeSpecToTimeMs(&st->mtime);
 }
 static inline NQTimeMs NQStat_creationTimeMs(const NQStat* st)
 {
-  return st->creationTimeMs;
+  return NQTimeSpecToTimeMs(&st->ctime);
 }
 
 #ifdef __cplusplus

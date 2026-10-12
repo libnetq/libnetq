@@ -16,6 +16,7 @@
 #include <libnetq/String.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/Limits.h>
+#include <libnetq/Log.h>
 
 struct NQBaseValue {
   uint32_t type;
@@ -44,7 +45,7 @@ static struct NQBaseValue* NQPrimitiveStorage_addNewValue(NQPrimitiveStorage* th
   struct NQBaseValue* objVal = (struct NQBaseValue*)NQMalloc(sizeInBytes + nlenz);
   if (objVal != NULL) {
     char* ptr = (char*)objVal + sizeInBytes;
-    (void)memcpy(ptr, name, nlenz);
+    (void)NQMemcpy(ptr, name, nlenz);
     objVal->name = ptr;
     objVal->type = type;
     NQListHead_init(&objVal->list);
@@ -164,6 +165,37 @@ bool NQPrimitiveStorage_setString(NQPrimitiveStorage* thiz, const char* name, co
   if (objVal == NULL)
     return false;
 
-  memcpy(objVal->value, value, length + 1);
+  NQMemcpy(objVal->value, value, length + 1);
+  return true;
+}
+
+bool NQPrimitiveStorage_mergeJSON(NQPrimitiveStorage* storage, NQJSON* json)
+{
+  NQ_LOGI("Storage:");
+  if (!NQJSON_isObject(json))
+    return false;
+
+  NQJSON_ObjectIter* iter = NQJSON_objectIterFirst(json);
+  while (iter != NULL) {
+    const char* key = NQJSON_objectIterKey(iter);
+    NQJSON* value = NQJSON_objectIterValue(iter);
+    if (NQJSON_isString(value)) {
+      const char* val = NQJSON_asString(value);
+      NQPrimitiveStorage_setString(storage, key, val);
+      NQ_LOGI("  %s: '%s'", key, val);
+    }
+    else if (NQJSON_isInt64(value)) {
+      uint32_t val = (uint32_t)NQJSON_asInt64(value); // FIXME
+      NQPrimitiveStorage_setUint32(storage, key, val);
+      NQ_LOGI("  %s: '%u'", key, val);
+    }
+    else if (NQJSON_isBool(value)) {
+      bool val = NQJSON_asBool(value);
+      NQPrimitiveStorage_setBool(storage, key, val);
+      NQ_LOGI("  %s: '%s'", key, val ? NQ_TRUE_STRING : NQ_FALSE_STRING);
+    }
+    iter = NQJSON_objectIterNext(json, iter);
+  }
+
   return true;
 }

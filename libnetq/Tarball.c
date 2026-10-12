@@ -51,12 +51,12 @@ static void writeUint64(uint64_t value, char* buffer, size_t size)
 bool NQTarball_append(NQTarball* thiz, const NQTarFileInfo* info, const void* data, size_t size)
 {
   char block[NQ_TAR_BLOCK_LEN];
-  memset(block, 0, sizeof(block));
+  NQMemset(block, 0, sizeof(block));
 
   char* ptr = block;
 
-  size_t filenameLength = strlen(info->filename);
-  memcpy(ptr, info->filename, NQGetMin(filenameLength, NQ_TAR_FILENAME_LEN));
+  size_t filenameLength = NQStrlen(info->filename);
+  NQMemcpy(ptr, info->filename, NQGetMin(filenameLength, NQ_TAR_FILENAME_LEN));
   ptr += NQ_TAR_FILENAME_LEN;
 
   writeUint64(info->mode, ptr, NQ_TAR_MODE_LEN);
@@ -75,24 +75,24 @@ bool NQTarball_append(NQTarball* thiz, const NQTarFileInfo* info, const void* da
   ptr += NQ_TAR_MTIME_LEN;
 
   char* chksumPtr = ptr;
-  memset(ptr, ' ', NQ_TAR_CHKSUM_LEN);
+  NQMemset(ptr, ' ', NQ_TAR_CHKSUM_LEN);
   ptr += NQ_TAR_CHKSUM_LEN;
 
   *ptr++ = kNQTarRegularType;
   ptr += NQ_TAR_LINKNAME_LEN;
 
-  memcpy(ptr, NQ_TAR_MAGIC, NQ_TAR_MAGIC_LEN);
+  NQMemcpy(ptr, NQ_TAR_MAGIC, NQ_TAR_MAGIC_LEN);
   ptr += NQ_TAR_MAGIC_LEN;
 
   *ptr++ = ' ';
   *ptr++ = '\0';
 
-  size_t usernameLength = strlen(info->username);
-  memcpy(ptr, info->username, NQGetMin(usernameLength, NQ_TAR_USERNAME_LEN));
+  size_t usernameLength = NQStrlen(info->username);
+  NQMemcpy(ptr, info->username, NQGetMin(usernameLength, NQ_TAR_USERNAME_LEN));
   ptr += NQ_TAR_USERNAME_LEN;
 
-  size_t groupnameLength = strlen(info->groupname);
-  memcpy(ptr, info->groupname, NQGetMin(groupnameLength, NQ_TAR_GROUPNAME_LEN));
+  size_t groupnameLength = NQStrlen(info->groupname);
+  NQMemcpy(ptr, info->groupname, NQGetMin(groupnameLength, NQ_TAR_GROUPNAME_LEN));
   ptr += NQ_TAR_GROUPNAME_LEN;
 
   ptr += NQ_TAR_DEVMAJOR_LEN;
@@ -117,7 +117,7 @@ bool NQTarball_append(NQTarball* thiz, const NQTarFileInfo* info, const void* da
   size_t totalSize = (size + NQ_TAR_BLOCK_LEN) / NQ_TAR_BLOCK_LEN * NQ_TAR_BLOCK_LEN;
   size_t padSize = totalSize - size;
   if (padSize) {
-    memset(block, 0, padSize);
+    NQMemset(block, 0, padSize);
     if (!NQTarball_write(thiz, block, padSize)) {
       return false;
     }
@@ -129,7 +129,7 @@ bool NQTarball_append(NQTarball* thiz, const NQTarFileInfo* info, const void* da
 bool NQTarball_finish(NQTarball* thiz)
 {
   char block[NQ_TAR_BLOCK_LEN];
-  memset(block, 0, sizeof(block));
+  NQMemset(block, 0, sizeof(block));
 
   if (!NQTarball_write(thiz, block, sizeof(block))) {
     return false;

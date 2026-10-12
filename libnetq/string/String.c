@@ -11,6 +11,7 @@
 #include "libnetq/string/String.h"
 
 #include <libnetq/Assert.h>
+#include <libnetq/CType.h>
 
 #ifndef NQ_HAVE_ARCH_MEMCPY
 void* NQMemcpy(void* dest, const void* src, size_t count)
@@ -53,10 +54,12 @@ int NQMemcmp(const void* m1, const void* m2, size_t count)
 #ifndef NQ_HAVE_ARCH_MEMCHR
 void* NQMemchr(const void* mem, int ch, size_t count)
 {
-  NQ_UNUSED_PARAM(mem);
-  NQ_UNUSED_PARAM(ch);
-  NQ_UNUSED_PARAM(count);
-  NQ_ASSERT_NOT_REACHED();
+  const unsigned char* p = (const unsigned char*)mem;
+  const unsigned char c = (unsigned char)ch;
+  for (; count; count--, p++) {
+    if (*p == c)
+      return (void*)p;
+  }
   return NULL;
 }
 #endif
@@ -64,11 +67,24 @@ void* NQMemchr(const void* mem, int ch, size_t count)
 #ifndef NQ_HAVE_ARCH_MEMMOVE
 void* NQMemmove(void* dest, const void* src, size_t count)
 {
-  NQ_UNUSED_PARAM(dest);
-  NQ_UNUSED_PARAM(src);
-  NQ_UNUSED_PARAM(count);
-  NQ_ASSERT_NOT_REACHED();
-  return NULL;
+  unsigned char* d = (unsigned char*)dest;
+  const unsigned char* s = (const unsigned char*)src;
+  if (d == s || count == 0)
+    return dest;
+
+  if (d < s || d >= s + count) {
+    NQMemcpy(dest, src, count);
+    return dest;
+  }
+
+  d += count;
+  s += count;
+  while (count) {
+    count--;
+    *--d = *--s;
+  }
+
+  return dest;
 }
 #endif
 
@@ -82,37 +98,114 @@ size_t NQStrlen(const char* s)
 }
 #endif
 
+#ifndef NQ_HAVE_ARCH_STRCHR
+char* NQStrchr(const char* s, int c)
+{
+  const char* p = s;
+  for (;;) {
+    if (*p == (char)c)
+      return (char*)p;
+    if (*p == '\0')
+      return NULL;
+    p++;
+  }
+}
+#endif
+
 #ifndef NQ_HAVE_ARCH_STRRCHR
 char* NQStrrchr(const char* s, int c)
 {
   const char* res = NULL;
   const char* p = s;
-  while (*p) {
-    if (*p++ == c) {
+  for (;;) {
+    if (*p == (char)c)
       res = p;
-    }
+    if (*p == '\0')
+      break;
+    p++;
   }
   return (char*)res;
+}
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRSTR
+char* NQStrstr(const char* haystack, const char* needle)
+{
+  if (*needle == '\0')
+    return (char*)haystack;
+  for (; *haystack; haystack++) {
+    const char* h = haystack;
+    const char* n = needle;
+    while (*n && *h == *n) {
+      h++;
+      n++;
+    }
+    if (*n == '\0')
+      return (char*)haystack;
+  }
+  return NULL;
 }
 #endif
 
 #ifndef NQ_HAVE_ARCH_STRCMP
 int NQStrcmp(const char* s1, const char* s2)
 {
-  NQ_UNUSED_PARAM(s1);
-  NQ_UNUSED_PARAM(s2);
-  NQ_ASSERT_NOT_REACHED();
-  return -1;
+  const unsigned char* p1 = (const unsigned char*)s1;
+  const unsigned char* p2 = (const unsigned char*)s2;
+  while (*p1 != '\0' && *p1 == *p2) {
+    p1++;
+    p2++;
+  }
+  return *p1 - *p2;
 }
 #endif
 
 #ifndef NQ_HAVE_ARCH_STRNCMP
 int NQStrncmp(const char* s1, const char* s2, size_t count)
 {
-  NQ_UNUSED_PARAM(s1);
-  NQ_UNUSED_PARAM(s2);
-  NQ_UNUSED_PARAM(count);
-  NQ_ASSERT_NOT_REACHED();
-  return -1;
+  const unsigned char* p1 = (const unsigned char*)s1;
+  const unsigned char* p2 = (const unsigned char*)s2;
+  for (; count; count--, p1++, p2++) {
+    if (*p1 != *p2)
+      return *p1 - *p2;
+    if (*p1 == '\0')
+      break;
+  }
+  return 0;
+}
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRCASECMP
+int NQStrcasecmp(const char* s1, const char* s2)
+{
+  const unsigned char* p1 = (const unsigned char*)s1;
+  const unsigned char* p2 = (const unsigned char*)s2;
+  int c1, c2;
+  do {
+    c1 = *p1++;
+    c2 = *p2++;
+    c1 = NQToLower(c1);
+    c2 = NQToLower(c2);
+  } while (c1 && c1 == c2);
+  return c1 - c2;
+}
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRNCASECMP
+int NQStrncasecmp(const char* s1, const char* s2, size_t count)
+{
+  const unsigned char* p1 = (const unsigned char*)s1;
+  const unsigned char* p2 = (const unsigned char*)s2;
+  for (; count; count--) {
+    int c1 = *p1++;
+    int c2 = *p2++;
+    c1 = NQToLower(c1);
+    c2 = NQToLower(c2);
+    if (c1 != c2)
+      return c1 - c2;
+    if (c1 == 0)
+      break;
+  }
+  return 0;
 }
 #endif

@@ -19,7 +19,8 @@
 #elif defined(NQ_OS_KERNEL)
 # include <libnetq/sync/kernel/Cond.h>
 #else
-# error There is no implementation for the Cond
+# warning There is no implementation for the Cond
+# include <libnetq/sync/stub/Cond.h>
 #endif
 
 #endif /* _LIBNETQ_COND_H */
