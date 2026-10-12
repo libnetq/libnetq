@@ -45,14 +45,17 @@ bool NQCond_waitfor(NQCond* cond, NQMutex* mutex, uint32_t ms)
     return true;
   }
 
+  // The deadline must use the clock the condition was created with.
   NQTimeSpec ts;
+#if HAVE_PTHREAD_CONDATTR_SETCLOCK
   clock_gettime(CLOCK_MONOTONIC, &ts);
+#else
+  clock_gettime(CLOCK_REALTIME, &ts);
+#endif
 
   NQTimeSpec dts;
   NQTimeMsToTimeSpec(ms, &dts);
-
-  ts.tv_sec += dts.tv_sec;
-  ts.tv_nsec += dts.tv_nsec;
+  NQTimeSpecAdd(&ts, &dts);
 
   return pthread_cond_timedwait(cond, mutex, &ts) == 0;
 }

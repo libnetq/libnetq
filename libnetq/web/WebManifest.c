@@ -69,12 +69,12 @@ static int fileUrlMapRequest(NQWebRequest* request, NQWebResponse* response)
   NQListHead* hdrIter = entry->headers.next;
   while (hdrIter != &entry->headers) {
     struct HeaderEntry* hdrEntry = NQ_CONTAINER_OF(hdrIter, struct HeaderEntry, list);
-    NQWebResponse_setHeader(response, hdrEntry->name, hdrEntry->value);
+    NQWebResponse_addHeader(response, hdrEntry->name, hdrEntry->value);
     hdrIter = hdrIter->next;
   }
 
   if (entry->type != NULL)
-    NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, entry->type);
+    NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, entry->type);
 
   NQWebResponse_write(response, (char*)NQUint8Array_data(arraybuffer), NQUint8Array_size(arraybuffer));
   NQUint8Array_destroy(arraybuffer);
@@ -169,9 +169,9 @@ int NQWebManifestListenersInit(NQWebExecutor* executor, struct NQWebManifestList
           if (!NQStrcmp(NQHTTP_HEADER_CONTENT_TYPE, name))
             hasContentType = true;
           NQListHead_init(&hdrEntry->list);
-          memcpy(hdrEntry->value, NQJSON_asString(value), NQJSON_stringLength(value) + 1);
+          NQMemcpy(hdrEntry->value, NQJSON_asString(value), NQJSON_stringLength(value) + 1);
           char* ptr = (char*)hdrEntry + sizeof(*hdrEntry) + NQJSON_stringLength(value);
-          memcpy(ptr, name, nameLenz);
+          NQMemcpy(ptr, name, nameLenz);
           hdrEntry->name = ptr;
           NQListHead_addBack(&fileEntry->headers, &hdrEntry->list);
         }

@@ -152,7 +152,7 @@ static NQDescEntry* NQDescList_shift(struct NQDescList* list)
 static void NQDescEntry_fill(NQDescEntry* entry, int value, size_t size)
 {
   void* data = NQDescEntry_data(entry);
-  memset(data, value, size);
+  NQMemset(data, value, size);
 }
 
 static NQDescEntry* NQDescSet_getAllEntries(NQDescSet* descset, size_t index)

@@ -7,8 +7,8 @@
  * under the MIT License. See LICENSE file for details.
  */
 
-#ifndef _LIBNETQ_KEYVAL_H
-#define _LIBNETQ_KEYVAL_H
+#ifndef _LIBNETQ_STRING_KEYVAL_H
+#define _LIBNETQ_STRING_KEYVAL_H
 
 #include <libnetq/Basic.h>
 
@@ -37,4 +37,4 @@ NQ_EXPORT const char* NQKeyValIter_val(NQKeyValIter*);
 }
 #endif
 
-#endif /* _LIBNETQ_KEYVAL_H */
+#endif /* _LIBNETQ_STRING_KEYVAL_H */

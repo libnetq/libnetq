@@ -439,7 +439,7 @@ bool DBCRanges_add(DBCContext* context, DBCRanges* thiz, uint32_t first, uint32_
 
       DBCFree(context, thiz->rangePointer);
       thiz->rangePointer = newPointer;
-      thiz->capacity = newCapacity;
+      thiz->capacity = (uint16_t)newCapacity;
     }
     thiz->rangePointer[thiz->count].first = first;
     thiz->rangePointer[thiz->count].second = second;

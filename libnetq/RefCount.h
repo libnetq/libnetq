@@ -29,10 +29,10 @@ static inline void NQRefCount_ref(NQRefCount* thiz)
 }
 
 #define NQRefCount_unref(thiz, func, ptr) \
-  do {                      \
+  do {                        \
     --(thiz)->counter;        \
     if ((thiz)->counter == 0) \
-      func(ptr);            \
+      func(ptr);              \
   } while(0)
 
 #ifdef __cplusplus

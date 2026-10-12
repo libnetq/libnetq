@@ -14,40 +14,40 @@
 
 size_t NQGetInt16(const void* buffer, int16_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   return sizeof(*value);
 }
 
 size_t NQGetInt16LE(const void* buffer, int16_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToLE16(*value);
   return sizeof(*value);
 }
 
 size_t NQGetInt16BE(const void* buffer, int16_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToBE16(*value);
   return sizeof(*value);
 }
 
 size_t NQGetUint16(const void* buffer, uint16_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   return sizeof(*value);
 }
 
 size_t NQGetUint16LE(const void* buffer, uint16_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToLE16(*value);
   return sizeof(*value);
 }
 
 size_t NQGetUint16BE(const void* buffer, uint16_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToBE16(*value);
   return sizeof(*value);
 }
@@ -55,9 +55,9 @@ size_t NQGetUint16BE(const void* buffer, uint16_t* value)
 size_t NQGetInt24(const void* buffer, int32_t* value)
 {
 #ifdef NQ_CPU_BIG_ENDIAN
-  memcpy(((uint8_t*)value) + 1, buffer, 3);
+  NQMemcpy(((uint8_t*)value) + 1, buffer, 3);
 #else
-  memcpy(value, buffer, 3);
+  NQMemcpy(value, buffer, 3);
 #endif
   if (*value & 0x00800000)
     *value |= 0xFF000000;
@@ -66,7 +66,7 @@ size_t NQGetInt24(const void* buffer, int32_t* value)
 
 size_t NQGetInt24LE(const void* buffer, int32_t* value)
 {
-  memcpy(value, buffer, 3);
+  NQMemcpy(value, buffer, 3);
   *value = NQLEToHost32(*value);
   if (*value & 0x00800000)
     *value |= 0xFF000000;
@@ -75,7 +75,7 @@ size_t NQGetInt24LE(const void* buffer, int32_t* value)
 
 size_t NQGetInt24BE(const void* buffer, int32_t* value)
 {
-  memcpy(((uint8_t*)value) + 1, buffer, 3);
+  NQMemcpy(((uint8_t*)value) + 1, buffer, 3);
   *value = NQBEToHost32(*value);
   if (*value & 0x00800000)
     *value |= 0xFF000000;
@@ -85,110 +85,110 @@ size_t NQGetInt24BE(const void* buffer, int32_t* value)
 size_t NQGetUint24(const void* buffer, uint32_t* value)
 {
 #ifdef NQ_CPU_BIG_ENDIAN
-  memcpy(((uint8_t*)value) + 1, buffer, 3);
+  NQMemcpy(((uint8_t*)value) + 1, buffer, 3);
 #else
-  memcpy(value, buffer, 3);
+  NQMemcpy(value, buffer, 3);
 #endif
   return 3;
 }
 
 size_t NQGetUint24LE(const void* buffer, uint32_t* value)
 {
-  memcpy(value, buffer, 3);
+  NQMemcpy(value, buffer, 3);
   *value = NQLEToHost32(*value);
   return 3;
 }
 
 size_t NQGetUint24BE(const void* buffer, uint32_t* value)
 {
-  memcpy(((uint8_t*)value) + 1, buffer, 3);
+  NQMemcpy(((uint8_t*)value) + 1, buffer, 3);
   *value = NQBEToHost32(*value);
   return 3;
 }
 
 size_t NQGetInt32(const void* buffer, int32_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   return sizeof(*value);
 }
 
 size_t NQGetInt32LE(const void* buffer, int32_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToLE32(*value);
   return sizeof(*value);
 }
 
 size_t NQGetInt32BE(const void* buffer, int32_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToBE32(*value);
   return sizeof(*value);
 }
 
 size_t NQGetUint32(const void* buffer, uint32_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   return sizeof(*value);
 }
 
 size_t NQGetUint32LE(const void* buffer, uint32_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToLE32(*value);
   return sizeof(*value);
 }
 
 size_t NQGetUint32BE(const void* buffer, uint32_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToBE32(*value);
   return sizeof(*value);
 }
 
 size_t NQGetInt64(const void* buffer, int64_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   return sizeof(*value);
 }
 
 size_t NQGetInt64LE(const void* buffer, int64_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToLE64(*value);
   return sizeof(*value);
 }
 
 size_t NQGetInt64BE(const void* buffer, int64_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToBE64(*value);
   return sizeof(*value);
 }
 
 size_t NQGetUint64(const void* buffer, uint64_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   return sizeof(*value);
 }
 
 size_t NQGetUint64LE(const void* buffer, uint64_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToLE64(*value);
   return sizeof(*value);
 }
 
 size_t NQGetUint64BE(const void* buffer, uint64_t* value)
 {
-  memcpy(value, buffer, sizeof(*value));
+  NQMemcpy(value, buffer, sizeof(*value));
   *value = NQHostToBE64(*value);
   return sizeof(*value);
 }
 
 size_t NQPutBytes(void* buffer, const uint8_t* data, size_t size)
 {
-  memcpy(buffer, data, size);
+  NQMemcpy(buffer, data, size);
   return size;
 }
 
@@ -206,50 +206,50 @@ size_t NQPutUint8(void* buffer, uint8_t value)
 
 size_t NQPutInt16(void* buffer, int16_t value)
 {
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt16LE(void* buffer, int16_t value)
 {
   value = NQHostToLE16(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt16BE(void* buffer, int16_t value)
 {
   value = NQHostToBE16(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint16(void* buffer, uint16_t value)
 {
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint16LE(void* buffer, uint16_t value)
 {
   value = NQHostToLE16(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint16BE(void* buffer, uint16_t value)
 {
   value = NQHostToBE16(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt24(void* buffer, int32_t value)
 {
 #ifdef NQ_CPU_BIG_ENDIAN
-  memcpy(buffer, ((uint8_t*)&value) + 1, 3);
+  NQMemcpy(buffer, ((uint8_t*)&value) + 1, 3);
 #else
-  memcpy(buffer, &value, 3);
+  NQMemcpy(buffer, &value, 3);
 #endif
   return 3;
 }
@@ -257,23 +257,23 @@ size_t NQPutInt24(void* buffer, int32_t value)
 size_t NQPutInt24LE(void* buffer, int32_t value)
 {
   value = NQHostToLE32(value);
-  memcpy(buffer, &value, 3);
+  NQMemcpy(buffer, &value, 3);
   return 3;
 }
 
 size_t NQPutInt24BE(void* buffer, int32_t value)
 {
   value = NQHostToBE32(value);
-  memcpy(buffer, ((uint8_t*)&value) + 1, 3);
+  NQMemcpy(buffer, ((uint8_t*)&value) + 1, 3);
   return 3;
 }
 
 size_t NQPutUint24(void* buffer, uint32_t value)
 {
 #ifdef NQ_CPU_BIG_ENDIAN
-  memcpy(buffer, ((uint8_t*)&value) + 1, 3);
+  NQMemcpy(buffer, ((uint8_t*)&value) + 1, 3);
 #else
-  memcpy(buffer, &value, 3);
+  NQMemcpy(buffer, &value, 3);
 #endif
   return 3;
 }
@@ -281,94 +281,94 @@ size_t NQPutUint24(void* buffer, uint32_t value)
 size_t NQPutUint24LE(void* buffer, uint32_t value)
 {
   value = NQHostToLE32(value);
-  memcpy(buffer, &value, 3);
+  NQMemcpy(buffer, &value, 3);
   return 3;
 }
 
 size_t NQPutUint24BE(void* buffer, uint32_t value)
 {
   value = NQHostToBE32(value);
-  memcpy(buffer, ((uint8_t*)&value) + 1, 3);
+  NQMemcpy(buffer, ((uint8_t*)&value) + 1, 3);
   return 3;
 }
 
 size_t NQPutInt32(void* buffer, int32_t value)
 {
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt32LE(void* buffer, int32_t value)
 {
   value = NQHostToLE32(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt32BE(void* buffer, int32_t value)
 {
   value = NQHostToBE32(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint32(void* buffer, uint32_t value)
 {
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint32LE(void* buffer, uint32_t value)
 {
   value = NQHostToLE32(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint32BE(void* buffer, uint32_t value)
 {
   value = NQHostToBE32(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt64(void* buffer, int64_t value)
 {
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt64LE(void* buffer, int64_t value)
 {
   value = NQHostToLE64(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutInt64BE(void* buffer, int64_t value)
 {
   value = NQHostToBE64(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint64(void* buffer, uint64_t value)
 {
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint64LE(void* buffer, uint64_t value)
 {
   value = NQHostToLE64(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
 size_t NQPutUint64BE(void* buffer, uint64_t value)
 {
   value = NQHostToBE64(value);
-  memcpy(buffer, &value, sizeof(value));
+  NQMemcpy(buffer, &value, sizeof(value));
   return sizeof(value);
 }
 
@@ -404,7 +404,7 @@ size_t NQBufferBuilder_write(NQBufferBuilder* builder, const void* data, size_t 
       return size;
   }
 
-  memcpy(builder->data, data, n);
+  NQMemcpy(builder->data, data, n);
   builder->data += n;
   builder->size -= n;
 

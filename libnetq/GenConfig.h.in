@@ -61,9 +61,6 @@
 /* Use native cypto random implementation */
 #cmakedefine NQCONFIG_USE_PLATFORM_CRYPTORAND
 
-/* Use HttpRequestSync implementation from the libcurl library */
-#cmakedefine NQCONFIG_USE_CURL_HTTPREQUESTSYNC
-
 /* Use stub for CryptoHash */
 #cmakedefine NQCONFIG_USE_STUB_CRYPTOHASH
 

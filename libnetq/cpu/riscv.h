@@ -29,8 +29,13 @@
 
 #define NQ_CPU_RISCV 1
 #define NQ_CPU_NAME "RISC-V"
-#define NQ_CPU_ABI "riscv"
+
+/* RISC-V is little-endian by default; GCC's -mbig-endian is only visible through __BYTE_ORDER__ */
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define NQ_CPU_BIG_ENDIAN 1
+#else
 #define NQ_CPU_LITTLE_ENDIAN 1
+#endif
 
 #if defined(__riscv_xlen)
 # if __riscv_xlen == 64
@@ -42,6 +47,29 @@
 # endif
 #elif defined(__riscv64)
 # define NQ_CPU_64BIT 1
+#endif
+
+/* psABI name: integer ABI (lp64/ilp32, "e" for the RV32E/RV64E reduced register set) + float ABI suffix */
+#if defined(__riscv_abi_rve)
+# define NQ_CPU_RISCV_ABI_E "e"
+#else
+# define NQ_CPU_RISCV_ABI_E ""
+#endif
+#if defined(__riscv_float_abi_double)
+# define NQ_CPU_RISCV_ABI_FLOAT "d"
+#elif defined(__riscv_float_abi_single)
+# define NQ_CPU_RISCV_ABI_FLOAT "f"
+#elif defined(__riscv_float_abi_quad)
+# define NQ_CPU_RISCV_ABI_FLOAT "q"
+#else
+# define NQ_CPU_RISCV_ABI_FLOAT ""
+#endif
+#if defined(NQ_CPU_64BIT)
+# define NQ_CPU_ABI "riscv64-lp64" NQ_CPU_RISCV_ABI_E NQ_CPU_RISCV_ABI_FLOAT
+#elif defined(NQ_CPU_32BIT)
+# define NQ_CPU_ABI "riscv32-ilp32" NQ_CPU_RISCV_ABI_E NQ_CPU_RISCV_ABI_FLOAT
+#else
+# define NQ_CPU_ABI "riscv"
 #endif
 
 #endif

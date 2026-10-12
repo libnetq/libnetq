@@ -35,6 +35,18 @@ int NQFileOpen(const char* path, NQFileOpenMode mode, NQFileHandle* result)
     flags |= (O_WRONLY | O_CREAT | O_TRUNC);
     break;
 
+  case NQ_FOPEN_CREATE:
+    flags |= (O_WRONLY | O_CREAT);
+    break;
+
+  case NQ_FOPEN_APPEND:
+    flags |= (O_WRONLY | O_CREAT | O_APPEND);
+    break;
+
+  case NQ_FOPEN_UPDATE:
+    flags |= O_WRONLY;
+    break;
+
   default:
     NQ_ASSERT_NOT_REACHED();
     return -NQ_EINVAL;
@@ -113,6 +125,34 @@ long long NQFileSeek(NQFileHandle handle, long long offset, NQFileSeekOrigin ori
   }
 
   return (long long)lseek(handle, offset, whence);
+}
+
+int NQFileSync(NQFileHandle handle)
+{
+  NQ_ASSERT(NQIsFileValid(handle));
+
+  int ret;
+  do {
+    ret = fsync(handle);
+  } while (ret != 0 && errno == EINTR);
+  return ret == 0 ? 0 : -NQGetLastError();
+}
+
+int NQFileTruncate(NQFileHandle handle, long long size)
+{
+  NQ_ASSERT(NQIsFileValid(handle));
+
+  if (size < 0)
+    return -NQ_EINVAL;
+  if ((long long)(off_t)size != size)
+    return -NQ_EOVERFLOW;
+
+  int ret;
+  do {
+    ret = ftruncate(handle, (off_t)size);
+  } while (ret != 0 && errno == EINTR);
+
+  return ret == 0 ? 0 : -NQGetLastError();
 }
 
 long long NQFileGetSize(NQFileHandle handle)

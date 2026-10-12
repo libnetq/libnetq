@@ -78,7 +78,7 @@ int NQWebSocketHeaderParse(const uint8_t* data, size_t size, NQWebSocketHeader* 
     if (size < sizeof(mkey)) {
       return 0;
     }
-    (void)memcpy(mkey, ptr, sizeof(mkey));
+    (void)NQMemcpy(mkey, ptr, sizeof(mkey));
     ptr += sizeof(mkey);
     size -= sizeof(mkey);
   }
@@ -93,7 +93,7 @@ int NQWebSocketHeaderParse(const uint8_t* data, size_t size, NQWebSocketHeader* 
     result->fin = fin;
     result->rsv = rsv;
     result->hasMask = masked;
-    (void)memcpy(result->mask, mkey, sizeof(mkey));
+    (void)NQMemcpy(result->mask, mkey, sizeof(mkey));
     result->opcode = opcode;
     result->payloadSize = payloadSize;
   }
@@ -141,7 +141,7 @@ bool NQWebSocketFrameParse(uint8_t* data, size_t size, NQWebSocketFrame* frame)
 
   frame->fin = header.fin;
   frame->hasMask = header.hasMask;
-  (void)memcpy(&frame->mask, header.mask, sizeof(header.mask));
+  (void)NQMemcpy(&frame->mask, header.mask, sizeof(header.mask));
   frame->opcode = header.opcode;
   frame->payload = payload;
   frame->payloadSize = header.payloadSize;
@@ -184,7 +184,7 @@ bool NQWebSocketBuffer_reserve(NQWebSocketBuffer* thiz, size_t size)
   if (thiz->payloadLen != 0) {
     NQ_ASSERT(thiz->payloadPtr != NULL);
     NQ_ASSERT(thiz->payloadCapacity >= thiz->payloadLen);
-    memcpy(newPayloadPtr, thiz->payloadPtr, thiz->payloadLen);
+    NQMemcpy(newPayloadPtr, thiz->payloadPtr, thiz->payloadLen);
     NQFree(toHeaderPtr(thiz->payloadPtr));
   }
 
@@ -216,7 +216,7 @@ static bool payloadCapacityResize(NQWebSocketBuffer* thiz, uint64_t newPayloadCa
 
   uint8_t* newPayloadPtr = toPayloadPtr(newHeaderPtr);
   if (thiz->payloadLen)
-    memcpy(newPayloadPtr, thiz->payloadPtr, thiz->payloadLen);
+    NQMemcpy(newPayloadPtr, thiz->payloadPtr, thiz->payloadLen);
   if (thiz->payloadPtr)
     NQFree(toHeaderPtr(thiz->payloadPtr));
 
@@ -231,7 +231,7 @@ int NQWebSocketBuffer_vprintf(NQWebSocketBuffer* thiz, const char* format, va_li
   va_list listCopy;
 
   va_copy(listCopy, list);
-  int n = vsnprintf((char*)thiz->payloadPtr + thiz->payloadLen, thiz->payloadCapacity - thiz->payloadLen, format, listCopy);
+  int n = NQVsnprintf((char*)thiz->payloadPtr + thiz->payloadLen, thiz->payloadCapacity - thiz->payloadLen, format, listCopy);
   va_end(listCopy);
 
   if (n <= 0)
@@ -247,7 +247,7 @@ int NQWebSocketBuffer_vprintf(NQWebSocketBuffer* thiz, const char* format, va_li
   if (!payloadCapacityResize(thiz, newPayloadLen + 1))
     return -1;
 
-  int ret = vsnprintf((char*)thiz->payloadPtr + thiz->payloadLen, thiz->payloadCapacity - thiz->payloadLen, format, list);
+  int ret = NQVsnprintf((char*)thiz->payloadPtr + thiz->payloadLen, thiz->payloadCapacity - thiz->payloadLen, format, list);
   NQ_ASSERT(ret == n);
   if (ret <= 0)
     return ret;
@@ -273,7 +273,7 @@ int NQWebSocketBuffer_write(NQWebSocketBuffer* thiz, const void* data, size_t le
       return -1;
   }
 
-  memcpy(thiz->payloadPtr + thiz->payloadLen, data, length);
+  NQMemcpy(thiz->payloadPtr + thiz->payloadLen, data, length);
   thiz->payloadLen = newPayloadLen;
   return (int)length;
 }
@@ -326,7 +326,7 @@ void NQWebSocketBuffer_complete(NQWebSocketBuffer* thiz, uint8_t opcode, bool fi
     headerPtr += NQPutUint64BE(headerPtr, len8);
 
   if (mask) {
-    (void)memcpy(headerPtr, mask, 4);
+    (void)NQMemcpy(headerPtr, mask, 4);
     NQWebSocketFramePayloadUnmask(mask, thiz->payloadPtr, thiz->payloadLen);
     NQ_ASSERT(headerPtr + 4 == thiz->payloadPtr);
   }

@@ -44,7 +44,7 @@ static bool NQUrlHost_parse(NQUrlHost* thiz, const char* characters)
   }
 
   thiz->wwwIndex = 0;
-  if (thiz->length > 4 && memcmp(characters, "www.", 4) == 0) {
+  if (thiz->length > 4 && NQMemcmp(characters, "www.", 4) == 0) {
     thiz->wwwLength = 3;
     thiz->hostIndex = 4;
   }
@@ -54,7 +54,7 @@ static bool NQUrlHost_parse(NQUrlHost* thiz, const char* characters)
   }
 
   const char* hostBegin = characters + thiz->hostIndex;
-  const char* hostEnd = strstr(hostBegin, ":");
+  const char* hostEnd = NQStrstr(hostBegin, ":");
   if (hostEnd != NULL) {
     const char* portBegin = hostEnd + 1;
 
@@ -98,7 +98,7 @@ NQUrlHost* NQUrlHost_create(const char* characters)
     return NULL;
 
   char* str = (char*)thiz + sizeof(*thiz);
-  memcpy(str, characters, lenz);
+  NQMemcpy(str, characters, lenz);
   thiz->characters = str;
 
   thiz->length = priv.length;
@@ -111,7 +111,7 @@ NQUrlHost* NQUrlHost_create(const char* characters)
   thiz->portIndex = priv.portIndex;
   thiz->portLength = priv.portLength;
 
-  memcpy(&thiz->ipv4Addr, &priv.ipv4Addr, sizeof(priv.ipv4Addr));
+  NQMemcpy(&thiz->ipv4Addr, &priv.ipv4Addr, sizeof(priv.ipv4Addr));
 
   return thiz;
 }
@@ -153,7 +153,7 @@ bool NQUrlHost_equal(const NQUrlHost* thiz, const NQUrlHost* other)
   if (thiz->hostLength != other->hostLength)
     return false;
 
-  if (memcmp(thiz->characters + thiz->hostIndex, other->characters + other->hostIndex, thiz->hostLength) != 0)
+  if (NQMemcmp(thiz->characters + thiz->hostIndex, other->characters + other->hostIndex, thiz->hostLength) != 0)
     return false;
 
   return true;

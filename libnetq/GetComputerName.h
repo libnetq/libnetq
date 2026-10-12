@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2023-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2023-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -16,7 +16,11 @@
 extern "C" {
 #endif
 
-NQ_EXPORT size_t NQGetComputerName(char* buffer, size_t n);
+NQ_EXPORT int NQGetComputerName(char* buffer, size_t n);
+NQ_EXPORT int NQSetComputerName(const char* name);
+
+NQ_EXPORT int NQGetNisDomainName(char* buffer, size_t n);
+NQ_EXPORT int NQSetNisDomainName(const char* name);
 
 #ifdef __cplusplus
 }

@@ -77,7 +77,7 @@ static struct NQModuleEntry* allocModuleEntry(const char* path)
   entry->library = NULL;
   entry->init = NULL;
   entry->exit = NULL;
-  memcpy(entry->path, path, nlen + 1);
+  NQMemcpy(entry->path, path, nlen + 1);
   return entry;
 }
 
@@ -151,7 +151,7 @@ int NQContext_loadModule(NQContext* thiz, const char* format, ...)
     return -NQ_EIO;
 
   va_start(args, format);
-  ret = vsnprintf(modulePath + pathLength, sizeof(modulePath) - pathLength, format, args);
+  ret = NQVsnprintf(modulePath + pathLength, sizeof(modulePath) - pathLength, format, args);
   va_end(args);
 
   if (ret >= MODULE_NAME_LENGTH - sizeof(NQ_LIBRARY_EXT)) {
@@ -162,7 +162,7 @@ int NQContext_loadModule(NQContext* thiz, const char* format, ...)
   if (pathLength + sizeof(NQ_LIBRARY_EXT) >= sizeof(modulePath))
     return -NQ_EIO;
 
-  memcpy(modulePath + pathLength, NQ_LIBRARY_EXT, sizeof(NQ_LIBRARY_EXT));
+  NQMemcpy(modulePath + pathLength, NQ_LIBRARY_EXT, sizeof(NQ_LIBRARY_EXT));
   NQ_ASSERT(pathLength + sizeof(NQ_LIBRARY_EXT) - 1 == NQStrlen(modulePath));
 
   NQMutex_lock(&thiz->modules.mutex);

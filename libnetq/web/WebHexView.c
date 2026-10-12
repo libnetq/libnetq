@@ -72,7 +72,7 @@ static int mainInit(NQWebRequest* request, void* data)
 
 static int requestPrintf(struct NQWebHexView* hexView, NQWebRequest* request, NQWebResponse* response, const struct PostRequest* post)
 {
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
 
   NQWebResponse_printf(response, "<!DOCTYPE html>");
   NQWebResponse_printf(response, "<html>");
@@ -143,9 +143,9 @@ static bool WebRequest_onMultiPartParser(void* userdata, NQHTTPMultiPartType typ
     return true;
 
   case kNQHTTPMultiPartFieldName:
-    if (NQStrlen(httpHeaderContentDisposition) == size && memcmp(httpHeaderContentDisposition, data, size) == 0)
+    if (NQStrlen(httpHeaderContentDisposition) == size && NQMemcmp(httpHeaderContentDisposition, data, size) == 0)
       ctx->lastFieldType = kContentDispositionField;
-    else if (NQStrlen(httpHeaderContentType) == size && memcmp(httpHeaderContentType, data, size) == 0)
+    else if (NQStrlen(httpHeaderContentType) == size && NQMemcmp(httpHeaderContentType, data, size) == 0)
       ctx->lastFieldType = kContentTypeField;
     else
       ctx->lastFieldType = kUnknownField;
@@ -158,7 +158,7 @@ static bool WebRequest_onMultiPartParser(void* userdata, NQHTTPMultiPartType typ
         if (ctx->inFileState == kContentInit) {
           if (NQStringRangeIsEqual(&formData.name, "file")) {
             NQStringPrint_write(&ctx->filename, formData.filename.characters, formData.filename.length);
-            memcpy(ctx->contentType, ctx->lastContentType, kContentTypeMax);
+            NQMemcpy(ctx->contentType, ctx->lastContentType, kContentTypeMax);
             ctx->inFileState = kContentProcess;
           }
         }
@@ -173,11 +173,11 @@ static bool WebRequest_onMultiPartParser(void* userdata, NQHTTPMultiPartType typ
         str = ctx->contentType;
       }
       if (str != NULL) {
-        memset(str, 0, kContentTypeMax);
+        NQMemset(str, 0, kContentTypeMax);
         if (size >= kContentTypeMax) {
           return false;
         }
-        memcpy(str, data, size);
+        NQMemcpy(str, data, size);
       }
     }
     return true;
@@ -219,8 +219,8 @@ static int postInit(NQWebRequest* request, void* data)
 
   NQStringPrint_init(&ctx->filename);
 
-  memset(ctx->lastContentType, 0, sizeof(ctx->lastContentType));
-  memset(ctx->contentType, 0, sizeof(ctx->contentType));
+  NQMemset(ctx->lastContentType, 0, sizeof(ctx->lastContentType));
+  NQMemset(ctx->contentType, 0, sizeof(ctx->contentType));
 
   ctx->hasContentData = false;
   NQByteBuffer_init(&ctx->contentData);

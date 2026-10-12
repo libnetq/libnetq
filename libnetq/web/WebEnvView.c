@@ -42,7 +42,7 @@ static int mainInit(NQWebRequest* request, void* data)
 static int mainHandler(NQWebRequest* request, NQWebResponse* response)
 {
   struct NQWebEnvView* envView = (struct NQWebEnvView*)request->userdata;
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
 
   NQByteBuffer buf;
   NQByteBuffer_init(&buf);
@@ -76,7 +76,7 @@ static int mainHandler(NQWebRequest* request, NQWebResponse* response)
     }
 
     char* key = (char*)NQByteBuffer_data(&buf);
-    char* val = strchr(key, '=');
+    char* val = NQStrchr(key, '=');
     if (val) {
       *val++ = '\0';
       NQWebResponse_printf(response, "<tr>");
@@ -146,7 +146,7 @@ static int setterHandler(NQWebRequest* request, NQWebResponse* response)
   char* delimiter;
   char* name = NQStringPrint_characters(&ctx->buffer);
   for (;;) {
-    delimiter = strchr(name, '=');
+    delimiter = NQStrchr(name, '=');
     if (delimiter == NULL)
       return NQ_HTTP_BAD_REQUEST;
 
@@ -157,7 +157,7 @@ static int setterHandler(NQWebRequest* request, NQWebResponse* response)
     NQ_ASSERT(name[n] == '\0');
 
     char* value = delimiter + 1;
-    delimiter = strchr(value, '&');
+    delimiter = NQStrchr(value, '&');
     length = delimiter ? delimiter - value : NQStrlen(value);
     n = NQURLDecode(value, length, value, length + 1);
     if (n < 0 || n > length)
@@ -174,7 +174,7 @@ static int setterHandler(NQWebRequest* request, NQWebResponse* response)
     name = value + length + 1;
   }
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_LOCATION, ctx->baseUrl);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_LOCATION, ctx->baseUrl);
   return NQ_HTTP_MOVED_TEMPORARILY;
 }
 

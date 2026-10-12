@@ -25,9 +25,13 @@
 #define NQ_HAVE_ARCH_MEMCHR 1
 #define NQ_HAVE_ARCH_MEMMOVE 1
 #define NQ_HAVE_ARCH_STRLEN 1
+#define NQ_HAVE_ARCH_STRCHR 1
 #define NQ_HAVE_ARCH_STRRCHR 1
+#define NQ_HAVE_ARCH_STRSTR 1
 #define NQ_HAVE_ARCH_STRCMP 1
 #define NQ_HAVE_ARCH_STRNCMP 1
+#define NQ_HAVE_ARCH_STRCASECMP 1
+#define NQ_HAVE_ARCH_STRNCASECMP 1
 #endif
 
 #ifdef __cplusplus
@@ -68,24 +72,28 @@ NQ_EXPORT void* NQMemmove(void* dest, const void* src, size_t count);
 #define NQMemmove memmove
 #endif
 
-#if defined(NQ_COMPILER_MSVC)
-#define NQStrcasecmp _stricmp
-#define NQStrncasecmp _strnicmp
-#else
-#define NQStrcasecmp strcasecmp
-#define NQStrncasecmp strncasecmp
-#endif
-
 #ifndef NQ_HAVE_ARCH_STRLEN
 NQ_EXPORT size_t NQStrlen(const char* s);
 #else
 #define NQStrlen strlen
 #endif
 
+#ifndef NQ_HAVE_ARCH_STRCHR
+NQ_EXPORT char* NQStrchr(const char* s, int c);
+#else
+#define NQStrchr strchr
+#endif
+
 #ifndef NQ_HAVE_ARCH_STRRCHR
 NQ_EXPORT char* NQStrrchr(const char* s, int c);
 #else
 #define NQStrrchr strrchr
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRSTR
+NQ_EXPORT char* NQStrstr(const char* haystack, const char* needle);
+#else
+#define NQStrstr strstr
 #endif
 
 #ifndef NQ_HAVE_ARCH_STRCMP
@@ -98,6 +106,22 @@ NQ_EXPORT int NQStrcmp(const char* s1, const char* s2);
 NQ_EXPORT int NQStrncmp(const char* s1, const char* s2, size_t count);
 #else
 #define NQStrncmp strncmp
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRCASECMP
+NQ_EXPORT int NQStrcasecmp(const char* s1, const char* s2);
+#elif defined(NQ_COMPILER_MSVC)
+#define NQStrcasecmp _stricmp
+#else
+#define NQStrcasecmp strcasecmp
+#endif
+
+#ifndef NQ_HAVE_ARCH_STRNCASECMP
+NQ_EXPORT int NQStrncasecmp(const char* s1, const char* s2, size_t count);
+#elif defined(NQ_COMPILER_MSVC)
+#define NQStrncasecmp _strnicmp
+#else
+#define NQStrncasecmp strncasecmp
 #endif
 
 #ifdef __cplusplus

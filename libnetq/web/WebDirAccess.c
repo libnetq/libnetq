@@ -68,7 +68,7 @@ static int requestHandler(NQWebRequest* request, NQWebResponse* response)
   NQWebServer* server = NQWebRequest_server(request);
   const char* contentType = NQWebServer_getMimeType(server, url);
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
   NQWebResponse_write(response, NQUint8Array_data(arraybuffer), NQUint8Array_size(arraybuffer));
   return NQ_HTTP_OK;
 }

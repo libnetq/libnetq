@@ -19,13 +19,16 @@
   macro(_ARCH_PWR3)   \
   macro(_ARCH_PWR4)
 
-#if  defined (__THW_RS6000) \
+/* PowerPC compilers define _ARCH_PWR4+ for POWER4 and newer cores (e.g. ppc64le POWER8), and AIX xlc defines
+   _IBMR2/_POWER on PowerPC too; those are detected by ppc.h (included first) */
+#if (defined (__THW_RS6000) \
   || defined (_IBMR2)       \
   || defined (_POWER)       \
   || defined (_ARCH_PWR)    \
   || defined (_ARCH_PWR2)   \
   || defined (_ARCH_PWR3)   \
-  || defined (_ARCH_PWR4)
+  || defined (_ARCH_PWR4))  \
+  && !defined (NQ_CPU_PPC)
 
 #define NQ_CPU_RS6000 1
 #define NQ_CPU_NAME "RS/6000"
