@@ -17,7 +17,9 @@
  *   Creates a symbolic link at linkPath pointing to target.
  *
  * int NQLink(const char* existingPath, const char* newPath);
- *   Creates a hard link newPath to existingPath.
+ *   Creates a hard link newPath to existingPath. A symbolic link at
+ *   existingPath is linked itself, not the file it points to; resolve it
+ *   first (NQRealPath) to link that.
  *
  * Both return 0 on success or a negative NQ error code.
  */

@@ -25,8 +25,16 @@
 
 #define NQ_CPU_AMD64 1
 #define NQ_CPU_NAME "AMD64"
-#define NQ_CPU_ABI "x86_64"
 #define NQ_CPU_LITTLE_ENDIAN 1
+
+/* x32 ABI runs x86-64 code with 32-bit pointers */
+#if defined(__ILP32__) || defined(_ILP32)
+#define NQ_CPU_ABI "x32"
+#define NQ_CPU_32BIT 1
+#else
+#define NQ_CPU_ABI "x86_64"
+#define NQ_CPU_64BIT 1
+#endif
 
 #endif
 

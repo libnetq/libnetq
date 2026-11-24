@@ -1,0 +1,104 @@
+# clang-format configuration for libnetq
+#
+# Derived from the existing code base. Requires clang-format >= 22
+# (for "IndentPPDirectives: Leave"); with older versions change it to "None".
+#
+# No "Language:" key on purpose, so the style also applies to headers that
+# clang-format detects as Objective-C.
+
+BasedOnStyle: LLVM
+
+# --- Indentation -------------------------------------------------------------
+IndentWidth: 2
+ContinuationIndentWidth: 4
+UseTab: Never
+IndentCaseLabels: false          # "case" aligned with "switch"
+IndentCaseBlocks: false
+IndentGotoLabels: true
+IndentExternBlock: NoIndent      # extern "C" { ... } is not indented
+IndentWrappedFunctionNames: false
+# Keep preprocessor indentation as written: most files do not indent nested
+# directives, while a few (e.g. CPU detection) use "# if" / "#  define".
+IndentPPDirectives: Leave
+PPIndentWidth: 1
+
+# --- Line length -------------------------------------------------------------
+ColumnLimit: 120
+ReflowComments: false
+BreakStringLiterals: true
+
+# --- Braces ------------------------------------------------------------------
+# Function bodies open on a new line; everything else is attached.
+# "else" starts on its own line after "}".
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterExternBlock: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+InsertBraces: false
+
+# --- Short statements ---------------------------------------------------------
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+
+# --- Pointers, spaces ---------------------------------------------------------
+PointerAlignment: Left           # "char* p"
+DerivePointerAlignment: false
+SpaceAfterCStyleCast: false      # "(int)x"
+SpaceBeforeParens: ControlStatements
+Cpp11BracedListStyle: false      # "{ 0, 1, 2 }"
+BitFieldColonSpacing: Both
+SpacesBeforeTrailingComments: 1
+
+# --- Alignment ---------------------------------------------------------------
+AlignAfterOpenBracket: Align     # wrapped arguments align with "("
+AlignOperands: Align
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveMacros: None
+AlignConsecutiveBitFields: None
+AlignEscapedNewlines: DontAlign
+AlignTrailingComments:
+  Kind: Leave
+AlignArrayOfStructures: None
+
+# --- Wrapping ----------------------------------------------------------------
+BinPackArguments: true
+BinPackParameters: BinPack
+BreakBeforeBinaryOperators: None # operator stays at end of line
+BreakBeforeTernaryOperators: true
+BreakAfterReturnType: None
+
+# --- Macros ------------------------------------------------------------------
+# Multi-line macros are hand-formatted ("#define X() do { \ ... } while (0)").
+SkipMacroDefinitionBody: true
+
+# --- Includes / blank lines ---------------------------------------------------
+# Order is meaningful: "config.h", own header, then libnetq headers, then system.
+SortIncludes: Never
+IncludeBlocks: Preserve
+MaxEmptyLinesToKeep: 2
+KeepEmptyLines:
+  AtEndOfFile: false
+  AtStartOfBlock: false
+  AtStartOfFile: true
+InsertNewlineAtEOF: true
+LineEnding: DeriveLF

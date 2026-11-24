@@ -15,6 +15,7 @@
 #ifdef NQ_OS_UNIX
 
 #include <libnetq/ErrorCode.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 static inline int NQSymlink(const char* target, const char* linkPath)
@@ -26,7 +27,9 @@ static inline int NQSymlink(const char* target, const char* linkPath)
 
 static inline int NQLink(const char* existingPath, const char* newPath)
 {
-  if (link(existingPath, newPath) != 0)
+  /* linkat without AT_SYMLINK_FOLLOW: link() follows a symlink on some
+   * systems (macOS), not on others (Linux). */
+  if (linkat(AT_FDCWD, existingPath, AT_FDCWD, newPath, 0) != 0)
     return -NQGetLastError();
   return 0;
 }

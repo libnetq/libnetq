@@ -57,7 +57,7 @@ NQ_STATIC_ASSERT(sizeof(NQDescEntry) % sizeof(void*) == 0, "Invalid size of NQDe
 static bool NQIsFillMemory(const void* mem, int value, size_t size)
 {
   size_t index;
-  
+
   for (index = 0; index < size; index++) {
     if (((uint8_t*)mem)[index] != (value & 0xFF))
       return false;
@@ -76,7 +76,7 @@ static void NQDescEntry_checkData(NQDescEntry* entry, size_t entrySize)
 static NQDescIdentifier makeIdentifier(NQDescIdentifier id, NQDescIdentifier maxId)
 {
   NQDescIdentifier result;
-  
+
   size_t index = NQDescIdentifierToIndex(id);
 
   do {
@@ -84,11 +84,9 @@ static NQDescIdentifier makeIdentifier(NQDescIdentifier id, NQDescIdentifier max
     if (maxId != NQ_UINTPTR_MAX)
       result %= (maxId + 1);
     result &= ~(NQ_DESC_NUM_MAX - 1);
-    if (result == NQ_DESC_INVALID)
-      continue;
-    result |= index;
-  } while (id == result);
+  } while (result == NQ_DESC_INVALID || (result | index) == id);
 
+  result |= index;
   return result;
 }
 
@@ -152,7 +150,7 @@ static NQDescEntry* NQDescList_shift(struct NQDescList* list)
 static void NQDescEntry_fill(NQDescEntry* entry, int value, size_t size)
 {
   void* data = NQDescEntry_data(entry);
-  memset(data, value, size);
+  NQMemset(data, value, size);
 }
 
 static NQDescEntry* NQDescSet_getAllEntries(NQDescSet* descset, size_t index)

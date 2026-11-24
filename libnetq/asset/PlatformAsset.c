@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2025-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -181,16 +181,11 @@ NQAsset* NQPlatformAssetGetInstance(void)
 void NQPlatformAssetInit(NQAssetHandle handle)
 {
 #ifdef NQ_OS_MACOSX
-    CFURLRef url = CFBundleCopyBundleURL(handle);
-    if (url != NULL) {
-      char path[1024];
-      if (CFURLGetFileSystemRepresentation(url, true, (UInt8*)path, sizeof(path))) {
-        strcat(path, "/Contents/MacOS/");
-      }
-      CFRelease(url);
-      s_platformAsset.handle = (CFBundleRef)CFRetain(handle);
-    }
+  /* the bundle is kept; NULL (no bundle) is fine, as elsewhere */
+  if (s_platformAsset.handle)
+    CFRelease(s_platformAsset.handle);
+  s_platformAsset.handle = handle ? (CFBundleRef)CFRetain(handle) : NULL;
 #else
-    s_platformAsset.handle = handle;
+  s_platformAsset.handle = handle;
 #endif
 }

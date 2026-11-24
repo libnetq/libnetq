@@ -33,7 +33,7 @@ static bool jsonWriterHandler(void* userdata, const char* characters, size_t siz
 
 static int allEnvRequest(NQWebRequest* request, NQWebResponse* response)
 {
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
   NQByteBuffer buf;
   NQByteBuffer_init(&buf);
@@ -57,7 +57,7 @@ static int allEnvRequest(NQWebRequest* request, NQWebResponse* response)
       }
 
       char* key = (char*)NQByteBuffer_data(&buf);
-      char* val = strchr(key, '=');
+      char* val = NQStrchr(key, '=');
       if (val) {
         *val++ = '\0';
         NQJSONWriter_writeKeyString(&writer, key, val);
@@ -84,7 +84,7 @@ static const NQWebRequestOperations kAllEnvOps = {
 
 static int getEnvRequest(NQWebRequest* request, NQWebResponse* response)
 {
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_APPLICATION_JSON);
 
   NQJSONWriter writer;
   NQJSONWriter_init(&writer, &jsonWriterHandler, response);

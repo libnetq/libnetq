@@ -18,11 +18,68 @@
 #include <windows.h>
 #include <libnetq/Malloc.h>
 #include <libnetq/UTF.h>
+#include <libnetq/ErrorCode.h>
 #elif defined(NQ_OS_DARWIN)
 #include <crt_externs.h> // for _NSGetEnviron
 #elif defined(NQ_OS_UNIX)
 #include <unistd.h> // for environ
 #endif
+
+const char* NQEnvCreate(const char* name)
+{
+#if defined(NQ_OS_UNIX)
+  return getenv(name);
+#elif defined(NQ_OS_WINDOWS)
+  DWORD size;
+  NQUnicodeInfo info;
+  uint16_t* wname;
+  uint16_t* wvalue;
+  WCHAR dummy;
+
+  if (!NQConvertUTF8ToUTF16((const uint8_t*)name, NULL, NULL, NULL, &info))
+    return NULL;
+
+  wname = (uint16_t*)NQMalloc((info.utf16Size + 1) * sizeof(uint16_t));
+  if (wname == NULL)
+    return NULL;
+
+  NQConvertUTF8ToUTF16((const uint8_t*)name, (const uint8_t*)(name + info.utf8Size), wname, wname + info.utf16Size, NULL);
+  wname[info.utf16Size] = L'\0';
+
+  NQSetLastError(0);
+  size = GetEnvironmentVariableW((LPCWSTR)wname, &dummy, 0);
+  NQFree(wname);
+
+  if (NQGetLastError() == ERROR_ENVVAR_NOT_FOUND)
+    return NULL;
+
+  if (size == 0)
+    return NQCStrEmpty();
+
+  wvalue = (uint16_t*)NQMalloc(size * sizeof(uint16_t));
+  size = GetEnvironmentVariableW((LPCWSTR)wname, (LPWSTR)wvalue, size);
+
+  NQConvertUTF16ToUTF8(wvalue, wvalue + size, NULL, NULL, &info);
+
+  char* result = (char*)NQMalloc(info.utf8Size + 1);
+  if (result != NULL) {
+    NQConvertUTF16ToUTF8(wvalue, wvalue + size, (uint8_t*)result, (uint8_t*)(result + info.utf8Size + 1), &info);
+    NQ_ASSERT(!result[info.utf8Size]);
+  }
+
+  NQFree(wvalue);
+  return result;
+#else
+  return NULL;
+#endif
+}
+
+void NQEnvFree(const char* value)
+{
+#if defined(NQ_OS_WINDOWS)
+  NQFree((void*)value);
+#endif
+}
 
 int NQEnvGet(const char* name, char* value, size_t n)
 {
@@ -44,9 +101,9 @@ int NQEnvGet(const char* name, char* value, size_t n)
   NQConvertUTF8ToUTF16((const uint8_t*)name, (const uint8_t*)(name + info.utf8Size), wname, wname + info.utf16Size, NULL);
   wname[info.utf16Size] = L'\0';
 
-  SetLastError(0);
+  NQSetLastError(0);
   size = GetEnvironmentVariableW((LPCWSTR)wname, &dummy, 0);
-  if (GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+  if (NQGetLastError() == ERROR_ENVVAR_NOT_FOUND)
     result = -1;
   else if (size == 0)
     result = 0;
@@ -79,7 +136,7 @@ int NQEnvGet(const char* name, char* value, size_t n)
     return -1;
   }
 
-  (void)memcpy(value, val, (len < n) ? len + 1 : n);
+  (void)NQMemcpy(value, val, (len < n) ? len + 1 : n);
   return (int)len;
 
 #else

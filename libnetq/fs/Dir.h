@@ -15,16 +15,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
-typedef struct NQDir NQDir;
 
-NQ_EXPORT NQDir* NQDir_open(const char* pathname);
-NQ_EXPORT bool NQDir_next(NQDir* dir);
-NQ_EXPORT void NQDir_close(NQDir* dir);
+typedef struct NQDirImpl NQDir;
 
-NQ_EXPORT const char* NQDir_name(NQDir* dir);
-NQ_EXPORT bool NQDir_isFile(NQDir* dir);
-NQ_EXPORT bool NQDir_isDirectory(NQDir* dir);
+NQ_EXPORT int NQDir_open(const char* pathname, NQDir** result);
+NQ_EXPORT void NQDir_close(NQDir*);
+
+NQ_EXPORT bool NQDir_first(NQDir*);
+NQ_EXPORT bool NQDir_next(NQDir*);
+
+NQ_EXPORT const char* NQDir_name(NQDir*);
+NQ_EXPORT bool NQDir_isFile(NQDir*);
+NQ_EXPORT bool NQDir_isDirectory(NQDir*);
 
 #ifdef __cplusplus
 }

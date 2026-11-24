@@ -18,6 +18,7 @@ extern "C" {
 
 #define NQ_REGEX_CASELESS  (1 << 0)
 #define NQ_REGEX_MULTILINE (1 << 1)
+#define NQ_REGEX_UTF       (1 << 2)
 
 typedef struct NQRegex NQRegex;
 typedef struct NQRegexMatch NQRegexMatch;

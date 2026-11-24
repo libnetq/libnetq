@@ -11,7 +11,7 @@
 #define _LIBNETQ_BUFFERBUILDER_H
 
 #include <libnetq/Endian.h>
-#include <libnetq/String.h>
+#include <libnetq/string/String.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,7 +19,7 @@ extern "C" {
 
 static inline size_t NQGetBytes(const void* buffer, uint8_t* data, size_t size)
 {
-  memcpy(data, buffer, size);
+  NQMemcpy(data, buffer, size);
   return size;
 }
 

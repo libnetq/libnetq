@@ -12,6 +12,7 @@
 
 #include <libnetq/List.h>
 #include <libnetq/PrimitiveType.h>
+#include <libnetq/JSON.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,8 +37,7 @@ NQ_EXPORT bool NQPrimitiveStorage_setUint32(NQPrimitiveStorage*, const char* nam
 NQ_EXPORT bool NQPrimitiveStorage_getString(NQPrimitiveStorage*, const char* name, const char** value);
 NQ_EXPORT bool NQPrimitiveStorage_setString(NQPrimitiveStorage*, const char* name, const char* value);
 
-//typedef size_t (NQPrimitiveStorageHandler) (void* userdata, NQPrimitiveType type, char* buffer, size_t size);
-//NQ_EXPORT bool NQPrimitiveStorage_setHandle(NQPrimitiveStorage*, const char* name, NQPrimitiveStorageHandler* handler, void* userdata);
+NQ_EXPORT bool NQPrimitiveStorage_mergeJSON(NQPrimitiveStorage* storage, NQJSON* json);
 
 #ifdef __cplusplus
 }

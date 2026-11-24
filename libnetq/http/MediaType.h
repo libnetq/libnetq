@@ -28,6 +28,8 @@
 #define NQ_MEDIATYPE_AUDIO_3GPP                     "audio/3gpp"
 #define NQ_MEDIATYPE_AUDIO_AAC                      "audio/aac"
 #define NQ_MEDIATYPE_AUDIO_MP4                      "audio/mp4"
+#define NQ_MEDIATYPE_FONT_COLLECTION                "font/collection"
+#define NQ_MEDIATYPE_FONT_OTF                       "font/otf"
 #define NQ_MEDIATYPE_FONT_TTF                       "font/ttf"
 #define NQ_MEDIATYPE_FONT_WOFF                      "font/woff"
 #define NQ_MEDIATYPE_FONT_WOFF2                     "font/woff2"

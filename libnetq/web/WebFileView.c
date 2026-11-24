@@ -82,7 +82,7 @@ static const char* getRelativePath(const char* baseUrl, const char* url)
   size_t baseUrlLength = NQStrlen(baseUrl);
   size_t urlLength = NQStrlen(url);
 
-  if (urlLength < baseUrlLength || memcmp(url, baseUrl, baseUrlLength) != 0)
+  if (urlLength < baseUrlLength || NQMemcmp(url, baseUrl, baseUrlLength) != 0)
     return NULL;
 
   return url + baseUrlLength;
@@ -97,8 +97,8 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
   const char* url = NQWebRequest_url(request);
   const char* relativePath = getRelativePath(fileApi->baseUrl, url);
 
-  if (relativePath == NULL || strstr(url, "//") != NULL || strstr(url, "/../") != NULL) {
-    NQWebResponse_setHeader(response, NQHTTP_HEADER_LOCATION, fileApi->baseUrl);
+  if (relativePath == NULL || NQStrstr(url, "//") != NULL || NQStrstr(url, "/../") != NULL) {
+    NQWebResponse_addHeader(response, NQHTTP_HEADER_LOCATION, fileApi->baseUrl);
     return NQ_HTTP_MOVED_PERMANENTLY;
   }
 
@@ -114,7 +114,7 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
 
   NQStat stat;
   if (!NQIsPathSeparator(path[pathLen - 1])) {
-    int err = NQGetStat(path, &stat);
+    int err = NQGetStat(path, NQ_STAT_FOLLOW, &stat);
     if (err) {
       NQ_LOGE("NQGetStat error %i", err);
       NQStringPrint_finalize(&pathBuf);
@@ -130,7 +130,7 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
         return NQ_HTTP_INTERNAL_SERVER_ERROR;
       }
 
-      NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
+      NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, contentType);
 
       uint8_t buffer[1024];
       for (;;) {
@@ -160,19 +160,19 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
     }
 
     const char* location = NQPathBuilder_characters(&pathBuf);
-    NQWebResponse_setHeader(response, NQHTTP_HEADER_LOCATION, location);
+    NQWebResponse_addHeader(response, NQHTTP_HEADER_LOCATION, location);
     NQStringPrint_finalize(&pathBuf);
     return NQ_HTTP_MOVED_PERMANENTLY;
   }
 
-  NQDir* dir =  NQDir_open(path);
-
-  if (dir == NULL) {
+  NQDir* dir;
+  int err = NQDir_open(path, &dir);
+  if (err) {
     NQStringPrint_finalize(&pathBuf);
     return NQ_HTTP_NOT_FOUND;
   }
 
-  NQWebResponse_setHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
+  NQWebResponse_addHeader(response, NQHTTP_HEADER_CONTENT_TYPE, NQ_MEDIATYPE_TEXT_HTML);
   NQWebResponse_printf(response, "<!DOCTYPE html>");
   NQWebResponse_printf(response, "<html>");
   NQWebResponse_printf(response, "<head>");
@@ -191,35 +191,38 @@ static int onGetRequest(NQWebRequest* request, NQWebResponse* response)
   char sizeBuf[NQ_ARRAY_LENGTH(SIZE_EMPTY_STR)];
   char datetimeBuf[NQ_ARRAY_LENGTH(DATETIME_EMPTY_STR)];
 
-  while (NQDir_next(dir)) {
-    const char* name = NQDir_name(dir);
-    if (name[0] == '.' && (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
-      continue;
-    size_t nlen = NQStrlen(name);
+  if (NQDir_first(dir)) {
+    do {
+      const char* name = NQDir_name(dir);
+      if (name[0] == '.' && (name[1] == '\0' || (name[1] == '.' && name[2] == '\0')))
+        continue;
+      size_t nlen = NQStrlen(name);
 
-    const char* delimeter = "";
-    const char* sizeStr = SIZE_EMPTY_STR;
-    const char* datetimeStr = DATETIME_EMPTY_STR;
+      const char* delimeter = "";
+      const char* sizeStr = SIZE_EMPTY_STR;
+      const char* datetimeStr = DATETIME_EMPTY_STR;
 
-    if (NQStringPrint_writeAll(&pathBuf, name, nlen)) {
-      if (NQGetStat(NQStringPrint_characters(&pathBuf), &stat) == 0) {
-        printFileSize(sizeBuf, sizeof(sizeBuf), NQStat_size(&stat));
-        int sz = NQTimeMsFormat(NQStat_modificationTimeMs(&stat), NQ_DT_RFC3339, datetimeBuf, sizeof(datetimeBuf));
-        NQ_ASSERT(sz == NQ_CSTR_LENGTH(DATETIME_EMPTY_STR));
-        sizeStr = sizeBuf;
-        datetimeStr = datetimeBuf;
+      if (NQStringPrint_writeAll(&pathBuf, name, nlen)) {
+        if (NQGetStat(NQStringPrint_characters(&pathBuf), NQ_STAT_FOLLOW, &stat) == 0) {
+          printFileSize(sizeBuf, sizeof(sizeBuf), NQStat_size(&stat));
+          int sz = NQTimeMsFormat(NQStat_modificationTimeMs(&stat), NQ_DT_RFC3339, datetimeBuf, sizeof(datetimeBuf));
+          NQ_ASSERT(sz == NQ_CSTR_LENGTH(DATETIME_EMPTY_STR));
+          sizeStr = sizeBuf;
+          datetimeStr = datetimeBuf;
+        }
+        NQStringPrint_resize(&pathBuf, pathLen);
       }
-      NQStringPrint_resize(&pathBuf, pathLen);
-    }
 
-    size_t spaceLen = sizeof(spaceStr) - nlen - sizeof(sizeBuf) - 1 - sizeof(datetimeBuf) - 1;
-    if (NQDir_isDirectory(dir)) {
-      delimeter = "/";
-      spaceLen--;
-    }
+      size_t spaceLen = sizeof(spaceStr) - nlen - sizeof(sizeBuf) - 1 - sizeof(datetimeBuf) - 1;
+      if (NQDir_isDirectory(dir)) {
+        delimeter = "/";
+        spaceLen--;
+      }
 
-    NQWebResponse_printf(response, "<a href=\"%s%s\">%s%s</a>%*.s%s%s\n", name, delimeter, name, delimeter, (int)spaceLen, spaceStr, datetimeStr, sizeStr);
+      NQWebResponse_printf(response, "<a href=\"%s%s\">%s%s</a>%*.s%s%s\n", name, delimeter, name, delimeter, (int)spaceLen, spaceStr, datetimeStr, sizeStr);
+    } while(NQDir_next(dir));
   }
+
   NQDir_close(dir);
 
   NQWebResponse_printf(response, "</pre><hr>");

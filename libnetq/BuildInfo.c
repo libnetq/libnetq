@@ -1,7 +1,7 @@
 /*
  * MIT License
  *
- * Copyright (c) 2020-2025  Yurii Yakubin (yurii.yakubin@gmail.com)
+ * Copyright (c) 2020-2026  Yurii Yakubin (yurii.yakubin@gmail.com)
  *
  * Permission is granted to use, copy, modify, and distribute this software
  * under the MIT License. See LICENSE file for details.
@@ -41,6 +41,6 @@ const char* NQGetBuildABI(void)
 int NQPutBuildUserAgent(const char* product, const char* version, char* buf, size_t len)
 {
   if (version && *version != '\0')
-    return snprintf(buf, len, "%s/%s (%s) %s", product, version, USERAGENT_PLATFORM, NQ_CPU_NAME);
-  return snprintf(buf, len, "%s (%s) %s", product, USERAGENT_PLATFORM, NQ_CPU_NAME);
+    return NQSnprintf(buf, len, "%s/%s (%s) %s", product, version, USERAGENT_PLATFORM, NQ_CPU_NAME);
+  return NQSnprintf(buf, len, "%s (%s) %s", product, USERAGENT_PLATFORM, NQ_CPU_NAME);
 }

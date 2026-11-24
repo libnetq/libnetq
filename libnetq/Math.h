@@ -13,10 +13,10 @@
 #include <libnetq/Basic.h>
 #include <libnetq/MinMax.h>
 
-#ifdef NQ_OS_KERNEL
+#if defined(NQ_OS_KERNEL)
 #include <linux/math.h>
 #include <linux/math64.h>
-#else
+#elif defined(NQ_OS_WINDOWS) || defined(NQ_OS_UNIX)
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <float.h>
